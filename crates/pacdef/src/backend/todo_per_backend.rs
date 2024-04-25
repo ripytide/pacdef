@@ -9,7 +9,7 @@ use crate::prelude::*;
 ///
 /// This struct is used to store a list of unmanaged packages or missing packages
 /// for all backends.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct ToDoPerBackend(Vec<(AnyBackend, Packages)>);
 impl ToDoPerBackend {
     pub fn new() -> Self {
@@ -22,6 +22,10 @@ impl ToDoPerBackend {
 
     pub fn iter(&self) -> impl Iterator<Item = &(AnyBackend, Packages)> {
         self.0.iter()
+    }
+
+    pub fn combined_iter(&self) -> impl Iterator<Item = &Package> + '_ {
+        self.iter().flat_map(|(_, x)| x.iter())
     }
 
     pub fn nothing_to_do_for_all_backends(&self) -> bool {

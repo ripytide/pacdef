@@ -1,75 +1,31 @@
 mod datastructures;
 mod strategy;
+#[allow(dead_code)]
+mod tui;
 
 use std::io::{stdin, stdout, Write};
 
 use anyhow::Result;
 
 use crate::prelude::*;
-use crate::ui::{get_user_confirmation, read_single_char_from_terminal};
+use crate::ui::read_single_char_from_terminal;
 
-use self::datastructures::{ContinueWithReview, ReviewAction, ReviewIntention, ReviewsPerBackend};
-use self::strategy::Strategy;
+use self::{
+    datastructures::{
+        old_review, ContinueWithReview, ReviewAction, ReviewIntention, ReviewsPerBackend,
+    },
+    tui::Review,
+};
 
-pub fn review(todo_per_backend: ToDoPerBackend, groups: &Groups) -> Result<()> {
-    let mut reviews = ReviewsPerBackend::new();
-
-    if todo_per_backend.nothing_to_do_for_all_backends() {
-        println!("nothing to do");
-        return Ok(());
-    }
-
-    'outer: for (backend, packages) in todo_per_backend {
-        let mut actions = vec![];
-        for package in packages {
-            println!("{}: {package}", backend.backend_info().section);
-            match get_action_for_package(package, groups, &mut actions, &backend)? {
-                ContinueWithReview::Yes => continue,
-                ContinueWithReview::No => return Ok(()),
-                ContinueWithReview::NoAndApply => {
-                    reviews.push((backend, actions));
-                    break 'outer;
-                }
-            }
-        }
-        reviews.push((backend, actions));
-    }
-
-    if reviews.nothing_to_do() {
-        println!("nothing to do");
-        return Ok(());
-    }
-
-    let strategies: Vec<Strategy> = reviews.into_strategies();
-
-    println!();
-    let mut iter = strategies.iter().peekable();
-
-    while let Some(strategy) = iter.next() {
-        strategy.show();
-
-        if iter.peek().is_some() {
-            println!();
-        }
-    }
-
-    println!();
-    if !get_user_confirmation()? {
-        return Ok(());
-    }
-
-    for strategy in strategies {
-        strategy.execute()?;
-    }
-
-    Ok(())
+pub fn review(unmanaged_per_backend: ToDoPerBackend, groups: &Groups) -> Result<()> {
+    Review::new(unmanaged_per_backend, groups).run()
 }
 
 fn get_action_for_package(
     package: Package,
     groups: &Groups,
     reviews: &mut Vec<ReviewAction>,
-    backend: &dyn Backend,
+    backend: &AnyBackend,
 ) -> Result<ContinueWithReview> {
     loop {
         match ask_user_action_for_package(backend.supports_as_dependency())? {

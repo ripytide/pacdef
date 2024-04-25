@@ -1,6 +1,6 @@
 use std::cmp::Ordering;
 use std::collections::BTreeSet;
-use std::fmt::{Display, Write};
+use std::fmt::Display;
 
 pub type Packages = BTreeSet<Package>;
 
@@ -12,6 +12,20 @@ pub struct Package {
     pub name: String,
     /// Optionally, which repository the package belongs to
     pub repo: Option<String>,
+}
+impl Display for Package {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        if let Some(repo) = &self.repo {
+            write!(f, "{}/{}", repo, self.name)
+        } else {
+            write!(f, "{}", self.name)
+        }
+    }
+}
+impl<'a> From<&'a Package> for ratatui::text::Text<'a> {
+    fn from(value: &'a Package) -> Self {
+        ratatui::text::Text::from(value.to_string())
+    }
 }
 
 fn remove_comment_and_trim_whitespace(s: &str) -> &str {
@@ -91,19 +105,6 @@ impl Ord for Package {
                     .as_ref()
                     .map_or(Ordering::Equal, |other_repo| self_repo.cmp(other_repo))
             }))
-    }
-}
-
-impl Display for Package {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match &self.repo {
-            None => (),
-            Some(repo) => {
-                f.write_str(repo)?;
-                f.write_char('/')?;
-            }
-        }
-        f.write_str(&self.name)
     }
 }
 

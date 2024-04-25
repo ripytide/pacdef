@@ -1,4 +1,11 @@
+use anyhow::Result;
+use std::io::stdout;
+
 use crate::prelude::*;
+use crate::review::get_action_for_package;
+use crate::ui::get_user_confirmation;
+use ratatui::backend::CrosstermBackend;
+use ratatui::Terminal;
 
 use super::strategy::Strategy;
 
@@ -26,6 +33,34 @@ pub struct ReviewsPerBackend {
     items: Vec<(AnyBackend, Vec<ReviewAction>)>,
 }
 
+pub fn old_review(unmanaged_per_backend: ToDoPerBackend, groups: &Groups) -> Result<()> {
+    let mut reviews = ReviewsPerBackend::new();
+
+    if unmanaged_per_backend.nothing_to_do_for_all_backends() {
+        println!("nothing to do, all installed packages are associated with groups");
+
+        return Ok(());
+    }
+
+    'outer: for (backend, packages) in unmanaged_per_backend {
+        let mut actions = vec![];
+        for package in packages {
+            println!("{}: {package}", backend.backend_info().section);
+            match get_action_for_package(package, groups, &mut actions, &backend)? {
+                ContinueWithReview::Yes => continue,
+                ContinueWithReview::No => return Ok(()),
+                ContinueWithReview::NoAndApply => {
+                    reviews.push((backend, actions));
+                    break 'outer;
+                }
+            }
+        }
+        reviews.push((backend, actions));
+    }
+
+    reviews.run()
+}
+
 impl ReviewsPerBackend {
     pub fn new() -> Self {
         Self { items: vec![] }
@@ -37,6 +72,37 @@ impl ReviewsPerBackend {
 
     pub fn push(&mut self, value: (AnyBackend, Vec<ReviewAction>)) {
         self.items.push(value);
+    }
+
+    pub fn run(self) -> Result<()> {
+        if self.nothing_to_do() {
+            println!("nothing to do");
+            return Ok(());
+        }
+
+        let strategies: Vec<Strategy> = self.into_strategies();
+
+        println!();
+        let mut iter = strategies.iter().peekable();
+
+        while let Some(strategy) = iter.next() {
+            strategy.show();
+
+            if iter.peek().is_some() {
+                println!();
+            }
+        }
+
+        println!();
+        if !get_user_confirmation()? {
+            return Ok(());
+        }
+
+        for strategy in strategies {
+            strategy.execute()?;
+        }
+
+        Ok(())
     }
 
     /// Convert the reviews per backend to a vector of [`Strategy`], where one `Strategy` contains

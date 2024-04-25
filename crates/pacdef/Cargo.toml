@@ -21,6 +21,8 @@ walkdir = "2.5"
 libc = "0.2"
 enum_dispatch = "0.3"
 log = { version = "0.4", features = ["std"] }
+ratatui = "0.26"
+crossterm = "0.27"
 
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
