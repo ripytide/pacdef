@@ -39,10 +39,16 @@ impl Backend for Rustup {
         });
 
         for toolchain in toolchains {
+            // skip the esp toolchain since rustup errors on it
+            if toolchain == "esp" {
+                continue;
+            }
+
             packages.insert(RustupPackageId::Toolchain(toolchain.clone()), ());
 
-            let components_stdpout = run_args_for_stdout(
+            let components_stdout = run_args_for_stdout(
                 [
+                    "rustup",
                     "component",
                     "list",
                     "--installed",
@@ -52,7 +58,7 @@ impl Backend for Rustup {
                 .into_iter(),
             )?;
 
-            for component in components_stdpout.lines() {
+            for component in components_stdout.lines() {
                 packages.insert(
                     RustupPackageId::Component(component.to_string(), toolchain.to_string()),
                     (),

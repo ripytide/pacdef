@@ -18,23 +18,30 @@ pub fn review(groups: &Groups, config: &Config) -> Result<()> {
 
 #[derive(Debug, Clone)]
 struct Review {
-    unmanaged: PackagesIds,
+    unmanaged: Vec<String>,
     assigned: Groups,
+    selected_package_id: Option<usize>,
 }
 
 #[derive(Debug, Copy, Clone)]
 enum ReviewAction {
     Exit,
+    Up,
     Down,
+    Right,
+    Left,
 }
 
 impl Review {
     fn new(groups: &Groups, config: &Config) -> Result<Self> {
-        let unmanaged = PackagesIds::unmanaged(groups, config)?;
+        let unmanaged = PackagesIds::unmanaged(groups, config)?
+            .iter_strings()
+            .collect::<Vec<_>>();
 
         Ok(Self {
-            unmanaged,
             assigned: groups.clone(),
+            selected_package_id: if unmanaged.is_empty() { Some(0) } else { None },
+            unmanaged,
         })
     }
 
@@ -61,7 +68,12 @@ impl Review {
     fn update(&mut self, review_action: ReviewAction) {
         match review_action {
             ReviewAction::Exit => {}
-            ReviewAction::Down => todo!(),
+            ReviewAction::Up => {
+
+            }
+            ReviewAction::Down => {}
+            ReviewAction::Right => {}
+            ReviewAction::Left => {}
         }
     }
 
@@ -75,14 +87,21 @@ impl Review {
         }
     }
     fn try_parse_event(event: Event) -> Option<ReviewAction> {
-        match event {
-            Event::Key(key_event)
-                if key_event.kind == KeyEventKind::Press
-                    && matches!(key_event.code, KeyCode::Esc | KeyCode::Char('q')) =>
-            {
-                Some(ReviewAction::Exit)
+        if let Event::Key(key_event) = event {
+            if key_event.kind == KeyEventKind::Press {
+                match key_event.code {
+                    KeyCode::Esc | KeyCode::Char('q') => Some(ReviewAction::Exit),
+                    KeyCode::Up => Some(ReviewAction::Up),
+                    KeyCode::Down => Some(ReviewAction::Down),
+                    KeyCode::Right => Some(ReviewAction::Right),
+                    KeyCode::Left => Some(ReviewAction::Left),
+                    _ => None,
+                }
+            } else {
+                None
             }
-            _ => None,
+        } else {
+            None
         }
     }
 }

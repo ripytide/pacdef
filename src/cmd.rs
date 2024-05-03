@@ -14,35 +14,36 @@ pub fn command_found(command: &str) -> bool {
     false
 }
 
-pub fn run_args_for_stdout<S>(mut args: impl Iterator<Item = S>) -> Result<String>
+pub fn run_args_for_stdout<S>(args: impl Iterator<Item = S>) -> Result<String>
 where
-    S: std::convert::AsRef<std::ffi::OsStr>,
+    String: From<S>,
 {
-    let we_are_root = {
-        let uid = unsafe { libc::geteuid() };
-        uid == 0
-    };
-
-    let mut cmd = if we_are_root {
-        Command::new("sudo")
+    let sudo = if unsafe { libc::geteuid() } == 0 {
+        Some("sudo".to_string())
     } else {
-        Command::new(args.next().expect("cannot run an empty set of args"))
+        None
     };
 
-    cmd.args(args);
+    let args = sudo
+        .into_iter()
+        .chain(args.map(String::from))
+        .collect::<Vec<_>>();
+
+    let mut cmd = Command::new(args.first().expect("cannot run empty args"));
+    cmd.args(args.iter().skip(1));
 
     let output = cmd.output()?;
 
     if output.status.success() {
         Ok(String::from_utf8(output.stdout)?)
     } else {
-        Err(anyhow::anyhow!("command failed"))
+        Err(anyhow::anyhow!("command failed: {args:?}"))
     }
 }
 
 pub fn run_args<S>(args: impl Iterator<Item = S>) -> Result<()>
 where
-    S: std::convert::AsRef<std::ffi::OsStr>,
+    String: From<S>,
 {
     run_args_for_stdout(args).map(|_| ())
 }
