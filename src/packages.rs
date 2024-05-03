@@ -127,6 +127,20 @@ impl PackagesQuery {
 }
 
 impl PackagesIds {
+    pub fn iter_strings(&self) -> impl Iterator<Item = String> + '_ {
+        self.apt
+            .iter()
+            .map(ToString::to_string)
+            .chain(self.arch.iter().map(ToString::to_string))
+            .chain(self.cargo.iter().map(ToString::to_string))
+            .chain(self.dnf.iter().map(ToString::to_string))
+            .chain(self.flatpak.iter().map(ToString::to_string))
+            .chain(self.pip.iter().map(ToString::to_string))
+            .chain(self.pipx.iter().map(ToString::to_string))
+            .chain(self.rustup.iter().map(ToString::to_string))
+            .chain(self.xbps.iter().map(ToString::to_string))
+    }
+
     pub fn difference(&self, other: &Self) -> Self {
         Self {
             apt: self.apt.difference(&other.apt).cloned().collect(),

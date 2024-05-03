@@ -4,6 +4,7 @@ use anyhow::Result;
 use std::collections::BTreeMap;
 
 /// A type representing a users group files with all their packages
+#[derive(Debug, Clone)]
 pub struct Groups {
     groups: BTreeMap<String, PackagesInstall>,
 }
@@ -30,6 +31,8 @@ impl Groups {
     ///
     /// Returns an error if a parsing error is encountered in a found group file.
     pub fn load(_: &Config) -> Result<Self> {
-        todo!()
+        Ok(Groups {
+            groups: BTreeMap::new(),
+        })
     }
 }

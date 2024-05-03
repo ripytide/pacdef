@@ -70,8 +70,8 @@ impl CleanPackageAction {
 }
 
 impl ReviewPackageAction {
-    fn run(self, _: &Groups, _: &Config) -> Result<()> {
-        review()
+    fn run(self, groups: &Groups, config: &Config) -> Result<()> {
+        review(groups, config)
     }
 }
 
