@@ -1,4 +1,4 @@
-pub mod apt;
+// pub mod apt;
 pub mod arch;
 pub mod cargo;
 pub mod dnf;
@@ -15,7 +15,8 @@ use anyhow::{Context, Result};
 
 #[derive(Debug, Copy, Clone, derive_more::Display)]
 pub enum AnyBackend {
-    Apt(Apt),
+    // Apt(Apt),
+    Arch(Arch),
     Cargo(Cargo),
     Dnf(Dnf),
     Flatpak(Flatpak),
@@ -24,9 +25,11 @@ pub enum AnyBackend {
     Rustup(Rustup),
     Xbps(Xbps),
 }
+
 impl AnyBackend {
     pub const ALL: [Self; 8] = [
-        Self::Apt(Apt),
+        // Self::Apt(Apt),
+        Self::Arch(Arch),
         Self::Cargo(Cargo),
         Self::Dnf(Dnf),
         Self::Flatpak(Flatpak),
@@ -36,13 +39,14 @@ impl AnyBackend {
         Self::Xbps(Xbps),
     ];
 }
+
 impl FromStr for AnyBackend {
     type Err = anyhow::Error;
 
     fn from_str(s: &str) -> std::prelude::v1::Result<Self, Self::Err> {
         Self::ALL
             .iter()
-            .find(|x| x.to_string() == s)
+            .find(|x| x.to_string().to_lowercase() == s)
             .copied()
             .with_context(|| anyhow::anyhow!("unable to parse backend from string: {s}"))
     }
@@ -51,7 +55,7 @@ impl FromStr for AnyBackend {
 /// A trait to represent any package manager backend
 #[enum_dispatch::enum_dispatch]
 pub trait Backend {
-    type PackageId;
+    type PackageId: TryFrom<String>;
     type InstallOptions;
     type RemoveOptions;
     type QueryInfo;
