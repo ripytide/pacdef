@@ -13,10 +13,9 @@ use crate::prelude::*;
 #[derive(Debug, Copy, Clone, derive_more::Display)]
 pub struct Pip;
 
-#[allow(dead_code)]
 #[derive(Debug, Clone)]
 pub struct PipQueryInfo {
-    explicit: bool,
+    pub explicit: bool,
 }
 
 impl Backend for Pip {
@@ -84,13 +83,11 @@ impl Backend for Pip {
 fn extract_package_names(stdout: String) -> Result<BTreeSet<String>> {
     let value: Value = serde_json::from_str(&stdout)?;
 
-    let result = value
+    Ok(value
         .as_array()
         .context("getting inner json array")?
         .iter()
         .map(|node| node["name"].as_str().expect("should always be a string"))
         .map(String::from)
-        .collect();
-
-    Ok(result)
+        .collect())
 }

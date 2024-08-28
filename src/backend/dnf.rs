@@ -8,7 +8,6 @@ use crate::prelude::*;
 #[derive(Debug, Copy, Clone, derive_more::Display)]
 pub struct Dnf;
 
-#[allow(dead_code)]
 #[derive(Debug, Clone)]
 pub struct DnfQueryInfo {
     user: bool,

@@ -1,17 +1,15 @@
-use alpm::{Alpm, PackageReason};
 use anyhow::Result;
 use std::collections::BTreeMap;
 
-use crate::cmd::run_args;
+use crate::cmd::{command_found, run_args, run_args_for_stdout};
 use crate::prelude::*;
 
 #[derive(Debug, Clone, Copy, derive_more::Display)]
 pub struct Arch;
 
-#[allow(dead_code)]
 #[derive(Debug, Clone)]
 pub struct ArchQueryInfo {
-    reason: PackageReason,
+    pub explicit: bool,
 }
 
 pub struct ArchMakeImplicit;
@@ -24,16 +22,21 @@ impl Backend for Arch {
     type Modification = ArchMakeImplicit;
 
     fn query_installed_packages(_: &Config) -> Result<BTreeMap<Self::PackageId, Self::QueryInfo>> {
-        let alpm = match Alpm::new("/", "/var/lib/pacman") {
-            Ok(x) => x,
-            Err(_) => return Ok(BTreeMap::new()),
-        };
+        if !command_found("pacman") {
+            return Ok(BTreeMap::new());
+        }
 
-        Ok(alpm
-            .localdb()
-            .pkgs()
-            .iter()
-            .map(|x| (x.name().to_string(), ArchQueryInfo { reason: x.reason() }))
+        let explicit = run_args_for_stdout(["pacman", "--query", "--explicit", "--quiet"])?;
+        let dependency = run_args_for_stdout(["pacman", "--query", "--deps", "--quiet"])?;
+
+        Ok(dependency
+            .lines()
+            .map(|x| (x.to_string(), ArchQueryInfo { explicit: false }))
+            .chain(
+                explicit
+                    .lines()
+                    .map(|x| (x.to_string(), ArchQueryInfo { explicit: true })),
+            )
             .collect())
     }
 

@@ -10,7 +10,6 @@
 // #[derive(Debug, Copy, Clone, derive_more::Display)]
 // pub struct Apt;
 
-// #[allow(dead_code)]
 // #[derive(Debug, Clone)]
 // pub struct AptQueryInfo {
 //     explicit: bool,
