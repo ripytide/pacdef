@@ -1,11 +1,9 @@
-use std::fs::{create_dir_all, read_to_string, File};
+use std::fs::{create_dir_all, File};
 use std::io::{ErrorKind, Write};
 use std::path::Path;
 
 use anyhow::{bail, Context, Result};
 use serde::{Deserialize, Serialize};
-
-use crate::prelude::*;
 
 // Update the master README if fields change.
 /// Config for the program, as listed in `$XDG_CONFIG_HOME/pacdef/pacdef.toml`.
@@ -44,20 +42,20 @@ fn pip() -> String {
 }
 
 impl Config {
-    /// Load the config from the associated file.
+    /// Load the config file from a users pacdef config folder.
     ///
     /// # Errors
-    ///
-    /// This function will return an error if the config file exists but cannot be
-    /// read, its contents are not UTF-8, or the file is malformed.
-    pub fn load(config_file: &Path) -> Result<Self> {
-        let from_file = read_to_string(config_file);
+    /// - If a config file cannot be found.
+    pub fn load() -> Result<Self> {
+        let config_file = dirs::config_dir()
+            .context("getting the config directory")?
+            .join("pacdef/config.toml");
 
-        let content = match from_file {
+        let content = match std::fs::read_to_string(config_file) {
             Ok(content) => content,
             Err(e) => {
                 if e.kind() == ErrorKind::NotFound {
-                    bail!(Error::ConfigFileNotFound)
+                    bail!("config file not found")
                 }
                 bail!("unexpected error occurred: {e:?}");
             }

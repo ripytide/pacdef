@@ -28,7 +28,6 @@ mod cmd;
 mod config;
 #[allow(clippy::unused_self, clippy::unnecessary_wraps)]
 mod core;
-mod errors;
 mod groups;
 mod packages;
 mod review;
@@ -37,7 +36,5 @@ mod ui;
 #[allow(unused_imports)]
 mod prelude;
 
-pub mod path;
-
+pub use prelude::Config;
 pub use prelude::Groups;
-pub use prelude::{Config, Error};

@@ -10,8 +10,8 @@ pub struct Flatpak;
 
 #[derive(Debug, Clone)]
 pub struct FlatpakQueryInfo {
-    explicit: bool,
-    systemwide: bool,
+    pub explicit: bool,
+    pub systemwide: bool,
 }
 
 impl Backend for Flatpak {
