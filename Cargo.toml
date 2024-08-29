@@ -26,8 +26,6 @@ toml = "0.8"
 derive_more = "0.99"
 itertools = "0.12"
 
-# rust-apt = "0.7"
-
 [profile.release]
 lto = "off"
 opt-level = "z"
