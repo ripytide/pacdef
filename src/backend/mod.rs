@@ -1,4 +1,4 @@
-// pub mod apt;
+pub mod apt;
 pub mod arch;
 pub mod cargo;
 pub mod dnf;
@@ -12,10 +12,11 @@ use std::{collections::BTreeMap, str::FromStr};
 
 use crate::prelude::*;
 use anyhow::{Context, Result};
+use apt::Apt;
 
 #[derive(Debug, Copy, Clone, derive_more::Display)]
 pub enum AnyBackend {
-    // Apt(Apt),
+    Apt(Apt),
     Arch(Arch),
     Cargo(Cargo),
     Dnf(Dnf),
@@ -27,8 +28,8 @@ pub enum AnyBackend {
 }
 
 impl AnyBackend {
-    pub const ALL: [Self; 8] = [
-        // Self::Apt(Apt),
+    pub const ALL: [Self; 9] = [
+        Self::Apt(Apt),
         Self::Arch(Arch),
         Self::Cargo(Cargo),
         Self::Dnf(Dnf),
