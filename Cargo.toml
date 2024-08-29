@@ -26,6 +26,7 @@ toml = "0.8"
 derive_more = "0.99"
 itertools = "0.12"
 dirs = "5.0.1"
+home = "0.5.9"
 pretty_env_logger = "0.5.0"
 
 [profile.release]

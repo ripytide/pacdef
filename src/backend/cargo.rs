@@ -22,8 +22,8 @@ impl Backend for Cargo {
             return Ok(BTreeMap::new());
         }
 
-        let file = dirs::home_dir()
-            .context("getting the home directory")?
+        let file = home::cargo_home()
+            .context("getting the cargo home directory")?
             .join(".crates2.json");
 
         let contents = match std::fs::read_to_string(file) {
