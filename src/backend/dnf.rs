@@ -10,7 +10,7 @@ pub struct Dnf;
 
 #[derive(Debug, Clone)]
 pub struct DnfQueryInfo {
-    user: bool,
+    pub user: bool,
 }
 
 #[derive(Debug, Clone, Default)]

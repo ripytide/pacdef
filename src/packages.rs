@@ -289,6 +289,7 @@ macro_rules! generate_structs {
 }
 
 generate_structs!(
+    apt: Apt,
     arch: Arch,
     cargo: Cargo,
     dnf: Dnf,

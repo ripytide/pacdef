@@ -12,7 +12,6 @@ use std::{collections::BTreeMap, str::FromStr};
 
 use crate::prelude::*;
 use anyhow::{Context, Result};
-use apt::Apt;
 
 #[derive(Debug, Copy, Clone, derive_more::Display)]
 pub enum AnyBackend {

@@ -1,6 +1,5 @@
+use std::collections::BTreeMap;
 use std::io::ErrorKind::NotFound;
-use std::path::PathBuf;
-use std::{collections::BTreeMap, fs::read_to_string};
 
 use anyhow::{bail, Context, Result};
 use serde_json::Value;
@@ -23,9 +22,11 @@ impl Backend for Cargo {
             return Ok(BTreeMap::new());
         }
 
-        let file = get_crates_file().context("getting path to crates file")?;
+        let file = home::cargo_home()
+            .context("getting the cargo home directory")?
+            .join(".crates2.json");
 
-        let contents = match read_to_string(file) {
+        let contents = match std::fs::read_to_string(file) {
             Ok(string) => string,
             Err(err) if err.kind() == NotFound => {
                 log::warn!("no crates file found for cargo. Assuming no crates installed yet.");
@@ -87,11 +88,5 @@ fn extract_packages(contents: &str) -> Result<BTreeMap<String, ()>> {
         .map(|name| (name.to_string(), ()))
         .collect();
 
-    Ok(result)
-}
-
-fn get_crates_file() -> Result<PathBuf> {
-    let mut result = crate::path::get_cargo_home().context("getting cargo home dir")?;
-    result.push(".crates2.json");
     Ok(result)
 }
