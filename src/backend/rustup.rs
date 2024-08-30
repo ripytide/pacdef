@@ -5,7 +5,7 @@ use crate::prelude::*;
 use anyhow::{anyhow, bail, Error, Result};
 use std::collections::BTreeMap;
 
-#[derive(Debug, Copy, Clone, derive_more::Display)]
+#[derive(Debug, Copy, Clone, Default, derive_more::Display)]
 pub struct Rustup;
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, derive_more::Display)]

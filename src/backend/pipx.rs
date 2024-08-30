@@ -10,7 +10,7 @@ use crate::cmd::run_args;
 use crate::cmd::run_args_for_stdout;
 use crate::prelude::*;
 
-#[derive(Debug, Copy, Clone, derive_more::Display)]
+#[derive(Debug, Copy, Clone, Default, derive_more::Display)]
 pub struct Pipx;
 
 impl Backend for Pipx {

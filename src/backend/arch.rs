@@ -4,7 +4,7 @@ use std::collections::BTreeMap;
 use crate::cmd::{command_found, run_args, run_args_for_stdout};
 use crate::prelude::*;
 
-#[derive(Debug, Clone, Copy, derive_more::Display)]
+#[derive(Debug, Clone, Copy, Default, derive_more::Display)]
 pub struct Arch;
 
 #[derive(Debug, Clone)]

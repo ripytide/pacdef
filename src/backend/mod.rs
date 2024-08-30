@@ -10,44 +10,17 @@ pub mod xbps;
 
 use std::{collections::BTreeMap, str::FromStr};
 
+pub use crate::packages::AnyBackend;
 use crate::prelude::*;
 use anyhow::{Context, Result};
-
-#[derive(Debug, Copy, Clone, derive_more::Display)]
-pub enum AnyBackend {
-    Apt(Apt),
-    Arch(Arch),
-    Cargo(Cargo),
-    Dnf(Dnf),
-    Flatpak(Flatpak),
-    Pip(Pip),
-    Pipx(Pipx),
-    Rustup(Rustup),
-    Xbps(Xbps),
-}
-
-impl AnyBackend {
-    pub const ALL: [Self; 9] = [
-        Self::Apt(Apt),
-        Self::Arch(Arch),
-        Self::Cargo(Cargo),
-        Self::Dnf(Dnf),
-        Self::Flatpak(Flatpak),
-        Self::Pip(Pip),
-        Self::Pipx(Pipx),
-        Self::Rustup(Rustup),
-        Self::Xbps(Xbps),
-    ];
-}
+use strum::IntoEnumIterator;
 
 impl FromStr for AnyBackend {
     type Err = anyhow::Error;
 
     fn from_str(s: &str) -> std::prelude::v1::Result<Self, Self::Err> {
-        Self::ALL
-            .iter()
+        Self::iter()
             .find(|x| x.to_string().to_lowercase() == s)
-            .copied()
             .with_context(|| anyhow::anyhow!("unable to parse backend from string: {s}"))
     }
 }
