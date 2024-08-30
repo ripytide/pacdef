@@ -31,7 +31,6 @@ mod core;
 mod groups;
 mod packages;
 mod review;
-mod ui;
 
 #[allow(unused_imports)]
 mod prelude;

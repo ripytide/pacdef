@@ -1,9 +1,8 @@
-use anyhow::Result;
-use const_format::formatcp;
+use anyhow::{Context, Result};
+use dialoguer::Confirm;
 
 use crate::prelude::*;
 use crate::review::review;
-use crate::ui::get_user_confirmation;
 
 impl MainArguments {
     /// Run the action that was provided by the user as first argument.
@@ -26,17 +25,8 @@ impl MainArguments {
 }
 
 impl VersionArguments {
-    /// If the crate was compiled from git, return `pacdef, <version> (<hash>)`.
-    /// Otherwise return `pacdef, <version>`.
     fn run(self, _: &Config) -> Result<()> {
-        /// If the crate was compiled from git, return `<version> (<hash>)`. Otherwise
-        /// return `<version>`.
-        const VERSION: &str = env!("CARGO_PKG_VERSION");
-        const HASH: &str = env!("GIT_HASH");
-
-        let version = formatcp!("{VERSION} ({HASH})");
-
-        println!("pacdef, version: {}\n", version);
+        println!("pacdef, version: {}\n", env!("CARGO_PKG_VERSION"));
 
         Ok(())
     }
@@ -55,7 +45,13 @@ impl CleanPackageAction {
 
         if self.no_confirm {
             println!("proceeding without confirmation");
-        } else if !get_user_confirmation()? {
+        } else if !Confirm::new()
+            .with_prompt("Do you want to continue?")
+            .default(true)
+            .show_default(true)
+            .interact()
+            .context("getting user confirmation")?
+        {
             return Ok(());
         }
 
