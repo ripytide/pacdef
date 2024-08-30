@@ -37,14 +37,14 @@ impl CleanPackageAction {
         let unmanaged = PackagesIds::unmanaged(groups, config)?;
 
         if unmanaged.is_empty() {
-            println!("nothing to do");
+            log::info!("nothing to do since there are no unmanaged packages");
             return Ok(());
         }
 
         println!("Would remove the following packages:\n\n{unmanaged}\n");
 
         if self.no_confirm {
-            println!("proceeding without confirmation");
+            log::info!("proceeding without confirmation");
         } else if !Confirm::new()
             .with_prompt("Do you want to continue?")
             .default(true)
@@ -72,15 +72,21 @@ impl SyncPackageAction {
         let missing = PackagesIds::missing(groups, config)?;
 
         if missing.is_empty() {
-            println!("nothing to do");
+            log::info!("nothing to do as there are no missing packages");
             return Ok(());
         }
 
         println!("Would install the following packages:\n\n{missing}\n");
 
         if self.no_confirm {
-            println!("proceeding without confirmation");
-        } else if !get_user_confirmation()? {
+            log::info!("proceeding without confirmation");
+        } else if !Confirm::new()
+            .with_prompt("Do you want to continue?")
+            .default(true)
+            .show_default(true)
+            .interact()
+            .context("getting user confirmation")?
+        {
             return Ok(());
         }
 
