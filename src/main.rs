@@ -17,8 +17,7 @@
 use anyhow::{Context, Result};
 
 use clap::Parser;
-use pacdef::cli::MainArguments;
-use pacdef::{Config, Groups};
+use pacdef::{Config, Groups, MainArguments};
 
 fn main() -> Result<()> {
     pretty_env_logger::init();
