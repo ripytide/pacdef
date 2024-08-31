@@ -1,4 +1,5 @@
 use anyhow::Result;
+use serde::{Deserialize, Serialize};
 use std::{
     collections::{BTreeMap, BTreeSet},
     fmt::Display,
@@ -20,7 +21,7 @@ macro_rules! generate_packages_ids {
 
 macro_rules! generate_packages_install {
     ($($name:ident: $backend:ident),*) => {
-        #[derive(Debug, Clone, Default)]
+        #[derive(Debug, Clone, Default, Serialize, Deserialize)]
         pub struct PackagesInstall {
         $(
             pub $name: BTreeMap<<$backend as Backend>::PackageId, <$backend as Backend>::InstallOptions>,

@@ -46,10 +46,8 @@ impl Config {
     ///
     /// # Errors
     /// - If a config file cannot be found.
-    pub fn load() -> Result<Self> {
-        let config_file = dirs::config_dir()
-            .context("getting the config directory")?
-            .join("pacdef/config.toml");
+    pub fn load(pacdef_dir: &Path) -> Result<Self> {
+        let config_file = pacdef_dir.join("config.toml");
 
         let content = match std::fs::read_to_string(config_file) {
             Ok(content) => content,

@@ -24,9 +24,11 @@ fn main() -> Result<()> {
 
     let main_arguments = MainArguments::parse();
 
-    let config = Config::load().context("loading config file")?;
-
-    let groups = Groups::load().context("failed to load groups")?;
+    let pacdef_dir = dirs::config_dir()
+        .map(|path| path.join("pacdef/"))
+        .context("getting the pacdef config directory")?;
+    let config = Config::load(&pacdef_dir).context("loading config file")?;
+    let groups = Groups::load(&pacdef_dir).context("failed to load groups")?;
 
     if groups.is_empty() {
         log::warn!("no group files found");
