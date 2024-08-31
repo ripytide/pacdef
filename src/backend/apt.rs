@@ -10,7 +10,7 @@ pub struct Apt;
 
 #[derive(Debug, Clone)]
 pub struct AptQueryInfo {
-    explicit: bool,
+    pub explicit: bool,
 }
 
 pub struct AptMakeImplicit;

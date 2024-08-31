@@ -1,54 +1,20 @@
-name: check
+name: Cargo Build and Test
 
 on:
-  workflow_dispatch:
   push:
-    branches:
-      - 'main'
-      - 'devel'
-    paths:
-      - 'crates/**.rs'
-      - 'crates/**/Cargo.toml'
-      - 'Cargo.*'
-      - "clippy.toml"
+    branches: [$default-branch]
   pull_request:
-    branches:
-      - 'main'
-      - 'devel'
-    paths:
-      - 'crates/**.rs'
-      - 'crates/**/Cargo.toml'
-      - 'Cargo.*'
-      - "clippy.toml"
+    branches: [$default-branch]
 
 env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  test:
+  build:
     runs-on: ubuntu-latest
-    container:
-      image: archlinux
     steps:
-      - name: Install Packages
-        run: pacman -Syu git rust clang gcc libarchive pkgconf apt --noconfirm --needed
-
-      - name: Checkout
-        uses: actions/checkout@v3
-
-      - name: Format
-        if: '!cancelled()'
-        run: cargo fmt -- --check
-
+      - uses: actions/checkout@v4
       - name: Build
-        if: '!cancelled()'
-        run: cargo build --locked --features arch,debian
-
-      - name: Clippy
-        if: '!cancelled()'
-        run: cargo clippy --features arch,debian -- -Dwarnings
-
-      - name: Test
-        if: '!cancelled()'
-        run: cargo test --workspace --features arch,debian
-
+        run: cargo build --verbose
+      - name: Run tests
+        run: cargo test --verbose

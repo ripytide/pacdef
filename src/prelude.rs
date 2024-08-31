@@ -5,7 +5,7 @@ pub use crate::backend::dnf::{Dnf, DnfInstallOptions, DnfQueryInfo};
 pub use crate::backend::flatpak::{Flatpak, FlatpakQueryInfo};
 pub use crate::backend::pip::{Pip, PipQueryInfo};
 pub use crate::backend::pipx::Pipx;
-pub use crate::backend::rustup::Rustup;
+pub use crate::backend::rustup::{Rustup, RustupPackageId};
 pub use crate::backend::xbps::{Xbps, XbpsMakeImplicit};
 pub use crate::backend::{AnyBackend, Backend};
 pub use crate::cli::CleanPackageAction;
