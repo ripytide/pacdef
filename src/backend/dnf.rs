@@ -1,19 +1,20 @@
 use std::collections::BTreeMap;
 
 use anyhow::Result;
+use serde::{Deserialize, Serialize};
 
 use crate::cmd::{command_found, run_args, run_args_for_stdout};
 use crate::prelude::*;
 
-#[derive(Debug, Copy, Clone, derive_more::Display)]
+#[derive(Debug, Copy, Clone, Default, derive_more::Display)]
 pub struct Dnf;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DnfQueryInfo {
     pub user: bool,
 }
 
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct DnfInstallOptions {
     repo: Option<String>,
 }

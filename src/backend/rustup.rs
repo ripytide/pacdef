@@ -3,12 +3,15 @@ use crate::cmd::run_args;
 use crate::cmd::run_args_for_stdout;
 use crate::prelude::*;
 use anyhow::{anyhow, bail, Error, Result};
+use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 
-#[derive(Debug, Copy, Clone, derive_more::Display)]
+#[derive(Debug, Copy, Clone, Default, derive_more::Display)]
 pub struct Rustup;
 
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, derive_more::Display)]
+#[derive(
+    Debug, Clone, PartialEq, Eq, PartialOrd, Ord, derive_more::Display, Serialize, Deserialize,
+)]
 pub enum RustupPackageId {
     Toolchain(String),
     /// Toolchain, Component

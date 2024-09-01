@@ -1,18 +1,20 @@
 use std::collections::BTreeMap;
 
 use anyhow::Result;
+use serde::{Deserialize, Serialize};
 
 use crate::cmd::{command_found, run_args, run_args_for_stdout};
 use crate::prelude::*;
 
-#[derive(Debug, Copy, Clone, derive_more::Display)]
+#[derive(Debug, Copy, Clone, Default, derive_more::Display)]
 pub struct Apt;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct AptQueryInfo {
     pub explicit: bool,
 }
 
+#[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct AptMakeImplicit;
 
 impl Backend for Apt {

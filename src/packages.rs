@@ -1,4 +1,5 @@
 use anyhow::Result;
+use serde::{Deserialize, Serialize};
 use std::{
     collections::{BTreeMap, BTreeSet},
     fmt::Display,
@@ -20,7 +21,7 @@ macro_rules! generate_packages_ids {
 
 macro_rules! generate_packages_install {
     ($($name:ident: $backend:ident),*) => {
-        #[derive(Debug, Clone, Default)]
+        #[derive(Debug, Clone, Default, Serialize, Deserialize)]
         pub struct PackagesInstall {
         $(
             pub $name: BTreeMap<<$backend as Backend>::PackageId, <$backend as Backend>::InstallOptions>,
@@ -274,6 +275,17 @@ macro_rules! impl_display_for_packages_ids {
     };
 }
 
+macro_rules! generate_enums {
+    ($($backend:ident),*) => {
+        #[derive(Debug, Copy, Clone, strum::EnumIter, derive_more::Display)]
+        pub enum AnyBackend {
+            $(
+                $backend($backend),
+            )*
+        }
+    };
+}
+
 macro_rules! generate_structs {
     ($($name:ident: $backend:ident),*) => {
         generate_packages_ids!( $($name:$backend),* );
@@ -285,6 +297,7 @@ macro_rules! generate_structs {
         impl_packages_remove!($($name:$backend),*);
         impl_packages_query!($($name:$backend),*);
         impl_display_for_packages_ids!($($name),*);
+        generate_enums!($($backend),*);
     };
 }
 

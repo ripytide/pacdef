@@ -1,10 +1,12 @@
 use anyhow::Result;
+use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
+use std::ops::{Deref, DerefMut};
 
 use crate::cmd::{command_found, run_args, run_args_for_stdout};
 use crate::prelude::*;
 
-#[derive(Debug, Clone, Copy, derive_more::Display)]
+#[derive(Debug, Clone, Copy, Default, derive_more::Display)]
 pub struct Arch;
 
 #[derive(Debug, Clone)]
@@ -14,10 +16,26 @@ pub struct ArchQueryInfo {
 
 pub struct ArchMakeImplicit;
 
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub struct ArchOptionalDeps(Vec<String>);
+
+impl Deref for ArchOptionalDeps {
+    type Target = Vec<String>;
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl DerefMut for ArchOptionalDeps {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.0
+    }
+}
+
 impl Backend for Arch {
     type PackageId = String;
     type RemoveOptions = ();
-    type InstallOptions = ();
+    type InstallOptions = ArchOptionalDeps;
     type QueryInfo = ArchQueryInfo;
     type Modification = ArchMakeImplicit;
 
