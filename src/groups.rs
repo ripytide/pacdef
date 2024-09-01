@@ -1,11 +1,10 @@
 use crate::prelude::*;
 use anyhow::{anyhow, Context, Result};
-use path_absolutize::Absolutize;
-use walkdir::WalkDir;
+use walkdir::{DirEntry, WalkDir};
 
 use std::{
     collections::BTreeMap,
-    fs::{create_dir, read_to_string},
+    fs::read_to_string,
     ops::{Deref, DerefMut},
     path::Path,
 };
@@ -35,23 +34,27 @@ impl Groups {
 
         let group_dir = group_dir.join("groups/");
         if !group_dir.is_dir() {
-            //other directories were already created with the config file
-            create_dir(&group_dir).context("group directory doesn't exist, creating one")?;
+            return Err(anyhow!(
+                "The groups directory was not found in the pacdef config folder, please create it"
+            ));
         }
 
-        let mut files = vec![];
-        for file in WalkDir::new(&group_dir).follow_links(true) {
-            let path = file?.path().absolutize_from(&group_dir)?.to_path_buf();
-            files.push(path);
-        }
-        for group_file in files.iter().filter(|path| path.is_file()) {
+        let group_files: Vec<DirEntry> = WalkDir::new(&group_dir)
+            .follow_links(true)
+            .into_iter()
+            .collect::<Result<_, _>>()?;
+
+        for group_file in group_files.iter().filter(|path| path.path().is_file()) {
             let group_name = group_file
+                .path()
                 .strip_prefix(&group_dir)?
                 .to_str()
                 .ok_or(anyhow!("Will not fail on Linux"))?
                 .to_string();
-            println!("group_name: {group_name}");
-            let file_contents = read_to_string(group_file).context("Reading group file")?;
+
+            log::info!("parsing group file: {group_name}@{group_file:?}");
+
+            let file_contents = read_to_string(group_file.path()).context("Reading group file")?;
 
             let packages: PackagesInstall = toml::from_str(&file_contents)?;
             groups.insert(group_name, packages);
