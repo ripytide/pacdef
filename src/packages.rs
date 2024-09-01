@@ -129,11 +129,9 @@ macro_rules! impl_packages_ids {
 
                 let installed = PackagesQuery::installed(config)?;
 
-                let mut missing = requested
+                let missing = requested
                     .into_packages_ids()
                     .difference(&installed.into_packages_ids());
-
-                missing.clear_backends(&config.disabled_backends);
 
                 Ok(missing)
             }
@@ -142,13 +140,9 @@ macro_rules! impl_packages_ids {
 
                 let installed = PackagesQuery::installed(config)?;
 
-                let mut unmanaged = installed
+                Ok(installed
                     .into_packages_ids()
-                    .difference(&requested.into_packages_ids());
-
-                unmanaged.clear_backends(&config.disabled_backends);
-
-                Ok(unmanaged)
+                    .difference(&requested.into_packages_ids()))
             }
         }
     };
@@ -303,7 +297,6 @@ macro_rules! generate_structs {
 
 generate_structs!(
     apt: Apt,
-    arch: Arch,
     cargo: Cargo,
     dnf: Dnf,
     flatpak: Flatpak,
