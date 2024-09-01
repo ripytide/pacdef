@@ -1,12 +1,17 @@
-pub use crate::backend::apt::{Apt, AptMakeImplicit, AptQueryInfo};
-pub use crate::backend::arch::{Arch, ArchMakeImplicit, ArchQueryInfo};
+pub use crate::backend::apt::{Apt, AptModification, AptQueryInfo};
+pub use crate::backend::arch::{
+    Arch, ArchInstallOptions, ArchModification, ArchPackageId, ArchQueryInfo, ArchRemoveOptions,
+};
 pub use crate::backend::cargo::Cargo;
 pub use crate::backend::dnf::{Dnf, DnfInstallOptions, DnfQueryInfo};
 pub use crate::backend::flatpak::{Flatpak, FlatpakQueryInfo};
+pub use crate::backend::pacman::Pacman;
+pub use crate::backend::paru::Paru;
 pub use crate::backend::pip::{Pip, PipQueryInfo};
 pub use crate::backend::pipx::Pipx;
 pub use crate::backend::rustup::{Rustup, RustupPackageId};
-pub use crate::backend::xbps::{Xbps, XbpsMakeImplicit};
+pub use crate::backend::xbps::{Xbps, XbpsModification};
+pub use crate::backend::yay::Yay;
 pub use crate::backend::{AnyBackend, Backend};
 pub use crate::cli::CleanPackageAction;
 pub use crate::cli::MainArguments;

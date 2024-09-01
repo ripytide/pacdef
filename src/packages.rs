@@ -300,8 +300,11 @@ generate_structs!(
     cargo: Cargo,
     dnf: Dnf,
     flatpak: Flatpak,
+    pacman: Pacman,
+    paru: Paru,
     pip: Pip,
     pipx: Pipx,
     rustup: Rustup,
-    xbps: Xbps
+    xbps: Xbps,
+    yay: Yay
 );

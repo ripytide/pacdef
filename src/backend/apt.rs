@@ -15,14 +15,16 @@ pub struct AptQueryInfo {
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
-pub struct AptMakeImplicit;
+pub struct AptModification {
+    make_implicit: bool,
+}
 
 impl Backend for Apt {
     type PackageId = String;
     type RemoveOptions = ();
     type InstallOptions = ();
     type QueryInfo = AptQueryInfo;
-    type Modification = AptMakeImplicit;
+    type Modification = AptModification;
 
     fn query_installed_packages(_: &Config) -> Result<BTreeMap<Self::PackageId, Self::QueryInfo>> {
         if !command_found("apt-mark") {
@@ -67,9 +69,12 @@ impl Backend for Apt {
         _: &Config,
     ) -> Result<()> {
         run_args(
-            ["apt-mark", "auto"]
-                .into_iter()
-                .chain(packages.keys().map(String::as_str)),
+            ["apt-mark", "auto"].into_iter().chain(
+                packages
+                    .iter()
+                    .filter(|(_, m)| m.make_implicit)
+                    .map(|(p, _)| p.as_str()),
+            ),
         )
     }
 
