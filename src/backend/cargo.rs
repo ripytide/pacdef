@@ -2,6 +2,7 @@ use std::collections::BTreeMap;
 use std::io::ErrorKind::NotFound;
 
 use anyhow::{bail, Context, Result};
+use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
 use crate::cmd::{command_found, run_args};
@@ -10,11 +11,18 @@ use crate::prelude::*;
 #[derive(Debug, Copy, Clone, Default, derive_more::Display)]
 pub struct Cargo;
 
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub struct CargoInstallOptions {
+    git: Option<String>,
+    all_features: bool,
+    no_default_features: bool,
+}
+
 impl Backend for Cargo {
     type PackageId = String;
     type RemoveOptions = ();
-    type InstallOptions = ();
-    type QueryInfo = ();
+    type InstallOptions = CargoInstallOptions;
+    type QueryInfo = CargoInstallOptions;
     type Modification = ();
 
     fn query_installed_packages(_: &Config) -> Result<BTreeMap<Self::PackageId, Self::QueryInfo>> {
@@ -44,10 +52,78 @@ impl Backend for Cargo {
         _: &Config,
     ) -> Result<()> {
         run_args(
-            ["cargo", "install"]
-                .into_iter()
-                .chain(packages.keys().map(String::as_str)),
-        )
+            ["cargo", "install"].into_iter().chain(
+                packages
+                    .iter()
+                    .filter(|(_, opts)| {
+                        opts.git.is_none() && !opts.all_features && !opts.no_default_features
+                    })
+                    .map(|(name, _)| name)
+                    .map(String::as_str),
+            ),
+        )?;
+        for (package, options) in packages {
+            match options {
+                CargoInstallOptions {
+                    git: _,
+                    all_features: true,
+                    no_default_features: true,
+                } => {
+                    bail!("Invalid config parameters for {package}");
+                }
+
+                CargoInstallOptions {
+                    git: None,
+                    all_features: false,
+                    no_default_features: false,
+                } => {} // cannot be matched
+
+                CargoInstallOptions {
+                    git: Some(remote),
+                    all_features: false,
+                    no_default_features: false,
+                } => run_args(["cargo", "install", "--git", remote, package])?,
+
+                CargoInstallOptions {
+                    git: Some(remote),
+                    all_features: true,
+                    no_default_features: false,
+                } => run_args([
+                    "cargo",
+                    "install",
+                    "--all-features",
+                    "--git",
+                    remote,
+                    package,
+                ])?,
+
+                CargoInstallOptions {
+                    git: Some(remote),
+                    all_features: false,
+                    no_default_features: true,
+                } => run_args([
+                    "cargo",
+                    "install",
+                    "--no-default-features",
+                    "--git",
+                    remote,
+                    package,
+                ])?,
+
+                CargoInstallOptions {
+                    git: None,
+                    all_features: true,
+                    no_default_features: false,
+                } => run_args(["cargo", "install", "--all-features", package])?,
+
+                CargoInstallOptions {
+                    git: None,
+                    all_features: false,
+                    no_default_features: true,
+                } => run_args(["cargo", "install", "--no-default-features", package])?,
+            }
+        }
+        Ok(())
     }
 
     fn modify_packages(
@@ -70,22 +146,44 @@ impl Backend for Cargo {
     }
 }
 
-fn extract_packages(contents: &str) -> Result<BTreeMap<String, ()>> {
+fn extract_packages(contents: &str) -> Result<BTreeMap<String, CargoInstallOptions>> {
     let json: Value = serde_json::from_str(contents).context("parsing JSON from crates file")?;
 
-    let result: BTreeMap<String, ()> = json
+    let result: BTreeMap<String, CargoInstallOptions> = json
         .get("installs")
         .context("get 'installs' field from json")?
         .as_object()
         .context("getting object")?
         .into_iter()
-        .map(|(name, _)| name)
-        .map(|name| {
-            name.split_whitespace()
-                .next()
-                .expect("identifier is whitespace-delimited")
+        .map(|(name, value)| {
+            let (name, git_repo) = name
+                .split_once('+')
+                .expect("Resolve git status and name separately");
+
+            let all_features = value
+                .as_object()
+                .expect("Won't fail")
+                .get("all_features")
+                .expect("Won't fail")
+                .as_bool()
+                .expect("Won't fail");
+
+            let no_default_features = value
+                .as_object()
+                .expect("Won't fail")
+                .get("no_default_features")
+                .expect("Won't fail")
+                .as_bool()
+                .expect("Won't fail");
+            (
+                name.to_string(),
+                CargoInstallOptions {
+                    git: git_repo.split_once('#').map(|(repo, _)| repo.to_string()),
+                    all_features,
+                    no_default_features,
+                },
+            )
         })
-        .map(|name| (name.to_string(), ()))
         .collect();
 
     Ok(result)
