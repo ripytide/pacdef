@@ -1,45 +1,39 @@
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
-use std::ops::{Deref, DerefMut};
 
 use crate::cmd::{command_found, run_args, run_args_for_stdout};
 use crate::prelude::*;
 
-#[derive(Debug, Clone, Copy, Default, derive_more::Display)]
-pub struct Arch;
+#[derive(Debug, Clone, Copy, derive_more::Display)]
+pub struct Arch {
+    pub command: &'static str,
+}
+
+pub type ArchPackageId = String;
 
 #[derive(Debug, Clone)]
 pub struct ArchQueryInfo {
     pub explicit: bool,
 }
 
-pub struct ArchMakeImplicit;
+pub struct ArchModification {
+    pub make_implicit: bool,
+}
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-pub struct ArchOptionalDeps(Vec<String>);
-
-impl Deref for ArchOptionalDeps {
-    type Target = Vec<String>;
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
+pub struct ArchInstallOptions {
+    pub optional_deps: Vec<ArchPackageId>,
 }
 
-impl DerefMut for ArchOptionalDeps {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.0
-    }
-}
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub struct ArchRemoveOptions {}
 
-impl Backend for Arch {
-    type PackageId = String;
-    type RemoveOptions = ();
-    type InstallOptions = ArchOptionalDeps;
-    type QueryInfo = ArchQueryInfo;
-    type Modification = ArchMakeImplicit;
-
-    fn query_installed_packages(_: &Config) -> Result<BTreeMap<Self::PackageId, Self::QueryInfo>> {
+impl Arch {
+    pub fn query_installed_packages(
+        &self,
+        _: &Config,
+    ) -> Result<BTreeMap<ArchPackageId, ArchQueryInfo>> {
         if !command_found("pacman") {
             return Ok(BTreeMap::new());
         }
@@ -58,37 +52,43 @@ impl Backend for Arch {
             .collect())
     }
 
-    fn install_packages(
-        packages: &BTreeMap<Self::PackageId, Self::InstallOptions>,
+    pub fn install_packages(
+        &self,
+        packages: &BTreeMap<ArchPackageId, ArchInstallOptions>,
         no_confirm: bool,
-        config: &Config,
+        _: &Config,
     ) -> Result<()> {
         run_args(
-            [config.aur_helper.as_str(), "--sync"]
+            [self.command, "--sync"]
                 .into_iter()
                 .chain(Some("--no_confirm").filter(|_| no_confirm))
                 .chain(packages.keys().map(String::as_str)),
         )
     }
 
-    fn modify_packages(
-        packages: &BTreeMap<Self::PackageId, Self::Modification>,
-        config: &Config,
+    pub fn modify_packages(
+        &self,
+        packages: &BTreeMap<ArchPackageId, ArchModification>,
+        _: &Config,
     ) -> Result<()> {
         run_args(
-            [config.aur_helper.as_str(), "--database", "--asdeps"]
-                .into_iter()
-                .chain(packages.keys().map(String::as_str)),
+            [self.command, "--database", "--asdeps"].into_iter().chain(
+                packages
+                    .iter()
+                    .filter(|(_, m)| m.make_implicit)
+                    .map(|(p, _)| p.as_str()),
+            ),
         )
     }
 
-    fn remove_packages(
-        packages: &BTreeMap<Self::PackageId, Self::RemoveOptions>,
+    pub fn remove_packages(
+        &self,
+        packages: &BTreeMap<ArchPackageId, ArchRemoveOptions>,
         no_confirm: bool,
         config: &Config,
     ) -> Result<()> {
         run_args(
-            [config.aur_helper.as_str(), "--remove", "--recursive"]
+            [self.command, "--remove", "--recursive"]
                 .into_iter()
                 .chain(config.aur_rm_args.iter().map(String::as_str))
                 .chain(Some("--no_confirm").filter(|_| no_confirm))

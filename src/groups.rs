@@ -2,15 +2,10 @@ use crate::prelude::*;
 use anyhow::{anyhow, Context, Result};
 use walkdir::{DirEntry, WalkDir};
 
-use std::{
-    collections::BTreeMap,
-    fs::read_to_string,
-    ops::{Deref, DerefMut},
-    path::Path,
-};
+use std::{collections::BTreeMap, fs::read_to_string, path::Path};
 
 /// A type representing a users group files with all their packages
-#[derive(Debug, Default)]
+#[derive(Debug, Default, derive_more::Deref, derive_more::DerefMut)]
 pub struct Groups(BTreeMap<String, PackagesInstall>);
 
 impl Groups {
@@ -25,10 +20,7 @@ impl Groups {
         packages
     }
 
-    /// Loads Groups from a users pacdef config folder.
-    ///
-    /// # Errors
-    ///  - If the Group config file cannot be found.
+    /// Loads [`Groups`] from a users pacdef config folder.
     pub fn load(group_dir: &Path) -> Result<Self> {
         let mut groups = Self::default();
 
@@ -60,18 +52,5 @@ impl Groups {
             groups.insert(group_name, packages);
         }
         Ok(groups)
-    }
-}
-
-impl Deref for Groups {
-    type Target = BTreeMap<String, PackagesInstall>;
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
-
-impl DerefMut for Groups {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.0
     }
 }

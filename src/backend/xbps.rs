@@ -10,14 +10,16 @@ use crate::prelude::*;
 #[derive(Debug, Copy, Clone, Default, derive_more::Display)]
 pub struct Xbps;
 
-pub struct XbpsMakeImplicit;
+pub struct XbpsModification {
+    make_implicit: bool,
+}
 
 impl Backend for Xbps {
     type PackageId = String;
     type RemoveOptions = ();
     type InstallOptions = ();
     type QueryInfo = ();
-    type Modification = XbpsMakeImplicit;
+    type Modification = XbpsModification;
 
     fn query_installed_packages(
         _: &Config,
@@ -78,9 +80,12 @@ impl Backend for Xbps {
         _: &Config,
     ) -> Result<()> {
         run_args(
-            ["xbps-pkgdb", "-m", "auto"]
-                .into_iter()
-                .chain(packages.keys().map(String::as_str)),
+            ["xbps-pkgdb", "-m", "auto"].into_iter().chain(
+                packages
+                    .iter()
+                    .filter(|(_, m)| m.make_implicit)
+                    .map(|(p, _)| p.as_str()),
+            ),
         )
     }
 }
