@@ -1,24 +1,22 @@
 use anyhow::anyhow;
-use std::path::Path;
+use serde_inline_default::serde_inline_default;
+use std::{collections::BTreeMap, path::Path};
 
 use anyhow::{Context, Result};
 use serde::{Deserialize, Serialize};
 
-// Update the master README if fields change.
+// Update README if fields change.
+#[serde_inline_default]
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Config {
-    /// Additional arguments to pass to `aur_helper` when removing a package.
+    /// Additional arguments to pass to `Arch`-based backends when removing a package.
+    #[serde(default)]
     pub aur_rm_args: Vec<String>,
-    /// Install Flatpak packages system-wide
+    /// Install flatpak packages system-wide
+    #[serde_inline_default(true)]
     pub flatpak_systemwide: bool,
-}
-impl Default for Config {
-    fn default() -> Self {
-        Self {
-            aur_rm_args: vec![],
-            flatpak_systemwide: true,
-        }
-    }
+    #[serde(default)]
+    pub hostnames: BTreeMap<String, Vec<String>>,
 }
 
 impl Config {
@@ -30,7 +28,9 @@ impl Config {
             return Err(anyhow!("config file not found at: {config_file_path:?}"));
         }
 
-        toml::from_str(&std::fs::read_to_string(config_file_path).context("reading config file")?)
-            .context("parsing toml config")
+        dbg!(toml::from_str(
+            &std::fs::read_to_string(config_file_path).context("reading config file")?
+        )
+        .context("parsing toml config"))
     }
 }
