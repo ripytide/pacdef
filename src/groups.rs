@@ -1,5 +1,6 @@
 use crate::prelude::*;
 use anyhow::{anyhow, Context, Result};
+use strum::IntoEnumIterator;
 use walkdir::{DirEntry, WalkDir};
 
 use std::{collections::BTreeMap, fs::read_to_string, path::Path};
@@ -48,9 +49,38 @@ impl Groups {
 
             let file_contents = read_to_string(group_file.path()).context("Reading group file")?;
 
-            let packages: PackagesInstall = toml::from_str(&file_contents)?;
+            let packages: PackagesInstall =
+                parse_group_file(&group_name, &file_contents).context("parsing group file")?;
+
             groups.insert(group_name, packages);
         }
         Ok(groups)
     }
+}
+
+fn parse_group_file(group_name: &str, contents: &str) -> Result<PackagesInstall> {
+    let mut packages_install = PackagesInstall::default();
+
+    let toml = toml::from_str::<toml::Table>(contents)?;
+
+    for (key, value) in toml.iter() {
+        match AnyBackend::iter().find(|x| x.to_string().to_lowercase() == key.to_lowercase()) {
+            Some(backend) => {
+                let packages = value.as_array().context(
+                    anyhow!("the {backend} backend in the {group_name} group toml file has a non-array value")
+                )?;
+            }
+            None => {
+                log::warn!("unrecognised toml key: {key} in group file: {group_name}");
+            }
+        }
+    }
+
+    for backend in AnyBackend::iter() {
+        let backend_name = backend.to_string();
+
+        if let Some(value) = toml.get(&backend_name) {}
+    }
+
+    Ok(packages_install)
 }
