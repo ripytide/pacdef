@@ -3,52 +3,67 @@ use anyhow::{anyhow, Context, Result};
 use strum::IntoEnumIterator;
 use walkdir::{DirEntry, WalkDir};
 
-use std::{fs::read_to_string, path::Path};
+use std::{
+    collections::{BTreeMap, BTreeSet},
+    fs::read_to_string,
+    path::Path,
+};
 
-pub fn load_groups(group_dir: &Path) -> Result<BTreeSet<AnyPackageInstall>> {
-    let mut groups = Self::default();
+#[derive(Debug, Default, derive_more::Deref, derive_more::DerefMut)]
+pub struct Groups(BTreeMap<String, InstallOptions>);
 
-    let group_dir = group_dir.join("groups/");
-    if !group_dir.is_dir() {
-        return Err(anyhow!(
-            "The groups directory was not found in the pacdef config folder, please create it"
-        ));
+pub type InstallOptions = BTreeSet<AnyInstallOptions>;
+
+impl Groups {
+    pub fn to_install_options(&self) -> InstallOptions {
+        self.0.values().flatten().cloned().collect()
     }
 
-    let group_files: Vec<DirEntry> = WalkDir::new(&group_dir)
-        .follow_links(true)
-        .into_iter()
-        .collect::<Result<_, _>>()?;
+    pub fn load(group_dir: &Path) -> Result<Self> {
+        let mut groups = Self::default();
 
-    for group_file in group_files.iter().filter(|path| path.path().is_file()) {
-        let group_name = group_file
-            .path()
-            .strip_prefix(&group_dir)?
-            .to_str()
-            .ok_or(anyhow!("Will not fail on Linux"))?
-            .to_string();
+        let group_dir = group_dir.join("groups/");
+        if !group_dir.is_dir() {
+            return Err(anyhow!(
+                "The groups directory was not found in the pacdef config folder, please create it"
+            ));
+        }
 
-        log::info!("parsing group file: {group_name}@{group_file:?}");
+        let group_files: Vec<DirEntry> = WalkDir::new(&group_dir)
+            .follow_links(true)
+            .into_iter()
+            .collect::<Result<_, _>>()?;
 
-        let file_contents = read_to_string(group_file.path()).context("Reading group file")?;
+        for group_file in group_files.iter().filter(|path| path.path().is_file()) {
+            let group_name = group_file
+                .path()
+                .strip_prefix(&group_dir)?
+                .to_str()
+                .ok_or(anyhow!("Will not fail on Linux"))?
+                .to_string();
 
-        let packages: AnyPackageInstallOptions =
-            parse_group_file(&group_name, &file_contents).context("parsing group file")?;
+            log::info!("parsing group file: {group_name}@{group_file:?}");
 
-        groups.insert(group_name, packages);
+            let file_contents = read_to_string(group_file.path()).context("Reading group file")?;
+
+            let install_options: InstallOptions =
+                parse_group_file(&group_name, &file_contents).context("parsing group file")?;
+
+            groups.insert(group_name, install_options);
+        }
+        Ok(groups)
     }
-    Ok(groups)
 }
 
-fn parse_group_file(group_name: &str, contents: &str) -> Result<AnyPackageInstallOptions> {
-    let mut packages_install = AnyPackageInstallOptions::default();
+fn parse_group_file(group_name: &str, contents: &str) -> Result<InstallOptions> {
+    let mut all_install_options = InstallOptions::default();
 
     let toml = toml::from_str::<toml::Table>(contents)?;
 
     for (key, value) in toml.iter() {
         match AnyBackend::iter().find(|x| x.to_string().to_lowercase() == key.to_lowercase()) {
             Some(backend) => {
-                let packages = value.as_array().context(
+                let install_options = value.as_array().context(
                     anyhow!("the {backend} backend in the {group_name} group toml file has a non-array value")
                 )?;
 
@@ -66,5 +81,5 @@ fn parse_group_file(group_name: &str, contents: &str) -> Result<AnyPackageInstal
         if let Some(value) = toml.get(&backend_name) {}
     }
 
-    Ok(packages_install)
+    Ok(all_install_options)
 }

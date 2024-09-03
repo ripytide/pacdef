@@ -1,6 +1,5 @@
 pub use crate::backend::any::{
-    AnyBackend, AnyModification, AnyPackageId, AnyInstallOptions, AnyQueryInfo,
-    AnyRemoveOptions,
+    AnyBackend, AnyInstallOptions, AnyModification, AnyPackageId, AnyQueryInfo, AnyRemoveOptions,
 };
 pub use crate::backend::apt::{Apt, AptModification, AptQueryInfo};
 pub use crate::backend::arch::{
@@ -25,3 +24,4 @@ pub use crate::cli::SyncPackageAction;
 pub use crate::cli::UnmanagedPackageAction;
 pub use crate::cli::VersionArguments;
 pub use crate::config::Config;
+pub use crate::groups::{Groups, Installs};

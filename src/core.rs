@@ -47,7 +47,7 @@ impl CleanPackageAction {
             return Ok(());
         }
 
-        let packages_to_remove = AnyPackageRemoveOptions::from_package_ids_defaults(&unmanaged);
+        let packages_to_remove = unmanaged.;
 
         packages_to_remove.remove(self.no_confirm, config)
     }
@@ -101,3 +101,5 @@ impl UnmanagedPackageAction {
         Ok(())
     }
 }
+
+fn unmanaged(groups: &Groups, config: &Config) -> 

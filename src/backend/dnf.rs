@@ -14,7 +14,7 @@ pub struct DnfQueryInfo {
     pub user: bool,
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 pub struct DnfInstallOptions {
     repo: Option<String>,
 }

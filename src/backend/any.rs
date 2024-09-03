@@ -17,7 +17,7 @@ macro_rules! generate_anys {
             )*
         }
         //todo rename all to match trait associated types
-        #[derive(Debug, Clone)]
+        #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
         pub enum AnyInstallOptions {
             $(
                 $backend(<$backend as Backend>::InstallOptions),
