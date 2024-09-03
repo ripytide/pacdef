@@ -1,3 +1,7 @@
+pub use crate::backend::any::{
+    AnyBackend, AnyModification, AnyPackageId, AnyInstallOptions, AnyQueryInfo,
+    AnyRemoveOptions,
+};
 pub use crate::backend::apt::{Apt, AptModification, AptQueryInfo};
 pub use crate::backend::arch::{
     Arch, ArchInstallOptions, ArchModification, ArchPackageId, ArchQueryInfo, ArchRemoveOptions,
@@ -13,9 +17,6 @@ pub use crate::backend::rustup::{Rustup, RustupPackageId};
 pub use crate::backend::xbps::{Xbps, XbpsModification};
 pub use crate::backend::yay::Yay;
 pub use crate::backend::Backend;
-pub use crate::backend::{
-    AnyBackend, AnyModification, AnyPackageId, AnyPackageInstall, AnyPackageQuery, AnyPackageRemove,
-};
 pub use crate::cli::CleanPackageAction;
 pub use crate::cli::MainArguments;
 pub use crate::cli::MainSubcommand;
@@ -24,5 +25,3 @@ pub use crate::cli::SyncPackageAction;
 pub use crate::cli::UnmanagedPackageAction;
 pub use crate::cli::VersionArguments;
 pub use crate::config::Config;
-pub use crate::groups::Groups;
-pub use crate::packages::{PackagesIds, PackagesInstall, PackagesQuery, PackagesRemove};

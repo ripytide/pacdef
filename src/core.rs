@@ -5,14 +5,6 @@ use crate::prelude::*;
 use crate::review::review;
 
 impl MainArguments {
-    /// Run the action that was provided by the user as first argument.
-    ///
-    /// For convenience sake, all called functions take a `&self` argument, even if
-    /// these are not strictly required.
-    ///
-    /// # Errors
-    ///
-    /// This function propagates errors from the underlying functions.
     pub fn run(self, groups: &Groups, config: &Config) -> Result<()> {
         match self.subcommand {
             MainSubcommand::Clean(clean) => clean.run(groups, config),
@@ -34,7 +26,7 @@ impl VersionArguments {
 
 impl CleanPackageAction {
     fn run(self, groups: &Groups, config: &Config) -> Result<()> {
-        let unmanaged = PackagesIds::unmanaged(groups, config)?;
+        let unmanaged = AnyPackageIds::unmanaged(groups, config)?;
 
         if unmanaged.is_empty() {
             log::info!("nothing to do since there are no unmanaged packages");
@@ -55,7 +47,7 @@ impl CleanPackageAction {
             return Ok(());
         }
 
-        let packages_to_remove = PackagesRemove::from_packages_ids_defaults(&unmanaged);
+        let packages_to_remove = AnyPackageRemoveOptions::from_package_ids_defaults(&unmanaged);
 
         packages_to_remove.remove(self.no_confirm, config)
     }
@@ -69,7 +61,7 @@ impl ReviewPackageAction {
 
 impl SyncPackageAction {
     fn run(self, groups: &Groups, config: &Config) -> Result<()> {
-        let missing = PackagesIds::missing(groups, config)?;
+        let missing = AnyPackageIds::missing(groups, config)?;
 
         if missing.is_empty() {
             log::info!("nothing to do as there are no missing packages");
@@ -90,7 +82,7 @@ impl SyncPackageAction {
             return Ok(());
         }
 
-        let packages_to_install = PackagesInstall::from_packages_ids_defaults(&missing);
+        let packages_to_install = AnyPackageInstallOptions::from_package_ids_defaults(&missing);
 
         packages_to_install.install(self.no_confirm, config)
     }
@@ -98,7 +90,7 @@ impl SyncPackageAction {
 
 impl UnmanagedPackageAction {
     fn run(self, groups: &Groups, config: &Config) -> Result<()> {
-        let unmanaged = PackagesIds::unmanaged(groups, config)?;
+        let unmanaged = AnyPackageIds::unmanaged(groups, config)?;
 
         if unmanaged.is_empty() {
             println!("no unmanaged packages");

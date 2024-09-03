@@ -20,7 +20,7 @@ impl Backend for Pipx {
     type QueryInfo = ();
     type Modification = ();
 
-    fn query_installed_packages(_: &Config) -> Result<BTreeMap<Self::PackageId, Self::QueryInfo>> {
+    fn query_installed_packages(&self,_: &Config) -> Result<BTreeMap<Self::PackageId, Self::QueryInfo>> {
         if !command_found("pipx") {
             return Ok(BTreeMap::new());
         }
@@ -31,6 +31,7 @@ impl Backend for Pipx {
     }
 
     fn install_packages(
+        &self,
         packages: &BTreeMap<Self::PackageId, Self::InstallOptions>,
         _: bool,
         _: &Config,
@@ -43,6 +44,7 @@ impl Backend for Pipx {
     }
 
     fn modify_packages(
+        &self,
         _: &BTreeMap<Self::PackageId, Self::Modification>,
         _: &Config,
     ) -> Result<()> {
@@ -50,6 +52,7 @@ impl Backend for Pipx {
     }
 
     fn remove_packages(
+        &self,
         packages: &BTreeMap<Self::PackageId, Self::RemoveOptions>,
         _: bool,
         _: &Config,

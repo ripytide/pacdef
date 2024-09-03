@@ -23,6 +23,7 @@ impl Backend for Xbps {
     type Modification = XbpsModification;
 
     fn query_installed_packages(
+        &self,
         _: &Config,
     ) -> Result<std::collections::BTreeMap<Self::PackageId, Self::QueryInfo>> {
         if !command_found("xbps-query") {
@@ -51,6 +52,7 @@ impl Backend for Xbps {
     }
 
     fn install_packages(
+        &self,
         packages: &std::collections::BTreeMap<Self::PackageId, Self::InstallOptions>,
         no_confirm: bool,
         _: &Config,
@@ -64,6 +66,7 @@ impl Backend for Xbps {
     }
 
     fn remove_packages(
+        &self,
         packages: &std::collections::BTreeMap<Self::PackageId, Self::RemoveOptions>,
         no_confirm: bool,
         _: &Config,
@@ -77,6 +80,7 @@ impl Backend for Xbps {
     }
 
     fn modify_packages(
+        &self,
         packages: &std::collections::BTreeMap<Self::PackageId, Self::Modification>,
         _: &Config,
     ) -> Result<()> {

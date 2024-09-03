@@ -2,7 +2,7 @@ use crate::cmd::command_found;
 use crate::cmd::run_args;
 use crate::cmd::run_args_for_stdout;
 use crate::prelude::*;
-use anyhow::{anyhow, bail, Error, Result};
+use anyhow::Result;
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 
@@ -45,7 +45,7 @@ impl Backend for Rustup {
     type QueryInfo = ();
     type Modification = ();
 
-    fn query_installed_packages(_: &Config) -> Result<BTreeMap<Self::PackageId, Self::QueryInfo>> {
+    fn query_installed_packages(&self, _: &Config) -> Result<BTreeMap<Self::PackageId, Self::QueryInfo>> {
         if !command_found("rustup") {
             return Ok(BTreeMap::new());
         }
@@ -84,6 +84,7 @@ impl Backend for Rustup {
     }
 
     fn install_packages(
+        &self,
         packages: &BTreeMap<Self::PackageId, Self::InstallOptions>,
         _: bool,
         _: &Config,
@@ -110,6 +111,7 @@ impl Backend for Rustup {
     }
 
     fn modify_packages(
+        &self,
         _: &BTreeMap<Self::PackageId, Self::Modification>,
         _: &Config,
     ) -> Result<()> {
@@ -117,6 +119,7 @@ impl Backend for Rustup {
     }
 
     fn remove_packages(
+        &self,
         packages: &BTreeMap<Self::PackageId, Self::RemoveOptions>,
         _: bool,
         _: &Config,

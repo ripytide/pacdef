@@ -9,10 +9,8 @@ use serde::{Deserialize, Serialize};
 #[serde_inline_default]
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Config {
-    /// Additional arguments to pass to `Arch`-based backends when removing a package.
     #[serde(default)]
     pub aur_rm_args: Vec<String>,
-    /// Install flatpak packages system-wide
     #[serde_inline_default(true)]
     pub flatpak_systemwide: bool,
     #[serde(default)]
@@ -20,7 +18,6 @@ pub struct Config {
 }
 
 impl Config {
-    /// Load the config file from a users pacdef config folder.
     pub fn load(pacdef_dir: &Path) -> Result<Self> {
         let config_file_path = pacdef_dir.join("config.toml");
 

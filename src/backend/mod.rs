@@ -10,13 +10,13 @@ pub mod pipx;
 pub mod rustup;
 pub mod xbps;
 pub mod yay;
+pub mod any;
 
 use std::collections::BTreeMap;
 
 use crate::prelude::*;
 use anyhow::Result;
 
-/// A trait to represent any package manager backend
 pub trait Backend {
     type PackageId;
     type InstallOptions;
@@ -24,136 +24,28 @@ pub trait Backend {
     type QueryInfo;
     type Modification;
 
-    /// Query all packages that are installed in the backend.
-    ///
-    /// # Errors
-    ///
-    /// This function shall return an error if the installed packages cannot be
-    /// determined.
     fn query_installed_packages(
+        &self,
         config: &Config,
     ) -> Result<BTreeMap<Self::PackageId, Self::QueryInfo>>;
 
-    /// Install the specified packages. If `no_confirm` is `true`, pass the corresponding
-    /// switch to the package manager. Return the [`ExitStatus`] from the package manager.
-    ///
-    /// # Errors
-    ///
-    /// This function will return an error if the package manager cannot be run or it
-    /// returns an error.
     fn install_packages(
+        &self,
         packages: &BTreeMap<Self::PackageId, Self::InstallOptions>,
         no_confirm: bool,
         config: &Config,
     ) -> Result<()>;
 
-    /// Modify the packages as specified by [`Self::PackageModification`].
-    ///
-    /// This may not include installing or removing the package as [`Backend::install_packages()`]
-    /// and [`Backend::remove_packages()`] exist for this purpose.
-    ///
-    /// # Errors
-    ///
-    /// Returns an error if the backend fails to modify the packages as required.
     fn modify_packages(
+        &self,
         packages: &BTreeMap<Self::PackageId, Self::Modification>,
         config: &Config,
     ) -> Result<()>;
 
-    /// Remove the specified packages.
-    ///
-    /// # Errors
-    ///
-    /// Returns an error if the external command fails.
     fn remove_packages(
+        &self,
         packages: &BTreeMap<Self::PackageId, Self::RemoveOptions>,
         no_confirm: bool,
         config: &Config,
     ) -> Result<()>;
 }
-
-macro_rules! generate_anys {
-    ($($backend:ident),*) => {
-        #[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, strum::EnumIter, derive_more::Display, derive_more::From)]
-        pub enum AnyBackend {
-            $(
-                $backend,
-            )*
-        }
-        #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, derive_more::Display)]
-        pub enum AnyPackageId {
-            $(
-                $backend(<$backend as Backend>::PackageId),
-            )*
-        }
-        //todo rename all to match trait associated types
-        #[derive(Debug, Clone)]
-        pub enum AnyPackageInstall {
-            $(
-                $backend(<$backend as Backend>::InstallOptions),
-            )*
-        }
-        #[derive(Debug, Clone)]
-        pub enum AnyPackageQuery {
-            $(
-                $backend(<$backend as Backend>::QueryInfo),
-            )*
-        }
-        #[derive(Debug, Clone)]
-        pub enum AnyPackageRemove {
-            $(
-                $backend(<$backend as Backend>::RemoveOptions),
-            )*
-        }
-        #[derive(Debug, Clone)]
-        pub enum AnyModification {
-            $(
-                $backend(<$backend as Backend>::Modification),
-            )*
-        }
-    };
-
-}
-
-impl Backend for AnyBackend {
-    type PackageId = AnyPackageId;
-
-    type InstallOptions = AnyPackageInstall;
-
-    type RemoveOptions = AnyPackageRemove;
-
-    type QueryInfo = AnyPackageQuery;
-
-    type Modification = AnyModification;
-
-    fn query_installed_packages(
-        config: &Config,
-    ) -> Result<BTreeMap<Self::PackageId, Self::QueryInfo>> {
-        todo!()
-    }
-
-    fn install_packages(
-        packages: &BTreeMap<Self::PackageId, Self::InstallOptions>,
-        no_confirm: bool,
-        config: &Config,
-    ) -> Result<()> {
-        todo!()
-    }
-
-    fn modify_packages(
-        packages: &BTreeMap<Self::PackageId, Self::Modification>,
-        config: &Config,
-    ) -> Result<()> {
-        todo!()
-    }
-
-    fn remove_packages(
-        packages: &BTreeMap<Self::PackageId, Self::RemoveOptions>,
-        no_confirm: bool,
-        config: &Config,
-    ) -> Result<()> {
-        todo!()
-    }
-}
-
-generate_anys!(Apt, Cargo, Dnf, Flatpak, Pacman, Paru, Pip, Pipx, Rustup, Xbps, Yay);

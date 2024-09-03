@@ -25,7 +25,7 @@ impl Backend for Pip {
     type QueryInfo = PipQueryInfo;
     type Modification = ();
 
-    fn query_installed_packages(_: &Config) -> Result<BTreeMap<Self::PackageId, Self::QueryInfo>> {
+    fn query_installed_packages(&self,_: &Config) -> Result<BTreeMap<Self::PackageId, Self::QueryInfo>> {
         if !command_found("pip") {
             return Ok(BTreeMap::new());
         }
@@ -49,6 +49,7 @@ impl Backend for Pip {
     }
 
     fn install_packages(
+        &self,
         packages: &BTreeMap<Self::PackageId, Self::InstallOptions>,
         _: bool,
         _: &Config,
@@ -61,6 +62,7 @@ impl Backend for Pip {
     }
 
     fn modify_packages(
+        &self,
         _: &BTreeMap<Self::PackageId, Self::Modification>,
         _: &Config,
     ) -> Result<()> {
@@ -68,6 +70,7 @@ impl Backend for Pip {
     }
 
     fn remove_packages(
+        &self,
         packages: &BTreeMap<Self::PackageId, Self::RemoveOptions>,
         _: bool,
         _: &Config,

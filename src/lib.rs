@@ -6,7 +6,6 @@ mod cmd;
 mod config;
 mod core;
 mod groups;
-mod packages;
 mod prelude;
 mod review;
 

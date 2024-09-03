@@ -26,7 +26,10 @@ impl Backend for Apt {
     type QueryInfo = AptQueryInfo;
     type Modification = AptModification;
 
-    fn query_installed_packages(_: &Config) -> Result<BTreeMap<Self::PackageId, Self::QueryInfo>> {
+    fn query_installed_packages(
+        &self,
+        _: &Config,
+    ) -> Result<BTreeMap<Self::PackageId, Self::QueryInfo>> {
         if !command_found("apt-mark") {
             return Ok(BTreeMap::new());
         }
@@ -52,6 +55,7 @@ impl Backend for Apt {
     }
 
     fn install_packages(
+        &self,
         packages: &BTreeMap<Self::PackageId, Self::InstallOptions>,
         no_confirm: bool,
         _: &Config,
@@ -65,6 +69,7 @@ impl Backend for Apt {
     }
 
     fn modify_packages(
+        &self,
         packages: &BTreeMap<Self::PackageId, Self::Modification>,
         _: &Config,
     ) -> Result<()> {
@@ -79,6 +84,7 @@ impl Backend for Apt {
     }
 
     fn remove_packages(
+        &self,
         packages: &BTreeMap<Self::PackageId, Self::RemoveOptions>,
         no_confirm: bool,
         _: &Config,
