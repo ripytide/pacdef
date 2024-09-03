@@ -69,9 +69,11 @@ fn parse_group_file(group_name: &str, contents: &str) -> Result<PackagesInstall>
                 let packages = value.as_array().context(
                     anyhow!("the {backend} backend in the {group_name} group toml file has a non-array value")
                 )?;
+
+                // let packages = packages.into_iter().map(|x|)
             }
             None => {
-                log::warn!("unrecognised toml key: {key} in group file: {group_name}");
+                log::warn!("unrecognised backend: {key} in group file: {group_name}");
             }
         }
     }

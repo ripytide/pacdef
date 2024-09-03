@@ -2,7 +2,7 @@ use crate::prelude::*;
 use anyhow::Result;
 use std::collections::BTreeMap;
 
-#[derive(Debug, Copy, Clone, Default, derive_more::Display)]
+#[derive(Debug, Copy, Clone, Default, PartialEq, Eq, PartialOrd, Ord, derive_more::Display)]
 pub struct Paru;
 impl Paru {
     const PARU: Arch = Arch { command: "paru" };

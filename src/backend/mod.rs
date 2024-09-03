@@ -11,27 +11,14 @@ pub mod rustup;
 pub mod xbps;
 pub mod yay;
 
-use std::{collections::BTreeMap, str::FromStr};
+use std::collections::BTreeMap;
 
-pub use crate::packages::AnyBackend;
 use crate::prelude::*;
-use anyhow::{Context, Result};
-use strum::IntoEnumIterator;
-
-impl FromStr for AnyBackend {
-    type Err = anyhow::Error;
-
-    fn from_str(s: &str) -> std::prelude::v1::Result<Self, Self::Err> {
-        Self::iter()
-            .find(|x| x.to_string().to_lowercase() == s)
-            .with_context(|| anyhow::anyhow!("unable to parse backend from string: {s}"))
-    }
-}
+use anyhow::Result;
 
 /// A trait to represent any package manager backend
-#[enum_dispatch::enum_dispatch]
 pub trait Backend {
-    type PackageId: TryFrom<String>;
+    type PackageId;
     type InstallOptions;
     type RemoveOptions;
     type QueryInfo;
@@ -84,3 +71,89 @@ pub trait Backend {
         config: &Config,
     ) -> Result<()>;
 }
+
+macro_rules! generate_anys {
+    ($($backend:ident),*) => {
+        #[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, strum::EnumIter, derive_more::Display, derive_more::From)]
+        pub enum AnyBackend {
+            $(
+                $backend,
+            )*
+        }
+        #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, derive_more::Display)]
+        pub enum AnyPackageId {
+            $(
+                $backend(<$backend as Backend>::PackageId),
+            )*
+        }
+        //todo rename all to match trait associated types
+        #[derive(Debug, Clone)]
+        pub enum AnyPackageInstall {
+            $(
+                $backend(<$backend as Backend>::InstallOptions),
+            )*
+        }
+        #[derive(Debug, Clone)]
+        pub enum AnyPackageQuery {
+            $(
+                $backend(<$backend as Backend>::QueryInfo),
+            )*
+        }
+        #[derive(Debug, Clone)]
+        pub enum AnyPackageRemove {
+            $(
+                $backend(<$backend as Backend>::RemoveOptions),
+            )*
+        }
+        #[derive(Debug, Clone)]
+        pub enum AnyModification {
+            $(
+                $backend(<$backend as Backend>::Modification),
+            )*
+        }
+    };
+
+}
+
+impl Backend for AnyBackend {
+    type PackageId = AnyPackageId;
+
+    type InstallOptions = AnyPackageInstall;
+
+    type RemoveOptions = AnyPackageRemove;
+
+    type QueryInfo = AnyPackageQuery;
+
+    type Modification = AnyModification;
+
+    fn query_installed_packages(
+        config: &Config,
+    ) -> Result<BTreeMap<Self::PackageId, Self::QueryInfo>> {
+        todo!()
+    }
+
+    fn install_packages(
+        packages: &BTreeMap<Self::PackageId, Self::InstallOptions>,
+        no_confirm: bool,
+        config: &Config,
+    ) -> Result<()> {
+        todo!()
+    }
+
+    fn modify_packages(
+        packages: &BTreeMap<Self::PackageId, Self::Modification>,
+        config: &Config,
+    ) -> Result<()> {
+        todo!()
+    }
+
+    fn remove_packages(
+        packages: &BTreeMap<Self::PackageId, Self::RemoveOptions>,
+        no_confirm: bool,
+        config: &Config,
+    ) -> Result<()> {
+        todo!()
+    }
+}
+
+generate_anys!(Apt, Cargo, Dnf, Flatpak, Pacman, Paru, Pip, Pipx, Rustup, Xbps, Yay);

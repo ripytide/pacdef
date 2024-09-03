@@ -5,7 +5,7 @@ use std::collections::BTreeMap;
 use crate::cmd::{command_found, run_args, run_args_for_stdout};
 use crate::prelude::*;
 
-#[derive(Debug, Clone, Copy, derive_more::Display)]
+#[derive(Debug, Copy, Clone, Default, PartialEq, Eq, PartialOrd, Ord, derive_more::Display)]
 pub struct Arch {
     pub command: &'static str,
 }
@@ -17,6 +17,7 @@ pub struct ArchQueryInfo {
     pub explicit: bool,
 }
 
+#[derive(Debug, Clone)]
 pub struct ArchModification {
     pub make_implicit: bool,
 }

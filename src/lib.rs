@@ -2,7 +2,6 @@
 
 mod backend;
 mod cli;
-
 mod cmd;
 mod config;
 mod core;

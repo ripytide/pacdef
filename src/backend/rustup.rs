@@ -6,7 +6,7 @@ use anyhow::{anyhow, bail, Error, Result};
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 
-#[derive(Debug, Copy, Clone, Default, derive_more::Display)]
+#[derive(Debug, Copy, Clone, Default, PartialEq, Eq, PartialOrd, Ord, derive_more::Display)]
 pub struct Rustup;
 
 #[derive(
@@ -19,24 +19,24 @@ pub enum RustupPackageId {
     Component(String, String),
 }
 
-impl TryFrom<String> for RustupPackageId {
-    type Error = Error;
-    fn try_from(value: String) -> std::prelude::v1::Result<Self, Self::Error> {
-        match value.split_once('/') {
-            Some((package_type, name)) => match package_type {
-                "toolchain" => Ok(Self::Toolchain(name.to_string())),
-                "component" => name
-                    .split_once('/')
-                    .map(|(toolchain, name)| {
-                        Self::Component(toolchain.to_string(), name.to_string())
-                    })
-                    .ok_or(anyhow!("Invalid package name")),
-                _ => bail!("Invalid package name"),
-            },
-            None => bail!("Invalid package name"),
-        }
-    }
-}
+// impl TryFrom<String> for RustupPackageId {
+//     type Error = Error;
+//     fn try_from(value: String) -> std::prelude::v1::Result<Self, Self::Error> {
+//         match value.split_once('/') {
+//             Some((package_type, name)) => match package_type {
+//                 "toolchain" => Ok(Self::Toolchain(name.to_string())),
+//                 "component" => name
+//                     .split_once('/')
+//                     .map(|(toolchain, name)| {
+//                         Self::Component(toolchain.to_string(), name.to_string())
+//                     })
+//                     .ok_or(anyhow!("Invalid package name")),
+//                 _ => bail!("Invalid package name"),
+//             },
+//             None => bail!("Invalid package name"),
+//         }
+//     }
+// }
 
 impl Backend for Rustup {
     type PackageId = RustupPackageId;

@@ -1,310 +1,160 @@
 use anyhow::Result;
-use serde::{Deserialize, Serialize};
 use std::{
     collections::{BTreeMap, BTreeSet},
     fmt::Display,
-    str::FromStr,
 };
 
 use crate::prelude::*;
 
-macro_rules! generate_packages_ids {
-    ($($name:ident: $backend:ident),*) => {
-        #[derive(Debug, Clone, Default)]
-        pub struct PackagesIds {
-        $(
-            pub $name: BTreeSet<<$backend as Backend>::PackageId>,
-        )*
-        }
-    };
-}
-
-macro_rules! generate_packages_install {
-    ($($name:ident: $backend:ident),*) => {
-        #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-        pub struct PackagesInstall {
-        $(
-            pub $name: BTreeMap<<$backend as Backend>::PackageId, <$backend as Backend>::InstallOptions>,
-        )*
-        }
-    };
-}
-
-macro_rules! generate_packages_remove {
-    ($($name:ident: $backend:ident),* ) => {
-        #[derive(Debug, Clone, Default)]
-        pub struct PackagesRemove {
-        $(
-            pub $name: BTreeMap<<$backend as Backend>::PackageId, <$backend as Backend>::RemoveOptions>,
-        )*
-        }
-    };
-}
-
-macro_rules! generate_packages_query {
-    ($($name:ident: $backend:ident),*) => {
-        #[derive(Debug, Clone, Default)]
-        pub struct PackagesQuery {
-        $(
-            pub $name: BTreeMap<<$backend as Backend>::PackageId, <$backend as Backend>::QueryInfo>,
-        )*
-        }
-    };
-}
-
 macro_rules! append {
     ($($name:ident)*) => {
         pub fn append(&mut self, other: &mut Self) {
-            $(
-                self.$name.append(&mut other.$name);
-            )*
+            for (backend, packages) in self.0.iter_mut() {
+                if let Some(other_packages) = other.0.get_mut(backend) {
+                    packages.append(other_packages)
+                }
+            }
         }
     };
 }
-
 macro_rules! is_empty {
     ($($name:ident)*) => {
-        pub fn is_empty(&self) ->bool {
-            $(
-                self.$name.is_empty() &&
-            )* true
+        pub fn is_empty(&self) -> bool {
+            self.0.values().all(|x| x.is_empty())
         }
     };
 }
-
-macro_rules! impl_packages_ids {
-    ($($name:ident: $backend:ident),*) => {
-        impl PackagesIds {
-            pub fn new() -> Self {
-                Self {
-                    $(
-                        $name: BTreeSet::new(),
-                    )*
-                }
-            }
-
-            append!($($name)*);
-            is_empty!($($name)*);
-
-            pub fn difference(&self, other: &Self) -> Self {
-                Self {
-                    $(
-                        $name: self.$name.difference(&other.$name).cloned().collect(),
-                    )*
-                }
-            }
-
-            pub fn insert_backend_package(&mut self, backend: AnyBackend, package: String) -> Result<()> {
-                match backend {
-                    $(
-                      AnyBackend::$backend(_) => self.$name.insert(package.try_into()?),
-                    )*
-                };
-                Ok(())
-            }
-
-            //todo this could be improved by making the config for disabled_backends more strongly typed
-            //but if we make it more strongly typed we'll probably lose out the macro neatness
-            pub fn clear_backends(&mut self, backend_names: &Vec<String>) {
-                for backend_name in backend_names {
-                    let backend = match AnyBackend::from_str(backend_name) {
-                        Ok(x) => x,
-                        Err(e) => {
-                            log::warn!("{e}");
-                            continue;
-                        }
-                    };
-
-                    match backend {
-                        $(
-                            AnyBackend::$backend(_) => self.$name.clear(),
-                        )*
-                    }
-                }
-            }
-
-
-            pub fn missing(groups: &Groups, config: &Config) -> Result<Self> {
-                let requested = groups.to_packages_install();
-
-                let installed = PackagesQuery::installed(config)?;
-
-                let missing = requested
-                    .into_packages_ids()
-                    .difference(&installed.into_packages_ids());
-
-                Ok(missing)
-            }
-            pub fn unmanaged(groups: &Groups, config: &Config) -> Result<Self> {
-                let requested = groups.to_packages_install();
-
-                let installed = PackagesQuery::installed(config)?;
-
-                Ok(installed
-                    .into_packages_ids()
-                    .difference(&requested.into_packages_ids()))
-            }
-        }
-    };
-}
-
 macro_rules! into_packages_ids {
     ($($name:ident)*) => {
         pub fn into_packages_ids(self) -> PackagesIds {
-            PackagesIds {
-                $(
-                    $name: self.$name.into_keys().collect(),
-                )*
-            }
+            PackageIds(
+                self.0
+                    .iter()
+                    .map(|(x, y)| (*x, y.into_keys().collect()))
+                    .collect(),
+            )
         }
     };
 }
 
-macro_rules! impl_packages_installs {
-    ($($name:ident: $backend:ident),*) => {
-        impl PackagesInstall {
-            append!($($name)*);
-            is_empty!($($name)*);
-            into_packages_ids!($($name)*);
+#[derive(Debug, Clone, Default)]
+pub struct PackageIds(BTreeMap<AnyBackend, BTreeSet<AnyPackageId>>);
+impl PackageIds {
+    append!();
+    is_empty!();
+
+    pub fn difference(&self, other: &Self) -> Self {
+        Self(
+            self.0
+                .iter()
+                .filter_map(|(x, y)| match other.0.get(x) {
+                    Some(z) => Some((x, y, z)),
+                    None => None,
+                })
+                .map(|(x, y, z)| (*x, y.difference(z).cloned().collect()))
+                .collect(),
+        )
+    }
+
+    pub fn insert(&mut self, backend: AnyBackend, package_id: AnyPackageId) {
+        self.0.entry(backend).or_default().insert(package_id);
+    }
+
+    pub fn missing(groups: &Groups, config: &Config) -> Result<Self> {
+        let requested = groups.to_packages_install();
+
+        let installed = PackagesQuery::installed(config)?;
+
+        let missing = requested
+            .into_packages_ids()
+            .difference(&installed.into_packages_ids());
+
+        Ok(missing)
+    }
+    pub fn unmanaged(groups: &Groups, config: &Config) -> Result<Self> {
+        let requested = groups.to_packages_install();
+
+        let installed = PackagesQuery::installed(config)?;
+
+        Ok(installed
+            .into_packages_ids()
+            .difference(&requested.into_packages_ids()))
+    }
+}
+impl Display for PackageIds {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        for (backend, packages) in self.0.iter() {
+            write!(
+                f,
+                "{backend}:\n{}",
+                itertools::Itertools::intersperse(
+                    packages.iter().map(|x| x.to_string()),
+                    "\n".to_string()
+                )
+                .collect::<String>()
+            );
+        }
+
+        Ok(())
+    }
+}
+
+#[derive(Debug, Clone, Default)]
+pub struct PackagesInstall(BTreeMap<AnyBackend, BTreeMap<AnyPackageId, AnyPackageInstall>>);
+impl PackagesInstall {
+    append!();
+    is_empty!();
+    into_packages_ids!();
 
             pub fn install(self, no_confirm: bool, config: &Config) -> Result<()> {
-                $(
-                    let $name = $backend::install_packages(&self.$name, no_confirm, config);
-                )*
-                Ok(())$(
-                  .and($name)
-                )*
+                self.0.iter(|(x, y)| x.install_packages());
+                Ok(())
+                    $( .and($backend::install_packages(&self.$name, no_confirm, config)) )*
             }
 
             pub fn from_packages_ids_defaults(packages_ids: &PackagesIds) -> Self {
                 Self {
-                    $(
-                        $name: packages_ids.$name.iter().map(|x| (x.clone(), <$backend as Backend>::InstallOptions::default())).collect(),
-                    )*
+                    $( $name: packages_ids.$name.iter().map(|x| (x.clone(), <$backend as Backend>::InstallOptions::default())).collect(), )*
                 }
             }
 
-
-        }
-    };
-}
-
-macro_rules! impl_packages_remove {
-    ($($name:ident: $backend:ident),*) => {
-        impl PackagesRemove {
-            append!($($name)*);
-            is_empty!($($name)*);
-            into_packages_ids!($($name)*);
-
-            pub fn remove(self, no_confirm: bool, config: &Config) -> Result<()> {
-                $(
-                    let $name = $backend::remove_packages(&self.$name, no_confirm, config);
-                )*
-
-                Ok(())$(
-                  .and($name)
-                )*
-            }
-
-            pub fn from_packages_ids_defaults(packages_ids: &PackagesIds) -> Self {
-                Self {
-                    $(
-                        $name: packages_ids.$name.iter().map(|x| (x.clone(), <$backend as Backend>::RemoveOptions::default())).collect(),
-                    )*
-                }
-            }
-        }
-    };
-}
-
-macro_rules! impl_packages_query {
-    ($($name:ident:$backend:ident),*) => {
-        impl PackagesQuery {
-            append!($($name)*);
-            is_empty!($($name)*);
-            into_packages_ids!($($name)*);
-            pub fn installed(config: &Config) -> Result<Self> {
-                $(
-                    let $name = $backend::query_installed_packages(config)?;
-                )*
-
+            pub fn from_toml(toml_packages: BTreeMap<AnyBackend, Vec<toml::Value>>) -> Result<Self> {
                 Ok(Self {
-                    $(
-                        $name,
-                    )*
+                    $( $name: toml_packages.get(&$backend.into()).into_iter().flatten().map(|x| <$backend as Backend>::package_from_toml(x)), )*
                 })
             }
-        }
-    };
 }
 
-macro_rules! impl_display_for_packages_ids {
-    ($($name:ident),*) => {
-        impl Display for PackagesIds {
-            fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-                macro_rules! list {
-                    ($id:ident) => {
-                        let $id: String = itertools::Itertools::intersperse(
-                            self.$id.iter().map(|x| x.to_string()),
-                            "\n".to_string(),
-                        )
-                        .collect();
-                    };
-                }
+#[derive(Debug, Clone, Default)]
+pub struct PackagesQuery(BTreeMap<AnyBackend, BTreeMap<AnyPackageId, AnyPackageQuery>>);
+impl PackagesQuery {
+    append!();
+    is_empty!();
+    into_packages_ids!();
 
-                $(
-                    list!($name);
-                )*
-
-                write!(
-                    f,
-                    "{}", [$(
-                        stringify!([$name]),
-                        $name.as_str(),
-                        " ",
-                    )*].join("\n")
-                )
+            pub fn installed(config: &Config) -> Result<Self> {
+                Ok(Self {
+                    $( $name: $backend::query_installed_packages(config)?, )*
+                })
             }
-        }
-    };
 }
 
-macro_rules! generate_enums {
-    ($($backend:ident),*) => {
-        #[derive(Debug, Copy, Clone, strum::EnumIter, derive_more::Display)]
-        pub enum AnyBackend {
-            $(
-                $backend($backend),
-            )*
-        }
-    };
+#[derive(Debug, Clone, Default)]
+pub struct PackagesRemove(BTreeMap<AnyBackend, BTreeMap<AnyPackageId, AnyPackageRemove>>);
+impl PackagesRemove {
+    append!();
+    is_empty!();
+    into_packages_ids!();
+
+            pub fn remove(self, no_confirm: bool, config: &Config) -> Result<()> {
+                Ok(())
+                    $( .and($backend::remove_packages(&self.$name, no_confirm, config)) )*
+            }
+
+            pub fn from_packages_ids_defaults(packages_ids: &PackagesIds) -> Self {
+                Self {
+                    $( $name: packages_ids.$name.iter().map(|x| (x.clone(), <$backend as Backend>::RemoveOptions::default())).collect(), )*
+                }
+            }
 }
 
-macro_rules! generate_structs {
-    ($($name:ident: $backend:ident),*) => {
-        generate_packages_ids!( $($name:$backend),* );
-        generate_packages_install!( $($name:$backend),* );
-        generate_packages_remove!( $($name:$backend),* );
-        generate_packages_query!( $($name:$backend),* );
-        impl_packages_ids!($($name:$backend),*);
-        impl_packages_installs!($($name:$backend),*);
-        impl_packages_remove!($($name:$backend),*);
-        impl_packages_query!($($name:$backend),*);
-        impl_display_for_packages_ids!($($name),*);
-        generate_enums!($($backend),*);
-    };
-}
-
-generate_structs!(
-    apt: Apt,
-    cargo: Cargo,
-    dnf: Dnf,
-    flatpak: Flatpak,
-    pacman: Pacman,
-    paru: Paru,
-    pip: Pip,
-    pipx: Pipx,
-    rustup: Rustup,
-    xbps: Xbps,
-    yay: Yay
-);

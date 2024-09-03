@@ -8,7 +8,7 @@ use serde_json::Value;
 use crate::cmd::{command_found, run_args};
 use crate::prelude::*;
 
-#[derive(Debug, Copy, Clone, Default, derive_more::Display)]
+#[derive(Debug, Copy, Clone, Default, PartialEq, Eq, PartialOrd, Ord, derive_more::Display)]
 pub struct Cargo;
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]

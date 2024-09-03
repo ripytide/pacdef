@@ -12,7 +12,10 @@ pub use crate::backend::pipx::Pipx;
 pub use crate::backend::rustup::{Rustup, RustupPackageId};
 pub use crate::backend::xbps::{Xbps, XbpsModification};
 pub use crate::backend::yay::Yay;
-pub use crate::backend::{AnyBackend, Backend};
+pub use crate::backend::Backend;
+pub use crate::backend::{
+    AnyBackend, AnyModification, AnyPackageId, AnyPackageInstall, AnyPackageQuery, AnyPackageRemove,
+};
 pub use crate::cli::CleanPackageAction;
 pub use crate::cli::MainArguments;
 pub use crate::cli::MainSubcommand;
