@@ -16,6 +16,7 @@ pub struct CargoInstallOptions {
     git: Option<String>,
     all_features: bool,
     no_default_features: bool,
+    features: Vec<String>,
 }
 
 impl Backend for Cargo {
@@ -51,77 +52,30 @@ impl Backend for Cargo {
         _: bool,
         _: &Config,
     ) -> Result<()> {
-        run_args(
-            ["cargo", "install"].into_iter().chain(
-                packages
-                    .iter()
-                    .filter(|(_, opts)| {
-                        opts.git.is_none() && !opts.all_features && !opts.no_default_features
-                    })
-                    .map(|(name, _)| name)
-                    .map(String::as_str),
-            ),
-        )?;
         for (package, options) in packages {
-            match options {
-                CargoInstallOptions {
-                    git: _,
-                    all_features: true,
-                    no_default_features: true,
-                } => {
-                    bail!("Invalid config parameters for {package}");
-                }
-
-                CargoInstallOptions {
-                    git: None,
-                    all_features: false,
-                    no_default_features: false,
-                } => {} // cannot be matched
-
-                CargoInstallOptions {
-                    git: Some(remote),
-                    all_features: false,
-                    no_default_features: false,
-                } => run_args(["cargo", "install", "--git", remote, package])?,
-
-                CargoInstallOptions {
-                    git: Some(remote),
-                    all_features: true,
-                    no_default_features: false,
-                } => run_args([
-                    "cargo",
-                    "install",
-                    "--all-features",
-                    "--git",
-                    remote,
-                    package,
-                ])?,
-
-                CargoInstallOptions {
-                    git: Some(remote),
-                    all_features: false,
-                    no_default_features: true,
-                } => run_args([
-                    "cargo",
-                    "install",
-                    "--no-default-features",
-                    "--git",
-                    remote,
-                    package,
-                ])?,
-
-                CargoInstallOptions {
-                    git: None,
-                    all_features: true,
-                    no_default_features: false,
-                } => run_args(["cargo", "install", "--all-features", package])?,
-
-                CargoInstallOptions {
-                    git: None,
-                    all_features: false,
-                    no_default_features: true,
-                } => run_args(["cargo", "install", "--no-default-features", package])?,
-            }
+            run_args(
+                ["cargo", "install"]
+                    .into_iter()
+                    .chain(Some("--git").into_iter().filter(|_| options.git.is_some()))
+                    .chain(options.git.as_deref())
+                    .chain(
+                        Some("--all-features")
+                            .into_iter()
+                            .filter(|_| options.all_features),
+                    )
+                    .chain(
+                        Some("--no-default-features")
+                            .into_iter()
+                            .filter(|_| options.no_default_features),
+                    )
+                    .chain(
+                        Some("--features")
+                            .into_iter()
+                            .filter(|_| !options.features.is_empty()),
+                    )
+                    .chain(options.features.iter().map(|feature| feature.as_str()))
+                    .chain([package.as_str()]),
+            )?;
         }
         Ok(())
     }
@@ -175,12 +129,25 @@ fn extract_packages(contents: &str) -> Result<BTreeMap<String, CargoInstallOptio
                 .expect("Won't fail")
                 .as_bool()
                 .expect("Won't fail");
+
+            let features = value
+                .as_object()
+                .expect("Won't fail")
+                .get("features")
+                .expect("Won't fail")
+                .as_array()
+                .expect("Won't fail")
+                .iter()
+                .map(|value| value.as_str().expect("Won't fail").to_string())
+                .collect();
+
             (
                 name.to_string(),
                 CargoInstallOptions {
                     git: git_repo.split_once('#').map(|(repo, _)| repo.to_string()),
                     all_features,
                     no_default_features,
+                    features,
                 },
             )
         })
