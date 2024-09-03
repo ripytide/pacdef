@@ -62,7 +62,10 @@ impl Arch {
             [self.command, "--sync"]
                 .into_iter()
                 .chain(Some("--no_confirm").filter(|_| no_confirm))
-                .chain(packages.keys().map(String::as_str)),
+                .chain(packages.keys().map(String::as_str))
+                .chain(packages.values().flat_map(|dependencies| {
+                    dependencies.optional_deps.iter().map(String::as_str)
+                })),
         )
     }
 
