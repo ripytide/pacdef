@@ -3,20 +3,21 @@ use anyhow::{anyhow, Context, Result};
 use strum::IntoEnumIterator;
 use walkdir::{DirEntry, WalkDir};
 
-use std::{
-    collections::{BTreeMap, BTreeSet},
-    fs::read_to_string,
-    path::Path,
-};
+use std::{collections::BTreeMap, fs::read_to_string, path::Path};
 
 #[derive(Debug, Default, derive_more::Deref, derive_more::DerefMut)]
 pub struct Groups(BTreeMap<String, InstallOptions>);
 
-pub type InstallOptions = BTreeSet<AnyInstallOptions>;
-
 impl Groups {
     pub fn to_install_options(&self) -> InstallOptions {
-        self.0.values().flatten().cloned().collect()
+        self.0
+            .values()
+            .flat_map(|x| x.iter())
+            .map(|(x, y)| (x.clone(), y.clone()))
+            .collect()
+    }
+    pub fn to_package_ids(&self) -> PackageIds {
+        self.0.values().flat_map(|x| x.keys()).cloned().collect()
     }
 
     pub fn load(group_dir: &Path) -> Result<Self> {
