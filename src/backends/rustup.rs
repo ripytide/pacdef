@@ -3,49 +3,38 @@ use crate::cmd::run_args;
 use crate::cmd::run_args_for_stdout;
 use crate::prelude::*;
 use anyhow::Result;
-use serde::{Deserialize, Serialize};
+use itertools::Itertools;
+use serde::Deserialize;
+use serde::Serialize;
 use std::collections::BTreeMap;
 
 #[derive(Debug, Copy, Clone, Default, PartialEq, Eq, PartialOrd, Ord, derive_more::Display)]
 pub struct Rustup;
 
-#[derive(
-    Debug, Clone, PartialEq, Eq, PartialOrd, Ord, derive_more::Display, Serialize, Deserialize,
-)]
-pub enum RustupPackageId {
-    Toolchain(String),
-    /// Toolchain, Component
-    #[display(fmt = "{}/{}", _0, _1)]
-    Component(String, String),
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct RustupQueryInfo {
+    pub components: Vec<String>,
 }
 
-// impl TryFrom<String> for RustupPackageId {
-//     type Error = Error;
-//     fn try_from(value: String) -> std::prelude::v1::Result<Self, Self::Error> {
-//         match value.split_once('/') {
-//             Some((package_type, name)) => match package_type {
-//                 "toolchain" => Ok(Self::Toolchain(name.to_string())),
-//                 "component" => name
-//                     .split_once('/')
-//                     .map(|(toolchain, name)| {
-//                         Self::Component(toolchain.to_string(), name.to_string())
-//                     })
-//                     .ok_or(anyhow!("Invalid package name")),
-//                 _ => bail!("Invalid package name"),
-//             },
-//             None => bail!("Invalid package name"),
-//         }
-//     }
-// }
+#[derive(Debug, Clone, Default, Deserialize, Serialize)]
+pub struct RustupInstallOptions {
+    pub components: Vec<String>,
+}
+
+#[derive(Debug, Clone, Default, Deserialize, Serialize)]
+pub struct RustupModificationOptions {
+    pub add_components: Vec<String>,
+    pub remove_components: Vec<String>,
+}
 
 impl Backend for Rustup {
-    type PackageId = RustupPackageId;
-    type QueryInfo = ();
-    type InstallOptions = ();
-    type Modification = ();
+    type PackageId = String;
+    type QueryInfo = RustupQueryInfo;
+    type InstallOptions = RustupInstallOptions;
+    type ModificationOptions = RustupModificationOptions;
     type RemoveOptions = ();
 
-    fn query_installed_packages(&self, _: &Config) -> Result<BTreeMap<Self::PackageId, Self::QueryInfo>> {
+    fn query_installed_packages(_: &Config) -> Result<BTreeMap<Self::PackageId, Self::QueryInfo>> {
         if !command_found("rustup") {
             return Ok(BTreeMap::new());
         }
@@ -61,9 +50,7 @@ impl Backend for Rustup {
         });
 
         for toolchain in toolchains {
-            packages.insert(RustupPackageId::Toolchain(toolchain.clone()), ());
-
-            let components_stdpout = run_args_for_stdout([
+            let components_stdout = run_args_for_stdout([
                 "rustup",
                 "component",
                 "list",
@@ -72,38 +59,37 @@ impl Backend for Rustup {
                 toolchain.as_str(),
             ])?;
 
-            for component in components_stdpout.lines() {
-                packages.insert(
-                    RustupPackageId::Component(component.to_string(), toolchain.to_string()),
-                    (),
-                );
-            }
+            packages.insert(
+                toolchain,
+                RustupQueryInfo {
+                    components: components_stdout.lines().map(|x| x.to_string()).collect(),
+                },
+            );
         }
 
         Ok(packages)
     }
 
     fn install_packages(
-        &self,
         packages: &BTreeMap<Self::PackageId, Self::InstallOptions>,
         _: bool,
         _: &Config,
     ) -> Result<()> {
-        for package_id in packages.keys() {
-            match package_id {
-                RustupPackageId::Toolchain(toolchain) => {
-                    run_args(["rustup", "toolchain", "install", toolchain.as_str()])?;
-                }
-                RustupPackageId::Component(toolchain, component) => {
-                    run_args([
+        for (toolchain, rustup_install_options) in packages.iter() {
+            run_args(["rustup", "toolchain", "install", toolchain.as_str()])?;
+
+            if !rustup_install_options.components.is_empty() {
+                run_args(
+                    [
                         "rustup",
                         "component",
                         "add",
-                        component.as_str(),
                         "--toolchain",
                         toolchain.as_str(),
-                    ])?;
-                }
+                    ]
+                    .into_iter()
+                    .chain(rustup_install_options.components.iter().map(|x| x.as_str())),
+                )?;
             }
         }
 
@@ -111,35 +97,67 @@ impl Backend for Rustup {
     }
 
     fn modify_packages(
-        &self,
-        _: &BTreeMap<Self::PackageId, Self::Modification>,
+        packages: &BTreeMap<Self::PackageId, Self::ModificationOptions>,
         _: &Config,
     ) -> Result<()> {
-        unimplemented!()
+        for (toolchain, rustup_modification_options) in packages.iter() {
+            if !rustup_modification_options
+                .add_components
+                .iter()
+                .chain(rustup_modification_options.remove_components.iter())
+                .all_unique()
+            {
+                log::warn!("component in both add_components and remove_components for the {toolchain} toolchain modification")
+            }
+
+            if !rustup_modification_options.remove_components.is_empty() {
+                run_args(
+                    [
+                        "rustup",
+                        "component",
+                        "remove",
+                        "--toolchain",
+                        toolchain.as_str(),
+                    ]
+                    .into_iter()
+                    .chain(
+                        rustup_modification_options
+                            .remove_components
+                            .iter()
+                            .map(|x| x.as_str()),
+                    ),
+                )?;
+            }
+            if !rustup_modification_options.add_components.is_empty() {
+                run_args(
+                    [
+                        "rustup",
+                        "component",
+                        "add",
+                        "--toolchain",
+                        toolchain.as_str(),
+                    ]
+                    .into_iter()
+                    .chain(
+                        rustup_modification_options
+                            .add_components
+                            .iter()
+                            .map(|x| x.as_str()),
+                    ),
+                )?;
+            }
+        }
+
+        Ok(())
     }
 
     fn remove_packages(
-        &self,
         packages: &BTreeMap<Self::PackageId, Self::RemoveOptions>,
         _: bool,
         _: &Config,
     ) -> Result<()> {
-        for package_id in packages.keys() {
-            match package_id {
-                RustupPackageId::Toolchain(toolchain) => {
-                    run_args(["rustup", "toolchain", "uninstall", toolchain.as_str()])?;
-                }
-                RustupPackageId::Component(toolchain, component) => {
-                    run_args([
-                        "rustup",
-                        "component",
-                        "remove",
-                        component.as_str(),
-                        "--toolchain",
-                        toolchain.as_str(),
-                    ])?;
-                }
-            }
+        for toolchain in packages.keys() {
+            run_args(["rustup", "toolchain", "remove", toolchain.as_str()])?;
         }
 
         Ok(())

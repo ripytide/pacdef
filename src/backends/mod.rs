@@ -1,3 +1,4 @@
+pub mod all;
 pub mod apt;
 pub mod arch;
 pub mod cargo;
@@ -10,9 +11,8 @@ pub mod pipx;
 pub mod rustup;
 pub mod xbps;
 pub mod yay;
-pub mod all;
 
-use std::collections::{BTreeMap, BTreeSet};
+use std::collections::BTreeMap;
 
 use crate::prelude::*;
 use anyhow::Result;
@@ -28,29 +28,25 @@ pub trait Backend {
     type PackageId;
     type QueryInfo;
     type InstallOptions;
-    type Modification;
+    type ModificationOptions;
     type RemoveOptions;
 
     fn query_installed_packages(
-        &self,
         config: &Config,
     ) -> Result<BTreeMap<Self::PackageId, Self::QueryInfo>>;
 
     fn install_packages(
-        &self,
         packages: &BTreeMap<Self::PackageId, Self::InstallOptions>,
         no_confirm: bool,
         config: &Config,
     ) -> Result<()>;
 
     fn modify_packages(
-        &self,
-        packages: &BTreeMap<Self::PackageId, Self::Modification>,
+        packages: &BTreeMap<Self::PackageId, Self::ModificationOptions>,
         config: &Config,
     ) -> Result<()>;
 
     fn remove_packages(
-        &self,
         packages: &BTreeMap<Self::PackageId, Self::RemoveOptions>,
         no_confirm: bool,
         config: &Config,

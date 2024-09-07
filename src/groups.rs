@@ -1,6 +1,6 @@
 use crate::prelude::*;
 use anyhow::{anyhow, Context, Result};
-use strum::IntoEnumIterator;
+use toml::{Table, Value};
 use walkdir::{DirEntry, WalkDir};
 
 use std::{collections::BTreeMap, fs::read_to_string, path::Path};
@@ -10,14 +10,16 @@ pub struct Groups(BTreeMap<String, InstallOptions>);
 
 impl Groups {
     pub fn to_install_options(&self) -> InstallOptions {
-        self.0
-            .values()
-            .flat_map(|x| x.iter())
-            .map(|(x, y)| (x.clone(), y.clone()))
-            .collect()
+        let mut install_options = InstallOptions::default();
+
+        for x in self.0.values() {
+            install_options.append(&mut x.clone())
+        }
+
+        install_options
     }
     pub fn to_package_ids(&self) -> PackageIds {
-        self.0.values().flat_map(|x| x.keys()).cloned().collect()
+        self.to_install_options().to_package_ids()
     }
 
     pub fn load(group_dir: &Path) -> Result<Self> {
@@ -26,7 +28,7 @@ impl Groups {
         let group_dir = group_dir.join("groups/");
         if !group_dir.is_dir() {
             return Err(anyhow!(
-                "The groups directory was not found in the pacdef config folder, please create it"
+                "the groups directory was not found in the pacdef config folder, please create it"
             ));
         }
 
@@ -40,12 +42,12 @@ impl Groups {
                 .path()
                 .strip_prefix(&group_dir)?
                 .to_str()
-                .ok_or(anyhow!("Will not fail on Linux"))?
+                .ok_or(anyhow!("will not fail on linux"))?
                 .to_string();
 
             log::info!("parsing group file: {group_name}@{group_file:?}");
 
-            let file_contents = read_to_string(group_file.path()).context("Reading group file")?;
+            let file_contents = read_to_string(group_file.path()).context("reading group file")?;
 
             let install_options: InstallOptions =
                 parse_group_file(&group_name, &file_contents).context("parsing group file")?;
@@ -57,30 +59,49 @@ impl Groups {
 }
 
 fn parse_group_file(group_name: &str, contents: &str) -> Result<InstallOptions> {
-    let mut all_install_options = InstallOptions::default();
+    let mut install_options = InstallOptions::default();
 
-    let toml = toml::from_str::<toml::Table>(contents)?;
+    let toml = toml::from_str::<Table>(contents)?;
 
     for (key, value) in toml.iter() {
-        match AnyBackend::iter().find(|x| x.to_string().to_lowercase() == key.to_lowercase()) {
-            Some(backend) => {
-                let install_options = value.as_array().context(
-                    anyhow!("the {backend} backend in the {group_name} group toml file has a non-array value")
-                )?;
-
-                // let packages = packages.into_iter().map(|x|)
-            }
-            None => {
-                log::warn!("unrecognised backend: {key} in group file: {group_name}");
-            }
-        }
+        install_options.append(&mut parse_toml_key_value(group_name, key, value)?);
     }
 
-    for backend in AnyBackend::iter() {
-        let backend_name = backend.to_string();
+    Ok(install_options)
+}
 
-        if let Some(value) = toml.get(&backend_name) {}
+fn parse_toml_key_value(group_name: &str, key: &str, value: &Value) -> Result<InstallOptions> {
+    macro_rules! x {
+        ($($backend:ident),*) => {
+            $(
+                if key.to_lowercase() == $backend.to_string().to_lowercase() {
+                    let mut install_options = InstallOptions::default();
+
+                    let packages = value.as_array().context(
+                        anyhow!("the {} backend in the {group_name} group toml file has a non-array value", $backend)
+                    )?;
+
+                    for package in packages {
+                        match package {
+                            Value::String(x) => {
+                                install_options.$backend.insert(x.clone(), <$backend as Backend>::InstallOptions::default());
+                            },
+                            Value::Table(x) => {
+                                install_options.$backend.insert(toml::from_str(&x.to_string()).context("parsing package install options")?, <$backend as Backend>::InstallOptions::default());
+                            },
+
+                            _ => return Err(anyhow!("the {} backend in the {group_name} group toml file has a package which is neither a string nor a table", $backend))
+                        }
+                    }
+
+                    return Ok(install_options);
+                }
+            )*
+        };
     }
+    apply_public_backends!(x);
 
-    Ok(all_install_options)
+    log::warn!("unrecognised backend: {key} in group file: {group_name}");
+
+    Ok(InstallOptions::default())
 }

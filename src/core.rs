@@ -1,8 +1,5 @@
-use std::collections::BTreeMap;
-
 use anyhow::{Context, Result};
 use dialoguer::Confirm;
-use itertools::Itertools;
 
 use crate::prelude::*;
 use crate::review::review;
@@ -36,10 +33,7 @@ impl CleanPackageAction {
             return Ok(());
         }
 
-        println!(
-            "would remove the following packages:\n\n{}",
-            format_package_ids(&unmanaged)
-        );
+        println!("would remove the following packages:\n\n{unmanaged}");
 
         if self.no_confirm {
             log::info!("proceeding without confirmation");
@@ -53,16 +47,9 @@ impl CleanPackageAction {
             return Ok(());
         }
 
-        let packages_to_remove = unmanaged
-            .into_iter()
-            .map(|x| {
-                let default = x.default_remove_options();
-
-                (x, default)
-            })
-            .collect();
-
-        remove(&packages_to_remove, self.no_confirm, config)
+        unmanaged
+            .to_remove_options()
+            .remove_packages(self.no_confirm, config)
     }
 }
 
@@ -81,10 +68,7 @@ impl SyncPackageAction {
             return Ok(());
         }
 
-        println!(
-            "would install the following packages:\n\n{}",
-            format_package_ids(&missing)
-        );
+        println!("would install the following packages:\n\n{missing}");
 
         if self.no_confirm {
             log::info!("proceeding without confirmation");
@@ -98,16 +82,9 @@ impl SyncPackageAction {
             return Ok(());
         }
 
-        let packages_to_install: InstallOptions = missing
-            .into_iter()
-            .map(|x| {
-                let default = x.default_install_options();
-
-                (x, default)
-            })
-            .collect();
-
-        install(&packages_to_install, config)
+        missing
+            .to_install_options()
+            .install_packages(self.no_confirm, config)
     }
 }
 
@@ -118,7 +95,7 @@ impl UnmanagedPackageAction {
         if unmanaged.is_empty() {
             println!("no unmanaged packages");
         } else {
-            println!("unmanaged packages:\n\n{}", format_package_ids(&unmanaged));
+            println!("unmanaged packages:\n\n{unmanaged}");
         }
 
         Ok(())
@@ -126,32 +103,12 @@ impl UnmanagedPackageAction {
 }
 
 fn unmanaged(groups: &Groups, config: &Config) -> Result<PackageIds> {
-    Ok(query_installed(config)?
-        .difference(&groups.to_package_ids())
-        .cloned()
-        .collect())
+    Ok(QueryInfos::query_installed_packages(config)?
+        .to_package_ids()
+        .difference(&groups.to_package_ids()))
 }
 fn missing(groups: &Groups, config: &Config) -> Result<PackageIds> {
     Ok(groups
         .to_package_ids()
-        .difference(&query_installed(config)?)
-        .cloned()
-        .collect())
-}
-fn format_package_ids(package_ids: &PackageIds) -> String {
-    let groups = package_ids
-        .iter()
-        .group_by(|x| PackageIdDiscriminants::from(*x));
-
-    Itertools::intersperse(
-        groups.into_iter().map(|(discriminant, package_ids)| {
-            format!(
-                "{discriminant}:\n{}",
-                Itertools::intersperse(package_ids.map(|x| x.to_string()), "\n,".to_string())
-                    .collect::<String>()
-            )
-        }),
-        "\n".to_string(),
-    )
-    .collect()
+        .difference(&QueryInfos::query_installed_packages(config)?.to_package_ids()))
 }

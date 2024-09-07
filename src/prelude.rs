@@ -1,10 +1,10 @@
 pub use crate::backends::all::{
-    InstallOptions, Modifications, PackageIds, QueryInfos, RemoveOptions,
+    InstallOptions, ModificationOptions, PackageIds, QueryInfos, RemoveOptions,
 };
 pub(crate) use crate::backends::apply_public_backends;
-pub use crate::backends::apt::{Apt, AptModification, AptQueryInfo};
+pub use crate::backends::apt::{Apt, AptModificationOptions, AptQueryInfo};
 pub use crate::backends::arch::{
-    Arch, ArchInstallOptions, ArchModification, ArchPackageId, ArchQueryInfo, ArchRemoveOptions,
+    Arch, ArchInstallOptions, ArchModificationOptions, ArchPackageId, ArchQueryInfo, ArchRemoveOptions,
 };
 pub use crate::backends::cargo::Cargo;
 pub use crate::backends::dnf::{Dnf, DnfInstallOptions, DnfQueryInfo};
@@ -13,8 +13,8 @@ pub use crate::backends::pacman::Pacman;
 pub use crate::backends::paru::Paru;
 pub use crate::backends::pip::{Pip, PipQueryInfo};
 pub use crate::backends::pipx::Pipx;
-pub use crate::backends::rustup::{Rustup, RustupPackageId};
-pub use crate::backends::xbps::{Xbps, XbpsModification};
+pub use crate::backends::rustup::{Rustup, RustupQueryInfo, RustupInstallOptions, RustupModificationOptions};
+pub use crate::backends::xbps::{Xbps, XbpsModificationOptions};
 pub use crate::backends::yay::Yay;
 pub use crate::backends::Backend;
 pub use crate::cli::CleanPackageAction;

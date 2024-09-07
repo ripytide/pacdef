@@ -11,7 +11,7 @@ use crate::prelude::*;
 pub struct Xbps;
 
 #[derive(Debug, Clone)]
-pub struct XbpsModification {
+pub struct XbpsModificationOptions {
     make_implicit: bool,
 }
 
@@ -19,11 +19,10 @@ impl Backend for Xbps {
     type PackageId = String;
     type QueryInfo = ();
     type InstallOptions = ();
-    type Modification = XbpsModification;
+    type ModificationOptions = XbpsModificationOptions;
     type RemoveOptions = ();
 
     fn query_installed_packages(
-        &self,
         _: &Config,
     ) -> Result<std::collections::BTreeMap<Self::PackageId, Self::QueryInfo>> {
         if !command_found("xbps-query") {
@@ -52,7 +51,6 @@ impl Backend for Xbps {
     }
 
     fn install_packages(
-        &self,
         packages: &std::collections::BTreeMap<Self::PackageId, Self::InstallOptions>,
         no_confirm: bool,
         _: &Config,
@@ -66,7 +64,6 @@ impl Backend for Xbps {
     }
 
     fn remove_packages(
-        &self,
         packages: &std::collections::BTreeMap<Self::PackageId, Self::RemoveOptions>,
         no_confirm: bool,
         _: &Config,
@@ -80,8 +77,7 @@ impl Backend for Xbps {
     }
 
     fn modify_packages(
-        &self,
-        packages: &std::collections::BTreeMap<Self::PackageId, Self::Modification>,
+        packages: &std::collections::BTreeMap<Self::PackageId, Self::ModificationOptions>,
         _: &Config,
     ) -> Result<()> {
         run_args(

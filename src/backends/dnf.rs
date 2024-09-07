@@ -23,10 +23,10 @@ impl Backend for Dnf {
     type PackageId = String;
     type QueryInfo = DnfQueryInfo;
     type InstallOptions = DnfInstallOptions;
-    type Modification = ();
+    type ModificationOptions = ();
     type RemoveOptions = ();
 
-    fn query_installed_packages(&self,_: &Config) -> Result<BTreeMap<Self::PackageId, Self::QueryInfo>> {
+    fn query_installed_packages(_: &Config) -> Result<BTreeMap<Self::PackageId, Self::QueryInfo>> {
         if !command_found("dnf") {
             return Ok(BTreeMap::new());
         }
@@ -56,7 +56,6 @@ impl Backend for Dnf {
     }
 
     fn install_packages(
-        &self,
         packages: &BTreeMap<Self::PackageId, Self::InstallOptions>,
         no_confirm: bool,
         _: &Config,
@@ -79,15 +78,13 @@ impl Backend for Dnf {
     }
 
     fn modify_packages(
-        &self,
-        _: &BTreeMap<Self::PackageId, Self::Modification>,
+        _: &BTreeMap<Self::PackageId, Self::ModificationOptions>,
         _: &Config,
     ) -> Result<()> {
         unimplemented!()
     }
 
     fn remove_packages(
-        &self,
         packages: &BTreeMap<Self::PackageId, Self::RemoveOptions>,
         no_confirm: bool,
         _: &Config,

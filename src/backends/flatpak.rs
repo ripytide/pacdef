@@ -18,10 +18,10 @@ impl Backend for Flatpak {
     type PackageId = String;
     type QueryInfo = FlatpakQueryInfo;
     type InstallOptions = ();
-    type Modification = ();
+    type ModificationOptions = ();
     type RemoveOptions = ();
 
-    fn query_installed_packages(&self, _: &Config) -> Result<BTreeMap<Self::PackageId, Self::QueryInfo>> {
+    fn query_installed_packages(_: &Config) -> Result<BTreeMap<Self::PackageId, Self::QueryInfo>> {
         if !command_found("flatpak") {
             return Ok(BTreeMap::new());
         }
@@ -111,7 +111,6 @@ impl Backend for Flatpak {
     }
 
     fn install_packages(
-        &self,
         packages: &BTreeMap<Self::PackageId, Self::InstallOptions>,
         no_confirm: bool,
         config: &Config,
@@ -133,15 +132,13 @@ impl Backend for Flatpak {
     }
 
     fn modify_packages(
-        &self,
-        _: &BTreeMap<Self::PackageId, Self::Modification>,
+        _: &BTreeMap<Self::PackageId, Self::ModificationOptions>,
         _: &Config,
     ) -> Result<()> {
         unimplemented!()
     }
 
     fn remove_packages(
-        &self,
         packages: &BTreeMap<Self::PackageId, Self::RemoveOptions>,
         no_confirm: bool,
         config: &Config,

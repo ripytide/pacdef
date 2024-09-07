@@ -21,20 +21,9 @@ macro_rules! is_empty {
         }
     };
 }
-macro_rules! difference {
+macro_rules! to_package_ids {
     ($($backend:ident),*) => {
-        pub fn difference(&self, other: &Self) -> Self {
-            Self {
-                $(
-                    $backend: self.$backend.difference(&other.$backend).cloned().collect(),
-                )*
-            }
-        }
-    };
-}
-macro_rules! to_packages_ids {
-    ($($backend:ident),*) => {
-        pub fn to_packages_ids(&self) -> PackageIds {
+        pub fn to_package_ids(&self) -> PackageIds {
             PackageIds {
                 $(
                     $backend: self.$backend.keys().cloned().collect(),
@@ -47,15 +36,23 @@ macro_rules! to_packages_ids {
 macro_rules! x {
     ($($backend:ident),*) => {
         #[derive(Debug, Clone, Default)]
+        #[allow(non_snake_case)]
         pub struct PackageIds {
             $(
-                $backend: BTreeSet<<$backend as Backend>::PackageId>,
+                pub $backend: BTreeSet<<$backend as Backend>::PackageId>,
             )*
         }
         impl PackageIds {
             append!($($backend),*);
             is_empty!($($backend),*);
-            difference!($($backend),*);
+
+            pub fn difference(&self, other: &Self) -> Self {
+                Self {
+                    $(
+                        $backend: self.$backend.difference(&other.$backend).cloned().collect(),
+                    )*
+                }
+            }
 
             pub fn to_install_options(self) -> InstallOptions {
                 InstallOptions {
@@ -72,41 +69,56 @@ macro_rules! x {
                 }
             }
         }
+        impl core::fmt::Display for PackageIds {
+            fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+                let lists = [$(
+                    format!("[{}]\n{}",
+                        $backend,
+                        itertools::Itertools::intersperse(self.$backend.iter().map(ToString::to_string), "\n".to_string()).collect::<String>()),
+                )*];
+
+                write!(f, "{}",
+                    itertools::Itertools::intersperse(lists.into_iter(), "\n".to_string()).collect::<String>()
+                )
+            }
+        }
 
         #[derive(Debug, Clone, Default)]
+        #[allow(non_snake_case)]
         pub struct QueryInfos {
             $(
-                $backend: BTreeMap<<$backend as Backend>::PackageId, <$backend as Backend>::QueryInfo>,
+                pub $backend: BTreeMap<<$backend as Backend>::PackageId, <$backend as Backend>::QueryInfo>,
             )*
         }
         impl QueryInfos {
             append!($($backend),*);
             is_empty!($($backend),*);
-            to_packages_ids!($($backend),*);
+            to_package_ids!($($backend),*);
 
             pub fn query_installed_packages(config: &Config) -> Result<Self> {
                 Ok(Self {
                     $(
-                        $backend: $backend.query_installed_packages(config)?,
+                        $backend: $backend::query_installed_packages(config)?,
                     )*
                 })
             }
         }
 
         #[derive(Debug, Clone, Default)]
+        #[allow(non_snake_case)]
         pub struct InstallOptions {
             $(
-                $backend: BTreeMap<<$backend as Backend>::PackageId, <$backend as Backend>::InstallOptions>,
+                pub $backend: BTreeMap<<$backend as Backend>::PackageId, <$backend as Backend>::InstallOptions>,
             )*
         }
         impl InstallOptions {
             append!($($backend),*);
             is_empty!($($backend),*);
-            to_packages_ids!($($backend),*);
+            to_package_ids!($($backend),*);
 
             pub fn install_packages(self, no_confirm: bool, config: &Config) -> Result<()> {
                 $(
-                    $backend.install_packages(&self.$backend, no_confirm, config)?;
+                    $backend::install_packages(&self.$backend, no_confirm, config)?;
                 )*
 
                 Ok(())
@@ -114,19 +126,20 @@ macro_rules! x {
         }
 
         #[derive(Debug, Clone, Default)]
-        pub struct Modifications {
+        #[allow(non_snake_case)]
+        pub struct ModificationOptions {
             $(
-                $backend: BTreeMap<<$backend as Backend>::PackageId, <$backend as Backend>::Modification>,
+                pub $backend: BTreeMap<<$backend as Backend>::PackageId, <$backend as Backend>::ModificationOptions>,
             )*
         }
-        impl Modifications {
+        impl ModificationOptions {
             append!($($backend),*);
             is_empty!($($backend),*);
-            to_packages_ids!($($backend),*);
+            to_package_ids!($($backend),*);
 
             pub fn modify_packages(self, config: &Config) -> Result<()> {
                 $(
-                    $backend.modify_packages(&self.$backend, config)?;
+                    $backend::modify_packages(&self.$backend, config)?;
                 )*
 
                 Ok(())
@@ -134,19 +147,20 @@ macro_rules! x {
         }
 
         #[derive(Debug, Clone, Default)]
+        #[allow(non_snake_case)]
         pub struct RemoveOptions {
             $(
-                $backend: BTreeMap<<$backend as Backend>::PackageId, <$backend as Backend>::RemoveOptions>,
+                pub $backend: BTreeMap<<$backend as Backend>::PackageId, <$backend as Backend>::RemoveOptions>,
             )*
         }
         impl RemoveOptions {
             append!($($backend),*);
             is_empty!($($backend),*);
-            to_packages_ids!($($backend),*);
+            to_package_ids!($($backend),*);
 
             pub fn remove_packages(self, no_confirm: bool, config: &Config) -> Result<()> {
                 $(
-                    $backend.remove_packages(&self.$backend, no_confirm, config)?;
+                    $backend::remove_packages(&self.$backend, no_confirm, config)?;
                 )*
 
                 Ok(())
@@ -154,5 +168,4 @@ macro_rules! x {
         }
     };
 }
-#[allow(non_snake_case)]
 apply_public_backends!(x);

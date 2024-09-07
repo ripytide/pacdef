@@ -18,7 +18,7 @@ pub struct ArchQueryInfo {
 }
 
 #[derive(Debug, Clone)]
-pub struct ArchModification {
+pub struct ArchModificationOptions {
     pub make_implicit: bool,
 }
 
@@ -72,7 +72,7 @@ impl Arch {
 
     pub fn modify_packages(
         &self,
-        packages: &BTreeMap<ArchPackageId, ArchModification>,
+        packages: &BTreeMap<ArchPackageId, ArchModificationOptions>,
         _: &Config,
     ) -> Result<()> {
         run_args(
