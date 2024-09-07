@@ -1,8 +1,10 @@
 #![doc = include_str!("../README.md")]
 
-mod backend;
+mod backends;
 mod cli;
 mod cmd;
+//TODO Rename Modification
+//TODO remove &self from backend
 mod config;
 mod core;
 mod groups;

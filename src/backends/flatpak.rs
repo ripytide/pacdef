@@ -16,10 +16,10 @@ pub struct FlatpakQueryInfo {
 
 impl Backend for Flatpak {
     type PackageId = String;
-    type RemoveOptions = ();
-    type InstallOptions = ();
     type QueryInfo = FlatpakQueryInfo;
+    type InstallOptions = ();
     type Modification = ();
+    type RemoveOptions = ();
 
     fn query_installed_packages(&self, _: &Config) -> Result<BTreeMap<Self::PackageId, Self::QueryInfo>> {
         if !command_found("flatpak") {

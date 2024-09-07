@@ -11,23 +11,41 @@ use crate::cmd::run_args_for_stdout;
 use crate::prelude::*;
 
 #[derive(Debug, Copy, Clone, Default, PartialEq, Eq, PartialOrd, Ord, derive_more::Display)]
-pub struct Pipx;
+pub struct Pip;
 
-impl Backend for Pipx {
-    type PackageId = String;
-    type RemoveOptions = ();
+#[derive(Debug, Clone)]
+pub struct PipQueryInfo {
+    pub explicit: bool,
+}
+
+impl Backend for Pip {
+    type PackageId =String;
+    type QueryInfo = PipQueryInfo;
     type InstallOptions = ();
-    type QueryInfo = ();
     type Modification = ();
+    type RemoveOptions = ();
 
     fn query_installed_packages(&self,_: &Config) -> Result<BTreeMap<Self::PackageId, Self::QueryInfo>> {
-        if !command_found("pipx") {
+        if !command_found("pip") {
             return Ok(BTreeMap::new());
         }
 
-        let names = extract_package_names(run_args_for_stdout(["pipx", "list", "--json"])?)?;
+        let all = extract_package_names(run_args_for_stdout(["pip", "list", "--format", "json"])?)?;
+        let implicit = extract_package_names(run_args_for_stdout([
+            "pip",
+            "list",
+            "--format",
+            "json",
+            "--not-required",
+        ])?)?;
 
-        Ok(names.into_iter().map(|x| (x, ())).collect())
+        let explicit = all.difference(&implicit);
+
+        Ok(implicit
+            .iter()
+            .map(|x| (x.to_string(), PipQueryInfo { explicit: false }))
+            .chain(explicit.map(|x| (x.to_string(), PipQueryInfo { explicit: true })))
+            .collect())
     }
 
     fn install_packages(
@@ -37,7 +55,7 @@ impl Backend for Pipx {
         _: &Config,
     ) -> Result<()> {
         run_args(
-            ["pipx", "install"]
+            ["pip", "install"]
                 .into_iter()
                 .chain(packages.keys().map(String::as_str)),
         )
@@ -58,7 +76,7 @@ impl Backend for Pipx {
         _: &Config,
     ) -> Result<()> {
         run_args(
-            ["pipx", "uninstall"]
+            ["pip", "uninstall"]
                 .into_iter()
                 .chain(packages.keys().map(String::as_str)),
         )
@@ -68,12 +86,11 @@ impl Backend for Pipx {
 fn extract_package_names(stdout: String) -> Result<BTreeSet<String>> {
     let value: Value = serde_json::from_str(&stdout)?;
 
-    let result = value["venvs"]
-        .as_object()
-        .context("getting inner json object")?
+    Ok(value
+        .as_array()
+        .context("getting inner json array")?
         .iter()
-        .map(|(name, _)| name.clone())
-        .collect();
-
-    Ok(result)
+        .map(|node| node["name"].as_str().expect("should always be a string"))
+        .map(String::from)
+        .collect())
 }

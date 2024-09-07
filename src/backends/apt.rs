@@ -21,10 +21,10 @@ pub struct AptModification {
 
 impl Backend for Apt {
     type PackageId = String;
-    type RemoveOptions = ();
-    type InstallOptions = ();
     type QueryInfo = AptQueryInfo;
+    type InstallOptions = ();
     type Modification = AptModification;
+    type RemoveOptions = ();
 
     fn query_installed_packages(
         &self,

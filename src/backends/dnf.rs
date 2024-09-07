@@ -21,10 +21,10 @@ pub struct DnfInstallOptions {
 
 impl Backend for Dnf {
     type PackageId = String;
-    type RemoveOptions = ();
-    type InstallOptions = DnfInstallOptions;
     type QueryInfo = DnfQueryInfo;
+    type InstallOptions = DnfInstallOptions;
     type Modification = ();
+    type RemoveOptions = ();
 
     fn query_installed_packages(&self,_: &Config) -> Result<BTreeMap<Self::PackageId, Self::QueryInfo>> {
         if !command_found("dnf") {

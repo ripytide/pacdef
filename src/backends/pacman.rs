@@ -10,10 +10,10 @@ impl Pacman {
 
 impl Backend for Pacman {
     type PackageId = ArchPackageId;
-    type InstallOptions = ArchInstallOptions;
-    type RemoveOptions = ArchRemoveOptions;
     type QueryInfo = ArchQueryInfo;
+    type InstallOptions = ArchInstallOptions;
     type Modification = ArchModification;
+    type RemoveOptions = ArchRemoveOptions;
 
     fn query_installed_packages(
         &self,

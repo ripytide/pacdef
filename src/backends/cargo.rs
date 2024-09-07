@@ -21,12 +21,12 @@ pub struct CargoInstallOptions {
 
 impl Backend for Cargo {
     type PackageId = String;
-    type RemoveOptions = ();
-    type InstallOptions = CargoInstallOptions;
     type QueryInfo = CargoInstallOptions;
+    type InstallOptions = CargoInstallOptions;
     type Modification = ();
+    type RemoveOptions = ();
 
-    fn query_installed_packages(&self,_: &Config) -> Result<BTreeMap<Self::PackageId, Self::QueryInfo>> {
+    fn query_installed_packages(&self, _: &Config) -> Result<BTreeMap<Self::PackageId, Self::QueryInfo>> {
         if !command_found("cargo") {
             return Ok(BTreeMap::new());
         }

@@ -98,7 +98,7 @@ impl SyncPackageAction {
             return Ok(());
         }
 
-        let packages_to_install: BTreeMap<AnyPackageId, AnyInstallOptions> = missing
+        let packages_to_install: InstallOptions = missing
             .into_iter()
             .map(|x| {
                 let default = x.default_install_options();
@@ -131,15 +131,6 @@ fn unmanaged(groups: &Groups, config: &Config) -> Result<PackageIds> {
         .cloned()
         .collect())
 }
-fn install(install_options: &InstallOptions, config: &Config) -> Result<()> {
-    todo!()
-}
-fn query_installed(config: &Config) -> Result<PackageIds> {
-    todo!()
-}
-fn remove(remove_options: &RemoveOptions, no_confirm: bool, config: &Config) -> Result<()> {
-    todo!()
-}
 fn missing(groups: &Groups, config: &Config) -> Result<PackageIds> {
     Ok(groups
         .to_package_ids()
@@ -150,7 +141,7 @@ fn missing(groups: &Groups, config: &Config) -> Result<PackageIds> {
 fn format_package_ids(package_ids: &PackageIds) -> String {
     let groups = package_ids
         .iter()
-        .group_by(|x| AnyPackageIdDiscriminants::from(*x));
+        .group_by(|x| PackageIdDiscriminants::from(*x));
 
     Itertools::intersperse(
         groups.into_iter().map(|(discriminant, package_ids)| {

@@ -1,6 +1,6 @@
 use crate::prelude::*;
 use anyhow::Result;
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 
 #[derive(Debug, Copy, Clone, Default, PartialEq, Eq, PartialOrd, Ord, derive_more::Display)]
 pub struct Yay;
@@ -10,10 +10,10 @@ impl Yay {
 
 impl Backend for Yay {
     type PackageId = ArchPackageId;
-    type InstallOptions = ArchInstallOptions;
-    type RemoveOptions = ArchRemoveOptions;
     type QueryInfo = ArchQueryInfo;
+    type InstallOptions = ArchInstallOptions;
     type Modification = ArchModification;
+    type RemoveOptions = ArchRemoveOptions;
 
     fn query_installed_packages(
         &self,

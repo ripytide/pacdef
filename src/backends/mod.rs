@@ -10,19 +10,26 @@ pub mod pipx;
 pub mod rustup;
 pub mod xbps;
 pub mod yay;
-pub mod any;
+pub mod all;
 
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 
 use crate::prelude::*;
 use anyhow::Result;
 
+macro_rules! apply_public_backends {
+    ($macro:ident) => {
+        $macro! { Apt, Cargo, Dnf, Flatpak, Pacman, Paru, Pip, Pipx, Rustup, Xbps, Yay }
+    };
+}
+pub(crate) use apply_public_backends;
+
 pub trait Backend {
     type PackageId;
-    type InstallOptions;
-    type RemoveOptions;
     type QueryInfo;
+    type InstallOptions;
     type Modification;
+    type RemoveOptions;
 
     fn query_installed_packages(
         &self,

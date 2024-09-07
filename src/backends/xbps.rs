@@ -17,10 +17,10 @@ pub struct XbpsModification {
 
 impl Backend for Xbps {
     type PackageId = String;
-    type RemoveOptions = ();
-    type InstallOptions = ();
     type QueryInfo = ();
+    type InstallOptions = ();
     type Modification = XbpsModification;
+    type RemoveOptions = ();
 
     fn query_installed_packages(
         &self,

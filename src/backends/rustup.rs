@@ -40,10 +40,10 @@ pub enum RustupPackageId {
 
 impl Backend for Rustup {
     type PackageId = RustupPackageId;
-    type RemoveOptions = ();
-    type InstallOptions = ();
     type QueryInfo = ();
+    type InstallOptions = ();
     type Modification = ();
+    type RemoveOptions = ();
 
     fn query_installed_packages(&self, _: &Config) -> Result<BTreeMap<Self::PackageId, Self::QueryInfo>> {
         if !command_found("rustup") {
