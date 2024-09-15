@@ -5,7 +5,7 @@ use anyhow::{bail, Context, Result};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
-use crate::cmd::{command_found, run_args};
+use crate::cmd::{command_found, run_command};
 use crate::prelude::*;
 
 #[derive(Debug, Copy, Clone, Default, PartialEq, Eq, PartialOrd, Ord, derive_more::Display)]
@@ -53,7 +53,7 @@ impl Backend for Cargo {
         _: &Config,
     ) -> Result<()> {
         for (package, options) in packages {
-            run_args(
+            run_command(
                 ["cargo", "install"]
                     .into_iter()
                     .chain(Some("--git").into_iter().filter(|_| options.git.is_some()))
@@ -92,7 +92,7 @@ impl Backend for Cargo {
         _: bool,
         _: &Config,
     ) -> Result<()> {
-        run_args(
+        run_command(
             ["cargo", "uninstall"]
                 .into_iter()
                 .chain(packages.keys().map(String::as_str)),

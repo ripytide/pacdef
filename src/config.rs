@@ -25,9 +25,7 @@ impl Config {
             return Err(anyhow!("config file not found at: {config_file_path:?}"));
         }
 
-        dbg!(toml::from_str(
-            &std::fs::read_to_string(config_file_path).context("reading config file")?
-        )
-        .context("parsing toml config"))
+        toml::from_str(&std::fs::read_to_string(config_file_path).context("reading config file")?)
+            .context("parsing toml config")
     }
 }

@@ -2,7 +2,7 @@ use anyhow::Result;
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 
-use crate::cmd::{command_found, run_args, run_args_for_stdout};
+use crate::cmd::{command_found, run_command, run_command_for_stdout};
 use crate::prelude::*;
 
 #[derive(Debug, Copy, Clone, Default, PartialEq, Eq, PartialOrd, Ord, derive_more::Display)]
@@ -39,8 +39,8 @@ impl Arch {
             return Ok(BTreeMap::new());
         }
 
-        let explicit = run_args_for_stdout(["pacman", "--query", "--explicit", "--quiet"])?;
-        let dependency = run_args_for_stdout(["pacman", "--query", "--deps", "--quiet"])?;
+        let explicit = run_command_for_stdout(["pacman", "--query", "--explicit", "--quiet"])?;
+        let dependency = run_command_for_stdout(["pacman", "--query", "--deps", "--quiet"])?;
 
         Ok(dependency
             .lines()
@@ -59,7 +59,7 @@ impl Arch {
         no_confirm: bool,
         _: &Config,
     ) -> Result<()> {
-        run_args(
+        run_command(
             [self.command, "--sync"]
                 .into_iter()
                 .chain(Some("--no_confirm").filter(|_| no_confirm))
@@ -75,7 +75,7 @@ impl Arch {
         packages: &BTreeMap<ArchPackageId, ArchModificationOptions>,
         _: &Config,
     ) -> Result<()> {
-        run_args(
+        run_command(
             [self.command, "--database", "--asdeps"].into_iter().chain(
                 packages
                     .iter()
@@ -91,7 +91,7 @@ impl Arch {
         no_confirm: bool,
         config: &Config,
     ) -> Result<()> {
-        run_args(
+        run_command(
             [self.command, "--remove", "--recursive"]
                 .into_iter()
                 .chain(config.aur_rm_args.iter().map(String::as_str))

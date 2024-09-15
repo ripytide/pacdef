@@ -1,6 +1,6 @@
 use crate::cmd::command_found;
-use crate::cmd::run_args;
-use crate::cmd::run_args_for_stdout;
+use crate::cmd::run_command;
+use crate::cmd::run_command_for_stdout;
 use crate::prelude::*;
 use anyhow::Result;
 use itertools::Itertools;
@@ -41,7 +41,7 @@ impl Backend for Rustup {
 
         let mut packages = BTreeMap::new();
 
-        let toolchains_stdout = run_args_for_stdout(["rustup", "toolchain", "list"])?;
+        let toolchains_stdout = run_command_for_stdout(["rustup", "toolchain", "list"])?;
         let toolchains = toolchains_stdout.lines().map(|x| {
             x.split(' ')
                 .next()
@@ -50,7 +50,7 @@ impl Backend for Rustup {
         });
 
         for toolchain in toolchains {
-            let components_stdout = run_args_for_stdout([
+            let components_stdout = run_command_for_stdout([
                 "rustup",
                 "component",
                 "list",
@@ -76,10 +76,10 @@ impl Backend for Rustup {
         _: &Config,
     ) -> Result<()> {
         for (toolchain, rustup_install_options) in packages.iter() {
-            run_args(["rustup", "toolchain", "install", toolchain.as_str()])?;
+            run_command(["rustup", "toolchain", "install", toolchain.as_str()])?;
 
             if !rustup_install_options.components.is_empty() {
-                run_args(
+                run_command(
                     [
                         "rustup",
                         "component",
@@ -111,7 +111,7 @@ impl Backend for Rustup {
             }
 
             if !rustup_modification_options.remove_components.is_empty() {
-                run_args(
+                run_command(
                     [
                         "rustup",
                         "component",
@@ -129,7 +129,7 @@ impl Backend for Rustup {
                 )?;
             }
             if !rustup_modification_options.add_components.is_empty() {
-                run_args(
+                run_command(
                     [
                         "rustup",
                         "component",
@@ -157,7 +157,7 @@ impl Backend for Rustup {
         _: &Config,
     ) -> Result<()> {
         for toolchain in packages.keys() {
-            run_args(["rustup", "toolchain", "remove", toolchain.as_str()])?;
+            run_command(["rustup", "toolchain", "remove", toolchain.as_str()])?;
         }
 
         Ok(())

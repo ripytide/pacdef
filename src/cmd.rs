@@ -1,6 +1,6 @@
 use std::process::Command;
 
-use anyhow::Result;
+use anyhow::{anyhow, Result};
 
 pub fn command_found(command: &str) -> bool {
     if let Ok(path) = std::env::var("PATH") {
@@ -14,38 +14,43 @@ pub fn command_found(command: &str) -> bool {
     false
 }
 
-pub fn run_args_for_stdout<I, S>(args: I) -> Result<String>
+pub fn run_command_for_stdout<I, S>(command: I) -> Result<String>
 where
-    S: std::convert::AsRef<std::ffi::OsStr>,
+    S: Into<String>,
     I: IntoIterator<Item = S>,
 {
-    let mut args = args.into_iter();
     let we_are_root = {
         let uid = unsafe { libc::geteuid() };
         uid == 0
     };
 
-    let mut cmd = if we_are_root {
-        Command::new("sudo")
-    } else {
-        Command::new(args.next().expect("cannot run an empty set of args"))
-    };
+    let args: Vec<String> = command.into_iter().map(Into::into).collect::<Vec<_>>();
 
-    cmd.args(args);
+    if args.is_empty() {
+        return Err(anyhow!("cannot run an empty command"));
+    }
 
-    let output = cmd.output()?;
+    let args = Some("sudo".to_string())
+        .filter(|_| !we_are_root)
+        .into_iter()
+        .chain(args)
+        .collect::<Vec<_>>();
+
+    let (command, args) = args.split_first().unwrap();
+
+    let output = Command::new(command).args(args).output()?;
 
     if output.status.success() {
         Ok(String::from_utf8(output.stdout)?)
     } else {
-        Err(anyhow::anyhow!("command failed"))
+        Err(anyhow::anyhow!("command failed: {:?}", args))
     }
 }
 
-pub fn run_args<I, S>(args: I) -> Result<()>
+pub fn run_command<I, S>(command: I) -> Result<()>
 where
-    S: std::convert::AsRef<std::ffi::OsStr>,
+    S: Into<String>,
     I: IntoIterator<Item = S>,
 {
-    run_args_for_stdout(args).map(|_| ())
+    run_command_for_stdout(command).map(|_| ())
 }

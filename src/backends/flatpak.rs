@@ -2,7 +2,7 @@ use std::collections::{BTreeMap, BTreeSet};
 
 use anyhow::Result;
 
-use crate::cmd::{command_found, run_args, run_args_for_stdout};
+use crate::cmd::{command_found, run_command, run_command_for_stdout};
 use crate::prelude::*;
 
 #[derive(Debug, Copy, Clone, Default, PartialEq, Eq, PartialOrd, Ord, derive_more::Display)]
@@ -26,7 +26,7 @@ impl Backend for Flatpak {
             return Ok(BTreeMap::new());
         }
 
-        let sys_explicit_btree = run_args_for_stdout([
+        let sys_explicit_btree = run_command_for_stdout([
             "flatpak",
             "list",
             "--system",
@@ -37,12 +37,12 @@ impl Backend for Flatpak {
         .map(String::from)
         .collect::<BTreeSet<_>>();
         let sys_all_btree =
-            run_args_for_stdout(["flatpak", "list", "--system", "--columns=application"])?
+            run_command_for_stdout(["flatpak", "list", "--system", "--columns=application"])?
                 .lines()
                 .map(String::from)
                 .collect::<BTreeSet<_>>();
 
-        let user_explicit_btree = run_args_for_stdout([
+        let user_explicit_btree = run_command_for_stdout([
             "flatpak",
             "list",
             "--user",
@@ -53,7 +53,7 @@ impl Backend for Flatpak {
         .map(String::from)
         .collect::<BTreeSet<_>>();
         let user_all_btree =
-            run_args_for_stdout(["flatpak", "list", "--user", "--columns=application"])?
+            run_command_for_stdout(["flatpak", "list", "--user", "--columns=application"])?
                 .lines()
                 .map(String::from)
                 .collect::<BTreeSet<_>>();
@@ -115,7 +115,7 @@ impl Backend for Flatpak {
         no_confirm: bool,
         config: &Config,
     ) -> Result<()> {
-        run_args(
+        run_command(
             [
                 "flatpak",
                 "install",
@@ -143,7 +143,7 @@ impl Backend for Flatpak {
         no_confirm: bool,
         config: &Config,
     ) -> Result<()> {
-        run_args(
+        run_command(
             [
                 "flatpak",
                 "uninstall",

@@ -4,7 +4,7 @@ use std::process::Command;
 use anyhow::Result;
 use regex::Regex;
 
-use crate::cmd::{command_found, run_args, run_args_for_stdout};
+use crate::cmd::{command_found, run_command, run_command_for_stdout};
 use crate::prelude::*;
 
 #[derive(Debug, Copy, Clone, Default, PartialEq, Eq, PartialOrd, Ord, derive_more::Display)]
@@ -31,7 +31,7 @@ impl Backend for Xbps {
 
         let mut cmd = Command::new("xbps-query");
         cmd.args(["-l"]);
-        let stdout = run_args_for_stdout(["xbps-query", "-l"])?;
+        let stdout = run_command_for_stdout(["xbps-query", "-l"])?;
 
         // Removes the package status and description from output
         let re1 = Regex::new(r"^ii |^uu |^hr |^\?\? | .*")?;
@@ -55,7 +55,7 @@ impl Backend for Xbps {
         no_confirm: bool,
         _: &Config,
     ) -> Result<()> {
-        run_args(
+        run_command(
             ["xbps-install", "-S"]
                 .into_iter()
                 .chain(Some("-y").filter(|_| no_confirm))
@@ -68,7 +68,7 @@ impl Backend for Xbps {
         no_confirm: bool,
         _: &Config,
     ) -> Result<()> {
-        run_args(
+        run_command(
             ["xbps-remove", "-R"]
                 .into_iter()
                 .chain(Some("-y").filter(|_| no_confirm))
@@ -80,7 +80,7 @@ impl Backend for Xbps {
         packages: &std::collections::BTreeMap<Self::PackageId, Self::ModificationOptions>,
         _: &Config,
     ) -> Result<()> {
-        run_args(
+        run_command(
             ["xbps-pkgdb", "-m", "auto"].into_iter().chain(
                 packages
                     .iter()

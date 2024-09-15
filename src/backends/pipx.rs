@@ -6,8 +6,8 @@ use anyhow::Result;
 use serde_json::Value;
 
 use crate::cmd::command_found;
-use crate::cmd::run_args;
-use crate::cmd::run_args_for_stdout;
+use crate::cmd::run_command;
+use crate::cmd::run_command_for_stdout;
 use crate::prelude::*;
 
 #[derive(Debug, Copy, Clone, Default, PartialEq, Eq, PartialOrd, Ord, derive_more::Display)]
@@ -25,7 +25,7 @@ impl Backend for Pipx {
             return Ok(BTreeMap::new());
         }
 
-        let names = extract_package_names(run_args_for_stdout(["pipx", "list", "--json"])?)?;
+        let names = extract_package_names(run_command_for_stdout(["pipx", "list", "--json"])?)?;
 
         Ok(names.into_iter().map(|x| (x, ())).collect())
     }
@@ -35,7 +35,7 @@ impl Backend for Pipx {
         _: bool,
         _: &Config,
     ) -> Result<()> {
-        run_args(
+        run_command(
             ["pipx", "install"]
                 .into_iter()
                 .chain(packages.keys().map(String::as_str)),
@@ -54,7 +54,7 @@ impl Backend for Pipx {
         _: bool,
         _: &Config,
     ) -> Result<()> {
-        run_args(
+        run_command(
             ["pipx", "uninstall"]
                 .into_iter()
                 .chain(packages.keys().map(String::as_str)),

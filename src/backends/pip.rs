@@ -6,8 +6,8 @@ use anyhow::Result;
 use serde_json::Value;
 
 use crate::cmd::command_found;
-use crate::cmd::run_args;
-use crate::cmd::run_args_for_stdout;
+use crate::cmd::run_command;
+use crate::cmd::run_command_for_stdout;
 use crate::prelude::*;
 
 #[derive(Debug, Copy, Clone, Default, PartialEq, Eq, PartialOrd, Ord, derive_more::Display)]
@@ -30,8 +30,8 @@ impl Backend for Pip {
             return Ok(BTreeMap::new());
         }
 
-        let all = extract_package_names(run_args_for_stdout(["pip", "list", "--format", "json"])?)?;
-        let implicit = extract_package_names(run_args_for_stdout([
+        let all = extract_package_names(run_command_for_stdout(["pip", "list", "--format", "json"])?)?;
+        let implicit = extract_package_names(run_command_for_stdout([
             "pip",
             "list",
             "--format",
@@ -53,7 +53,7 @@ impl Backend for Pip {
         _: bool,
         _: &Config,
     ) -> Result<()> {
-        run_args(
+        run_command(
             ["pip", "install"]
                 .into_iter()
                 .chain(packages.keys().map(String::as_str)),
@@ -72,7 +72,7 @@ impl Backend for Pip {
         _: bool,
         _: &Config,
     ) -> Result<()> {
-        run_args(
+        run_command(
             ["pip", "uninstall"]
                 .into_iter()
                 .chain(packages.keys().map(String::as_str)),

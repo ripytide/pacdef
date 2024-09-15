@@ -3,7 +3,7 @@ use std::collections::BTreeMap;
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
 
-use crate::cmd::{command_found, run_args, run_args_for_stdout};
+use crate::cmd::{command_found, run_command, run_command_for_stdout};
 use crate::prelude::*;
 
 #[derive(Debug, Copy, Clone, Default, PartialEq, Eq, PartialOrd, Ord, derive_more::Display)]
@@ -31,7 +31,7 @@ impl Backend for Dnf {
             return Ok(BTreeMap::new());
         }
 
-        let system_packages = run_args_for_stdout([
+        let system_packages = run_command_for_stdout([
             "dnf",
             "repoquery",
             "--installed",
@@ -40,7 +40,7 @@ impl Backend for Dnf {
         ])?;
         let system_packages = system_packages.lines().map(parse_package);
 
-        let user_packages = run_args_for_stdout([
+        let user_packages = run_command_for_stdout([
             "dnf",
             "repoquery",
             "--userinstalled",
@@ -62,7 +62,7 @@ impl Backend for Dnf {
     ) -> Result<()> {
         // add these two repositories as these are needed for many dependencies
         #[allow(clippy::option_if_let_else)]
-        run_args(
+        run_command(
             ["dnf", "install", "--repo", "updates", "--repo", "fedora"]
                 .into_iter()
                 .chain(Some("--assumeyes").filter(|_| no_confirm))
@@ -89,7 +89,7 @@ impl Backend for Dnf {
         no_confirm: bool,
         _: &Config,
     ) -> Result<()> {
-        run_args(
+        run_command(
             ["dnf", "remove"]
                 .into_iter()
                 .chain(Some("--assumeyes").filter(|_| no_confirm))

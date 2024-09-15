@@ -3,7 +3,7 @@ use std::collections::BTreeMap;
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
 
-use crate::cmd::{command_found, run_args, run_args_for_stdout};
+use crate::cmd::{command_found, run_command, run_command_for_stdout};
 use crate::prelude::*;
 
 #[derive(Debug, Copy, Clone, Default, PartialEq, Eq, PartialOrd, Ord, derive_more::Display)]
@@ -39,8 +39,8 @@ impl Backend for Apt {
         // designed with this use-case in mind so there are lots and
         // lots of different methods all of which seem to have
         // caveats.
-        let explicit = run_args_for_stdout(["apt-mark", "showmanual"])?;
-        let dependency = run_args_for_stdout(["apt-mark", "showauto"])?;
+        let explicit = run_command_for_stdout(["apt-mark", "showmanual"])?;
+        let dependency = run_command_for_stdout(["apt-mark", "showauto"])?;
 
         Ok(dependency
             .lines()
@@ -58,7 +58,7 @@ impl Backend for Apt {
         no_confirm: bool,
         _: &Config,
     ) -> Result<()> {
-        run_args(
+        run_command(
             ["apt-get", "install"]
                 .into_iter()
                 .chain(Some("--yes").filter(|_| no_confirm))
@@ -70,7 +70,7 @@ impl Backend for Apt {
         packages: &BTreeMap<Self::PackageId, Self::ModificationOptions>,
         _: &Config,
     ) -> Result<()> {
-        run_args(
+        run_command(
             ["apt-mark", "auto"].into_iter().chain(
                 packages
                     .iter()
@@ -85,7 +85,7 @@ impl Backend for Apt {
         no_confirm: bool,
         _: &Config,
     ) -> Result<()> {
-        run_args(
+        run_command(
             ["apt-get", "remove"]
                 .into_iter()
                 .chain(Some("--yes").filter(|_| no_confirm))
