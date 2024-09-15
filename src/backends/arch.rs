@@ -1,6 +1,7 @@
 use anyhow::anyhow;
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
+use serde_inline_default::serde_inline_default;
 use std::collections::BTreeMap;
 
 use crate::cmd::{command_found, run_command, run_command_for_stdout};
@@ -23,8 +24,10 @@ pub struct ArchModificationOptions {
     pub make_implicit: bool,
 }
 
+#[serde_inline_default]
 #[derive(Debug, Clone, Default, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 pub struct ArchInstallOptions {
+    #[serde_inline_default(ArchInstallOptions::default().optional_deps)]
     pub optional_deps: Vec<ArchPackageId>,
 }
 

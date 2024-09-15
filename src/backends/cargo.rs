@@ -4,6 +4,7 @@ use std::io::ErrorKind::NotFound;
 use anyhow::anyhow;
 use anyhow::{bail, Context, Result};
 use serde::{Deserialize, Serialize};
+use serde_inline_default::serde_inline_default;
 use serde_json::Value;
 
 use crate::cmd::{command_found, run_command};
@@ -12,12 +13,16 @@ use crate::prelude::*;
 #[derive(Debug, Copy, Clone, Default, PartialEq, Eq, PartialOrd, Ord, derive_more::Display)]
 pub struct Cargo;
 
+#[serde_inline_default]
 #[derive(Debug, Clone, Default, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 pub struct CargoInstallOptions {
     version: Option<String>,
     git: Option<String>,
+    #[serde_inline_default(CargoInstallOptions::default().all_features)]
     all_features: bool,
+    #[serde_inline_default(CargoInstallOptions::default().no_default_features)]
     no_default_features: bool,
+    #[serde_inline_default(CargoInstallOptions::default().features)]
     features: Vec<String>,
 }
 

@@ -7,6 +7,7 @@ use anyhow::Result;
 use itertools::Itertools;
 use serde::Deserialize;
 use serde::Serialize;
+use serde_inline_default::serde_inline_default;
 use std::collections::BTreeMap;
 
 #[derive(Debug, Copy, Clone, Default, PartialEq, Eq, PartialOrd, Ord, derive_more::Display)]
@@ -17,8 +18,10 @@ pub struct RustupQueryInfo {
     pub components: Vec<String>,
 }
 
+#[serde_inline_default]
 #[derive(Debug, Clone, Default, Deserialize, Serialize)]
 pub struct RustupInstallOptions {
+    #[serde_inline_default(RustupInstallOptions::default().components)]
     pub components: Vec<String>,
 }
 
