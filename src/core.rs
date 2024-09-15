@@ -93,9 +93,9 @@ impl UnmanagedPackageAction {
         let unmanaged = unmanaged(groups, config)?;
 
         if unmanaged.is_empty() {
-            println!("no unmanaged packages");
+            eprintln!("no unmanaged packages");
         } else {
-            println!("unmanaged packages:\n\n{unmanaged}");
+            println!("{unmanaged}");
         }
 
         Ok(())

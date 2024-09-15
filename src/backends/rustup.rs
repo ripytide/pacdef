@@ -2,6 +2,7 @@ use crate::cmd::command_found;
 use crate::cmd::run_command;
 use crate::cmd::run_command_for_stdout;
 use crate::prelude::*;
+use anyhow::anyhow;
 use anyhow::Result;
 use itertools::Itertools;
 use serde::Deserialize;
@@ -41,7 +42,8 @@ impl Backend for Rustup {
 
         let mut packages = BTreeMap::new();
 
-        let toolchains_stdout = run_command_for_stdout(["rustup", "toolchain", "list"])?;
+        let toolchains_stdout =
+            run_command_for_stdout(["rustup", "toolchain", "list"], Perms::Same)?;
         let toolchains = toolchains_stdout.lines().map(|x| {
             x.split(' ')
                 .next()
@@ -50,21 +52,27 @@ impl Backend for Rustup {
         });
 
         for toolchain in toolchains {
-            let components_stdout = run_command_for_stdout([
-                "rustup",
-                "component",
-                "list",
-                "--installed",
-                "--toolchain",
-                toolchain.as_str(),
-            ])?;
-
-            packages.insert(
-                toolchain,
-                RustupQueryInfo {
-                    components: components_stdout.lines().map(|x| x.to_string()).collect(),
-                },
-            );
+            //due to https://github.com/rust-lang/rustup/issues/1570
+            //we sometimes must interpret a failed command as no
+            //components for custom toolchains
+            if let Ok(components_stdout) = run_command_for_stdout(
+                [
+                    "rustup",
+                    "component",
+                    "list",
+                    "--installed",
+                    "--toolchain",
+                    toolchain.as_str(),
+                ],
+                Perms::Same,
+            ) {
+                packages.insert(
+                    toolchain,
+                    RustupQueryInfo {
+                        components: components_stdout.lines().map(|x| x.to_string()).collect(),
+                    },
+                );
+            }
         }
 
         Ok(packages)
@@ -76,7 +84,10 @@ impl Backend for Rustup {
         _: &Config,
     ) -> Result<()> {
         for (toolchain, rustup_install_options) in packages.iter() {
-            run_command(["rustup", "toolchain", "install", toolchain.as_str()])?;
+            run_command(
+                ["rustup", "toolchain", "install", toolchain.as_str()],
+                Perms::Same,
+            )?;
 
             if !rustup_install_options.components.is_empty() {
                 run_command(
@@ -89,6 +100,7 @@ impl Backend for Rustup {
                     ]
                     .into_iter()
                     .chain(rustup_install_options.components.iter().map(|x| x.as_str())),
+                    Perms::Same,
                 )?;
             }
         }
@@ -126,6 +138,7 @@ impl Backend for Rustup {
                             .iter()
                             .map(|x| x.as_str()),
                     ),
+                    Perms::Same,
                 )?;
             }
             if !rustup_modification_options.add_components.is_empty() {
@@ -144,6 +157,7 @@ impl Backend for Rustup {
                             .iter()
                             .map(|x| x.as_str()),
                     ),
+                    Perms::Same,
                 )?;
             }
         }
@@ -157,9 +171,27 @@ impl Backend for Rustup {
         _: &Config,
     ) -> Result<()> {
         for toolchain in packages.keys() {
-            run_command(["rustup", "toolchain", "remove", toolchain.as_str()])?;
+            run_command(
+                ["rustup", "toolchain", "remove", toolchain.as_str()],
+                Perms::Same,
+            )?;
         }
 
         Ok(())
+    }
+
+    fn try_parse_toml_package(
+        toml: &toml::Value,
+    ) -> Result<(Self::PackageId, Self::InstallOptions)> {
+        match toml {
+            toml::Value::String(x) => Ok((x.to_string(), Default::default())),
+            toml::Value::Table(x) => Ok((
+                x.clone().try_into::<StringPackageStruct>()?.package,
+                x.clone().try_into()?,
+            )),
+            _ => Err(anyhow!(
+                "rustup packages must be either a string or a table"
+            )),
+        }
     }
 }

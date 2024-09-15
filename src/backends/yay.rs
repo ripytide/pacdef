@@ -40,4 +40,9 @@ impl Backend for Yay {
     ) -> Result<()> {
         Self::YAY.remove_packages(packages, no_confirm, config)
     }
+    fn try_parse_toml_package(
+            toml: &toml::Value,
+        ) -> Result<(Self::PackageId, Self::InstallOptions)> {
+        Self::YAY.try_parse_toml_package(toml)
+    }
 }

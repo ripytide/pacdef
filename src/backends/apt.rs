@@ -1,5 +1,6 @@
 use std::collections::BTreeMap;
 
+use anyhow::anyhow;
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
 
@@ -26,9 +27,7 @@ impl Backend for Apt {
     type ModificationOptions = AptModificationOptions;
     type RemoveOptions = ();
 
-    fn query_installed_packages(
-        _: &Config,
-    ) -> Result<BTreeMap<Self::PackageId, Self::QueryInfo>> {
+    fn query_installed_packages(_: &Config) -> Result<BTreeMap<Self::PackageId, Self::QueryInfo>> {
         if !command_found("apt-mark") {
             return Ok(BTreeMap::new());
         }
@@ -39,8 +38,8 @@ impl Backend for Apt {
         // designed with this use-case in mind so there are lots and
         // lots of different methods all of which seem to have
         // caveats.
-        let explicit = run_command_for_stdout(["apt-mark", "showmanual"])?;
-        let dependency = run_command_for_stdout(["apt-mark", "showauto"])?;
+        let explicit = run_command_for_stdout(["apt-mark", "showmanual"], Perms::Same)?;
+        let dependency = run_command_for_stdout(["apt-mark", "showauto"], Perms::Same)?;
 
         Ok(dependency
             .lines()
@@ -63,6 +62,7 @@ impl Backend for Apt {
                 .into_iter()
                 .chain(Some("--yes").filter(|_| no_confirm))
                 .chain(packages.keys().map(String::as_str)),
+            Perms::AsRoot,
         )
     }
 
@@ -77,6 +77,7 @@ impl Backend for Apt {
                     .filter(|(_, m)| m.make_implicit)
                     .map(|(p, _)| p.as_str()),
             ),
+            Perms::AsRoot,
         )
     }
 
@@ -90,6 +91,16 @@ impl Backend for Apt {
                 .into_iter()
                 .chain(Some("--yes").filter(|_| no_confirm))
                 .chain(packages.keys().map(String::as_str)),
+            Perms::AsRoot,
         )
+    }
+
+    fn try_parse_toml_package(
+        toml: &toml::Value,
+    ) -> Result<(Self::PackageId, Self::InstallOptions)> {
+        match toml {
+            toml::Value::String(x) => Ok((x.to_string(), Default::default())),
+            _ => Err(anyhow!("apt packages must be a string")),
+        }
     }
 }

@@ -14,7 +14,13 @@ pub fn command_found(command: &str) -> bool {
     false
 }
 
-pub fn run_command_for_stdout<I, S>(command: I) -> Result<String>
+#[derive(Debug, Clone, Copy)]
+pub enum Perms {
+    AsRoot,
+    Same,
+}
+
+pub fn run_command_for_stdout<I, S>(command: I, perms: Perms) -> Result<String>
 where
     S: Into<String>,
     I: IntoIterator<Item = S>,
@@ -31,7 +37,7 @@ where
     }
 
     let args = Some("sudo".to_string())
-        .filter(|_| !we_are_root)
+        .filter(|_| matches!(perms, Perms::AsRoot) && !we_are_root)
         .into_iter()
         .chain(args)
         .collect::<Vec<_>>();
@@ -47,10 +53,10 @@ where
     }
 }
 
-pub fn run_command<I, S>(command: I) -> Result<()>
+pub fn run_command<I, S>(command: I, perms: Perms) -> Result<()>
 where
     S: Into<String>,
     I: IntoIterator<Item = S>,
 {
-    run_command_for_stdout(command).map(|_| ())
+    run_command_for_stdout(command, perms).map(|_| ())
 }

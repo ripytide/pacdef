@@ -1,6 +1,7 @@
 use std::collections::BTreeMap;
 use std::collections::BTreeSet;
 
+use anyhow::anyhow;
 use anyhow::Context;
 use anyhow::Result;
 use serde_json::Value;
@@ -14,7 +15,7 @@ use crate::prelude::*;
 pub struct Pipx;
 
 impl Backend for Pipx {
-    type PackageId =String;
+    type PackageId = String;
     type QueryInfo = ();
     type InstallOptions = ();
     type ModificationOptions = ();
@@ -25,7 +26,10 @@ impl Backend for Pipx {
             return Ok(BTreeMap::new());
         }
 
-        let names = extract_package_names(run_command_for_stdout(["pipx", "list", "--json"])?)?;
+        let names = extract_package_names(run_command_for_stdout(
+            ["pipx", "list", "--json"],
+            Perms::Same,
+        )?)?;
 
         Ok(names.into_iter().map(|x| (x, ())).collect())
     }
@@ -39,6 +43,7 @@ impl Backend for Pipx {
             ["pipx", "install"]
                 .into_iter()
                 .chain(packages.keys().map(String::as_str)),
+            Perms::AsRoot,
         )
     }
 
@@ -58,7 +63,17 @@ impl Backend for Pipx {
             ["pipx", "uninstall"]
                 .into_iter()
                 .chain(packages.keys().map(String::as_str)),
+            Perms::AsRoot,
         )
+    }
+
+    fn try_parse_toml_package(
+        toml: &toml::Value,
+    ) -> Result<(Self::PackageId, Self::InstallOptions)> {
+        match toml {
+            toml::Value::String(x) => Ok((x.to_string(), Default::default())),
+            _ => Err(anyhow!("pipx packages must be a string")),
+        }
     }
 }
 

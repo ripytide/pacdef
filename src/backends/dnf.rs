@@ -1,5 +1,6 @@
 use std::collections::BTreeMap;
 
+use anyhow::anyhow;
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
 
@@ -31,22 +32,28 @@ impl Backend for Dnf {
             return Ok(BTreeMap::new());
         }
 
-        let system_packages = run_command_for_stdout([
-            "dnf",
-            "repoquery",
-            "--installed",
-            "--queryformat",
-            "%{from_repo}/%{name}",
-        ])?;
+        let system_packages = run_command_for_stdout(
+            [
+                "dnf",
+                "repoquery",
+                "--installed",
+                "--queryformat",
+                "%{from_repo}/%{name}",
+            ],
+            Perms::Same,
+        )?;
         let system_packages = system_packages.lines().map(parse_package);
 
-        let user_packages = run_command_for_stdout([
-            "dnf",
-            "repoquery",
-            "--userinstalled",
-            "--queryformat",
-            "%{from_repo}/%{name}",
-        ])?;
+        let user_packages = run_command_for_stdout(
+            [
+                "dnf",
+                "repoquery",
+                "--userinstalled",
+                "--queryformat",
+                "%{from_repo}/%{name}",
+            ],
+            Perms::Same,
+        )?;
         let user_packages = user_packages.lines().map(parse_package);
 
         Ok(system_packages
@@ -74,6 +81,7 @@ impl Backend for Dnf {
                             None => vec![package_id.as_str()],
                         }),
                 ),
+            Perms::AsRoot,
         )
     }
 
@@ -94,7 +102,23 @@ impl Backend for Dnf {
                 .into_iter()
                 .chain(Some("--assumeyes").filter(|_| no_confirm))
                 .chain(packages.keys().map(String::as_str)),
+            Perms::AsRoot,
         )
+    }
+
+    fn try_parse_toml_package(
+        toml: &toml::Value,
+    ) -> Result<(Self::PackageId, Self::InstallOptions)> {
+        match toml {
+            toml::Value::String(x) => Ok((x.to_string(), Default::default())),
+            toml::Value::Table(x) => Ok((
+                x.clone().try_into::<StringPackageStruct>()?.package,
+                x.clone().try_into()?,
+            )),
+            _ => Err(anyhow!(
+                "dnf packages must be either be a string or a table"
+            )),
+        }
     }
 }
 

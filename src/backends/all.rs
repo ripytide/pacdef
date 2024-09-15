@@ -69,16 +69,26 @@ macro_rules! x {
                 }
             }
         }
-        impl core::fmt::Display for PackageIds {
+        impl std::fmt::Display for PackageIds {
             fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-                let lists = [$(
-                    format!("[{}]\n{}",
-                        $backend,
-                        itertools::Itertools::intersperse(self.$backend.iter().map(ToString::to_string), "\n".to_string()).collect::<String>()),
-                )*];
+                let mut lists: Vec<String> = Vec::new();
+
+                $(
+                    if !self.$backend.is_empty() {
+                        lists.push(
+                            format!("[{}]\n{}",
+                                $backend,
+                                itertools::Itertools::intersperse(
+                                    self.$backend.iter().map(ToString::to_string),
+                                    "\n".to_string()
+                                ).collect::<String>()
+                            )
+                        );
+                    }
+                )*
 
                 write!(f, "{}",
-                    itertools::Itertools::intersperse(lists.into_iter(), "\n".to_string()).collect::<String>()
+                    itertools::Itertools::intersperse(lists.into_iter(), "\n\n".to_string()).collect::<String>()
                 )
             }
         }

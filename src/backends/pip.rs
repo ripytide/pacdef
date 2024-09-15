@@ -1,9 +1,9 @@
-use std::collections::BTreeMap;
-use std::collections::BTreeSet;
-
+use anyhow::anyhow;
 use anyhow::Context;
 use anyhow::Result;
 use serde_json::Value;
+use std::collections::BTreeMap;
+use std::collections::BTreeSet;
 
 use crate::cmd::command_found;
 use crate::cmd::run_command;
@@ -19,7 +19,7 @@ pub struct PipQueryInfo {
 }
 
 impl Backend for Pip {
-    type PackageId =String;
+    type PackageId = String;
     type QueryInfo = PipQueryInfo;
     type InstallOptions = ();
     type ModificationOptions = ();
@@ -30,14 +30,14 @@ impl Backend for Pip {
             return Ok(BTreeMap::new());
         }
 
-        let all = extract_package_names(run_command_for_stdout(["pip", "list", "--format", "json"])?)?;
-        let implicit = extract_package_names(run_command_for_stdout([
-            "pip",
-            "list",
-            "--format",
-            "json",
-            "--not-required",
-        ])?)?;
+        let all = extract_package_names(run_command_for_stdout(
+            ["pip", "list", "--format", "json"],
+            Perms::Same,
+        )?)?;
+        let implicit = extract_package_names(run_command_for_stdout(
+            ["pip", "list", "--format", "json", "--not-required"],
+            Perms::Same,
+        )?)?;
 
         let explicit = all.difference(&implicit);
 
@@ -57,6 +57,7 @@ impl Backend for Pip {
             ["pip", "install"]
                 .into_iter()
                 .chain(packages.keys().map(String::as_str)),
+            Perms::AsRoot,
         )
     }
 
@@ -76,7 +77,17 @@ impl Backend for Pip {
             ["pip", "uninstall"]
                 .into_iter()
                 .chain(packages.keys().map(String::as_str)),
+            Perms::AsRoot,
         )
+    }
+
+    fn try_parse_toml_package(
+        toml: &toml::Value,
+    ) -> Result<(Self::PackageId, Self::InstallOptions)> {
+        match toml {
+            toml::Value::String(x) => Ok((x.to_string(), Default::default())),
+            _ => Err(anyhow!("pip packages must be a string")),
+        }
     }
 }
 

@@ -1,6 +1,7 @@
 use std::collections::BTreeMap;
 use std::process::Command;
 
+use anyhow::anyhow;
 use anyhow::Result;
 use regex::Regex;
 
@@ -31,7 +32,7 @@ impl Backend for Xbps {
 
         let mut cmd = Command::new("xbps-query");
         cmd.args(["-l"]);
-        let stdout = run_command_for_stdout(["xbps-query", "-l"])?;
+        let stdout = run_command_for_stdout(["xbps-query", "-l"], Perms::Same)?;
 
         // Removes the package status and description from output
         let re1 = Regex::new(r"^ii |^uu |^hr |^\?\? | .*")?;
@@ -60,6 +61,7 @@ impl Backend for Xbps {
                 .into_iter()
                 .chain(Some("-y").filter(|_| no_confirm))
                 .chain(packages.keys().map(String::as_str)),
+            Perms::AsRoot,
         )
     }
 
@@ -73,6 +75,7 @@ impl Backend for Xbps {
                 .into_iter()
                 .chain(Some("-y").filter(|_| no_confirm))
                 .chain(packages.keys().map(String::as_str)),
+            Perms::AsRoot,
         )
     }
 
@@ -87,6 +90,16 @@ impl Backend for Xbps {
                     .filter(|(_, m)| m.make_implicit)
                     .map(|(p, _)| p.as_str()),
             ),
+            Perms::AsRoot,
         )
+    }
+
+    fn try_parse_toml_package(
+        toml: &toml::Value,
+    ) -> Result<(Self::PackageId, Self::InstallOptions)> {
+        match toml {
+            toml::Value::String(x) => Ok((x.to_string(), Default::default())),
+            _ => Err(anyhow!("xbps packages must be a string")),
+        }
     }
 }
