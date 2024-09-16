@@ -1,18 +1,34 @@
 use std::collections::BTreeMap;
 use std::io::ErrorKind::NotFound;
 
+use anyhow::anyhow;
 use anyhow::{bail, Context, Result};
 use serde::{Deserialize, Serialize};
+use serde_inline_default::serde_inline_default;
 use serde_json::Value;
 
-use crate::cmd::{command_found, run_args};
+use crate::cmd::{command_found, run_command};
 use crate::prelude::*;
 
-#[derive(Debug, Copy, Clone, Default, derive_more::Display)]
+#[derive(Debug, Copy, Clone, Default, PartialEq, Eq, PartialOrd, Ord, derive_more::Display)]
 pub struct Cargo;
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[serde_inline_default]
+#[derive(Debug, Clone, Default, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 pub struct CargoInstallOptions {
+    version: Option<String>,
+    git: Option<String>,
+    #[serde_inline_default(CargoInstallOptions::default().all_features)]
+    all_features: bool,
+    #[serde_inline_default(CargoInstallOptions::default().no_default_features)]
+    no_default_features: bool,
+    #[serde_inline_default(CargoInstallOptions::default().features)]
+    features: Vec<String>,
+}
+
+#[derive(Debug, Clone, Default, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
+pub struct CargoQueryInfo {
+    version: String,
     git: Option<String>,
     all_features: bool,
     no_default_features: bool,
@@ -21,10 +37,10 @@ pub struct CargoInstallOptions {
 
 impl Backend for Cargo {
     type PackageId = String;
-    type RemoveOptions = ();
+    type QueryInfo = CargoQueryInfo;
     type InstallOptions = CargoInstallOptions;
-    type QueryInfo = CargoInstallOptions;
-    type Modification = ();
+    type ModificationOptions = ();
+    type RemoveOptions = ();
 
     fn query_installed_packages(_: &Config) -> Result<BTreeMap<Self::PackageId, Self::QueryInfo>> {
         if !command_found("cargo") {
@@ -53,7 +69,7 @@ impl Backend for Cargo {
         _: &Config,
     ) -> Result<()> {
         for (package, options) in packages {
-            run_args(
+            run_command(
                 ["cargo", "install"]
                     .into_iter()
                     .chain(Some("--git").into_iter().filter(|_| options.git.is_some()))
@@ -75,13 +91,14 @@ impl Backend for Cargo {
                     )
                     .chain(options.features.iter().map(|feature| feature.as_str()))
                     .chain([package.as_str()]),
+                Perms::AsRoot,
             )?;
         }
         Ok(())
     }
 
     fn modify_packages(
-        _: &BTreeMap<Self::PackageId, Self::Modification>,
+        _: &BTreeMap<Self::PackageId, Self::ModificationOptions>,
         _: &Config,
     ) -> Result<()> {
         unimplemented!()
@@ -92,59 +109,71 @@ impl Backend for Cargo {
         _: bool,
         _: &Config,
     ) -> Result<()> {
-        run_args(
+        run_command(
             ["cargo", "uninstall"]
                 .into_iter()
                 .chain(packages.keys().map(String::as_str)),
+            Perms::AsRoot,
         )
+    }
+
+    fn try_parse_toml_package(
+        toml: &toml::Value,
+    ) -> Result<(Self::PackageId, Self::InstallOptions)> {
+        match toml {
+            toml::Value::String(x) => Ok((x.to_string(), Default::default())),
+            toml::Value::Table(x) => Ok((
+                x.clone().try_into::<StringPackageStruct>()?.package,
+                x.clone().try_into()?,
+            )),
+            _ => Err(anyhow!("cargo packages must be either a string or a table")),
+        }
     }
 }
 
-fn extract_packages(contents: &str) -> Result<BTreeMap<String, CargoInstallOptions>> {
+fn extract_packages(contents: &str) -> Result<BTreeMap<String, CargoQueryInfo>> {
     let json: Value = serde_json::from_str(contents).context("parsing JSON from crates file")?;
 
-    let result: BTreeMap<String, CargoInstallOptions> = json
+    let result: BTreeMap<String, CargoQueryInfo> = json
         .get("installs")
         .context("get 'installs' field from json")?
         .as_object()
         .context("getting object")?
         .into_iter()
         .map(|(name, value)| {
-            let (name, git_repo) = name
-                .split_once('+')
-                .expect("Resolve git status and name separately");
+            let value = value.as_object().unwrap();
 
-            let all_features = value
-                .as_object()
-                .expect("Won't fail")
-                .get("all_features")
-                .expect("Won't fail")
-                .as_bool()
-                .expect("Won't fail");
+            let (name, version_source) = name.split_once(' ').unwrap();
+            let (version, source) = version_source.split_once(' ').unwrap();
 
-            let no_default_features = value
-                .as_object()
-                .expect("Won't fail")
-                .get("no_default_features")
-                .expect("Won't fail")
-                .as_bool()
-                .expect("Won't fail");
+            let git = if source.starts_with("(git+") {
+                Some(
+                    source.split("+").collect::<Vec<_>>()[1]
+                        .split("#")
+                        .next()
+                        .unwrap()
+                        .to_string(),
+                )
+            } else {
+                None
+            };
 
+            let all_features = value.get("all_features").unwrap().as_bool().unwrap();
+            let no_default_features = value.get("no_default_features").unwrap().as_bool().unwrap();
             let features = value
-                .as_object()
-                .expect("Won't fail")
                 .get("features")
-                .expect("Won't fail")
+                .unwrap()
                 .as_array()
-                .expect("Won't fail")
+                .unwrap()
                 .iter()
-                .map(|value| value.as_str().expect("Won't fail").to_string())
+                .map(|value| value.as_str().unwrap().to_string())
                 .collect();
 
             (
                 name.to_string(),
-                CargoInstallOptions {
-                    git: git_repo.split_once('#').map(|(repo, _)| repo.to_string()),
+                CargoQueryInfo {
+                    version: version.to_string(),
+                    git,
                     all_features,
                     no_default_features,
                     features,

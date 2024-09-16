@@ -1,11 +1,13 @@
+use anyhow::anyhow;
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
+use serde_inline_default::serde_inline_default;
 use std::collections::BTreeMap;
 
-use crate::cmd::{command_found, run_args, run_args_for_stdout};
+use crate::cmd::{command_found, run_command, run_command_for_stdout};
 use crate::prelude::*;
 
-#[derive(Debug, Clone, Copy, derive_more::Display)]
+#[derive(Debug, Copy, Clone, Default, PartialEq, Eq, PartialOrd, Ord, derive_more::Display)]
 pub struct Arch {
     pub command: &'static str,
 }
@@ -17,12 +19,15 @@ pub struct ArchQueryInfo {
     pub explicit: bool,
 }
 
-pub struct ArchModification {
+#[derive(Debug, Clone)]
+pub struct ArchModificationOptions {
     pub make_implicit: bool,
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[serde_inline_default]
+#[derive(Debug, Clone, Default, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 pub struct ArchInstallOptions {
+    #[serde_inline_default(ArchInstallOptions::default().optional_deps)]
     pub optional_deps: Vec<ArchPackageId>,
 }
 
@@ -38,8 +43,10 @@ impl Arch {
             return Ok(BTreeMap::new());
         }
 
-        let explicit = run_args_for_stdout(["pacman", "--query", "--explicit", "--quiet"])?;
-        let dependency = run_args_for_stdout(["pacman", "--query", "--deps", "--quiet"])?;
+        let explicit =
+            run_command_for_stdout(["pacman", "--query", "--explicit", "--quiet"], Perms::Same)?;
+        let dependency =
+            run_command_for_stdout(["pacman", "--query", "--deps", "--quiet"], Perms::Same)?;
 
         Ok(dependency
             .lines()
@@ -58,7 +65,7 @@ impl Arch {
         no_confirm: bool,
         _: &Config,
     ) -> Result<()> {
-        run_args(
+        run_command(
             [self.command, "--sync"]
                 .into_iter()
                 .chain(Some("--no_confirm").filter(|_| no_confirm))
@@ -66,21 +73,23 @@ impl Arch {
                 .chain(packages.values().flat_map(|dependencies| {
                     dependencies.optional_deps.iter().map(String::as_str)
                 })),
+            Perms::AsRoot,
         )
     }
 
     pub fn modify_packages(
         &self,
-        packages: &BTreeMap<ArchPackageId, ArchModification>,
+        packages: &BTreeMap<ArchPackageId, ArchModificationOptions>,
         _: &Config,
     ) -> Result<()> {
-        run_args(
+        run_command(
             [self.command, "--database", "--asdeps"].into_iter().chain(
                 packages
                     .iter()
                     .filter(|(_, m)| m.make_implicit)
                     .map(|(p, _)| p.as_str()),
             ),
+            Perms::AsRoot,
         )
     }
 
@@ -90,12 +99,27 @@ impl Arch {
         no_confirm: bool,
         config: &Config,
     ) -> Result<()> {
-        run_args(
+        run_command(
             [self.command, "--remove", "--recursive"]
                 .into_iter()
                 .chain(config.aur_rm_args.iter().map(String::as_str))
                 .chain(Some("--no_confirm").filter(|_| no_confirm))
                 .chain(packages.keys().map(String::as_str)),
+            Perms::AsRoot,
         )
+    }
+
+    pub fn try_parse_toml_package(
+        &self,
+        toml: &toml::Value,
+    ) -> Result<(ArchPackageId, ArchInstallOptions)> {
+        match toml {
+            toml::Value::String(x) => Ok((x.to_string(), Default::default())),
+            toml::Value::Table(x) => Ok((
+                x.clone().try_into::<StringPackageStruct>()?.package,
+                x.clone().try_into()?,
+            )),
+            _ => Err(anyhow!("pacman/yay/paru packages must be either a string or a table")),
+        }
     }
 }

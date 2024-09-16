@@ -1,11 +1,12 @@
 use std::collections::{BTreeMap, BTreeSet};
 
+use anyhow::anyhow;
 use anyhow::Result;
 
-use crate::cmd::{command_found, run_args, run_args_for_stdout};
+use crate::cmd::{command_found, run_command, run_command_for_stdout};
 use crate::prelude::*;
 
-#[derive(Debug, Copy, Clone, Default, derive_more::Display)]
+#[derive(Debug, Copy, Clone, Default, PartialEq, Eq, PartialOrd, Ord, derive_more::Display)]
 pub struct Flatpak;
 
 #[derive(Debug, Clone)]
@@ -16,47 +17,57 @@ pub struct FlatpakQueryInfo {
 
 impl Backend for Flatpak {
     type PackageId = String;
-    type RemoveOptions = ();
-    type InstallOptions = ();
     type QueryInfo = FlatpakQueryInfo;
-    type Modification = ();
+    type InstallOptions = ();
+    type ModificationOptions = ();
+    type RemoveOptions = ();
 
     fn query_installed_packages(_: &Config) -> Result<BTreeMap<Self::PackageId, Self::QueryInfo>> {
         if !command_found("flatpak") {
             return Ok(BTreeMap::new());
         }
 
-        let sys_explicit_btree = run_args_for_stdout([
-            "flatpak",
-            "list",
-            "--system",
-            "--app",
-            "--columns=application",
-        ])?
+        let sys_explicit_btree = run_command_for_stdout(
+            [
+                "flatpak",
+                "list",
+                "--system",
+                "--app",
+                "--columns=application",
+            ],
+            Perms::Same,
+        )?
         .lines()
         .map(String::from)
         .collect::<BTreeSet<_>>();
-        let sys_all_btree =
-            run_args_for_stdout(["flatpak", "list", "--system", "--columns=application"])?
-                .lines()
-                .map(String::from)
-                .collect::<BTreeSet<_>>();
+        let sys_all_btree = run_command_for_stdout(
+            ["flatpak", "list", "--system", "--columns=application"],
+            Perms::Same,
+        )?
+        .lines()
+        .map(String::from)
+        .collect::<BTreeSet<_>>();
 
-        let user_explicit_btree = run_args_for_stdout([
-            "flatpak",
-            "list",
-            "--user",
-            "--app",
-            "--columns=application",
-        ])?
+        let user_explicit_btree = run_command_for_stdout(
+            [
+                "flatpak",
+                "list",
+                "--user",
+                "--app",
+                "--columns=application",
+            ],
+            Perms::Same,
+        )?
         .lines()
         .map(String::from)
         .collect::<BTreeSet<_>>();
-        let user_all_btree =
-            run_args_for_stdout(["flatpak", "list", "--user", "--columns=application"])?
-                .lines()
-                .map(String::from)
-                .collect::<BTreeSet<_>>();
+        let user_all_btree = run_command_for_stdout(
+            ["flatpak", "list", "--user", "--columns=application"],
+            Perms::Same,
+        )?
+        .lines()
+        .map(String::from)
+        .collect::<BTreeSet<_>>();
 
         let sys_explicit = sys_explicit_btree.iter().map(|x| {
             (
@@ -115,7 +126,7 @@ impl Backend for Flatpak {
         no_confirm: bool,
         config: &Config,
     ) -> Result<()> {
-        run_args(
+        run_command(
             [
                 "flatpak",
                 "install",
@@ -128,11 +139,12 @@ impl Backend for Flatpak {
             .into_iter()
             .chain(Some("--assumeyes").filter(|_| no_confirm))
             .chain(packages.keys().map(String::as_str)),
+            Perms::AsRoot,
         )
     }
 
     fn modify_packages(
-        _: &BTreeMap<Self::PackageId, Self::Modification>,
+        _: &BTreeMap<Self::PackageId, Self::ModificationOptions>,
         _: &Config,
     ) -> Result<()> {
         unimplemented!()
@@ -143,7 +155,7 @@ impl Backend for Flatpak {
         no_confirm: bool,
         config: &Config,
     ) -> Result<()> {
-        run_args(
+        run_command(
             [
                 "flatpak",
                 "uninstall",
@@ -156,6 +168,16 @@ impl Backend for Flatpak {
             .into_iter()
             .chain(Some("--assumeyes").filter(|_| no_confirm))
             .chain(packages.keys().map(String::as_str)),
+            Perms::AsRoot,
         )
+    }
+
+    fn try_parse_toml_package(
+        toml: &toml::Value,
+    ) -> Result<(Self::PackageId, Self::InstallOptions)> {
+        match toml {
+            toml::Value::String(x) => Ok((x.to_string(), Default::default())),
+            _ => Err(anyhow!("flatpak packages must be a string")),
+        }
     }
 }

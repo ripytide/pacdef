@@ -2,7 +2,7 @@ use crate::prelude::*;
 use anyhow::Result;
 use std::collections::BTreeMap;
 
-#[derive(Debug, Copy, Clone, Default, derive_more::Display)]
+#[derive(Debug, Copy, Clone, Default, PartialEq, Eq, PartialOrd, Ord, derive_more::Display)]
 pub struct Paru;
 impl Paru {
     const PARU: Arch = Arch { command: "paru" };
@@ -10,10 +10,10 @@ impl Paru {
 
 impl Backend for Paru {
     type PackageId = ArchPackageId;
-    type InstallOptions = ArchInstallOptions;
-    type RemoveOptions = ArchRemoveOptions;
     type QueryInfo = ArchQueryInfo;
-    type Modification = ArchModification;
+    type InstallOptions = ArchInstallOptions;
+    type ModificationOptions = ArchModificationOptions;
+    type RemoveOptions = ArchRemoveOptions;
 
     fn query_installed_packages(
         config: &Config,
@@ -28,7 +28,7 @@ impl Backend for Paru {
         Self::PARU.install_packages(packages, no_confirm, config)
     }
     fn modify_packages(
-        packages: &BTreeMap<Self::PackageId, Self::Modification>,
+        packages: &BTreeMap<Self::PackageId, Self::ModificationOptions>,
         config: &Config,
     ) -> Result<()> {
         Self::PARU.modify_packages(packages, config)
@@ -39,5 +39,10 @@ impl Backend for Paru {
         config: &Config,
     ) -> Result<()> {
         Self::PARU.remove_packages(packages, no_confirm, config)
+    }
+    fn try_parse_toml_package(
+        toml: &toml::Value,
+    ) -> Result<(Self::PackageId, Self::InstallOptions)> {
+        Self::PARU.try_parse_toml_package(toml)
     }
 }

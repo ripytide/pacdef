@@ -1,28 +1,23 @@
 use anyhow::anyhow;
-use std::path::Path;
+use serde_inline_default::serde_inline_default;
+use std::{collections::BTreeMap, path::Path};
 
 use anyhow::{Context, Result};
 use serde::{Deserialize, Serialize};
 
-// Update the master README if fields change.
+// Update README if fields change.
+#[serde_inline_default]
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Config {
-    /// Additional arguments to pass to `aur_helper` when removing a package.
+    #[serde(default)]
     pub aur_rm_args: Vec<String>,
-    /// Install Flatpak packages system-wide
+    #[serde_inline_default(true)]
     pub flatpak_systemwide: bool,
-}
-impl Default for Config {
-    fn default() -> Self {
-        Self {
-            aur_rm_args: vec![],
-            flatpak_systemwide: true,
-        }
-    }
+    #[serde(default)]
+    pub hostnames: BTreeMap<String, Vec<String>>,
 }
 
 impl Config {
-    /// Load the config file from a users pacdef config folder.
     pub fn load(pacdef_dir: &Path) -> Result<Self> {
         let config_file_path = pacdef_dir.join("config.toml");
 

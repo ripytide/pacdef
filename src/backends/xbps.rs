@@ -1,25 +1,27 @@
 use std::collections::BTreeMap;
 use std::process::Command;
 
+use anyhow::anyhow;
 use anyhow::Result;
 use regex::Regex;
 
-use crate::cmd::{command_found, run_args, run_args_for_stdout};
+use crate::cmd::{command_found, run_command, run_command_for_stdout};
 use crate::prelude::*;
 
-#[derive(Debug, Copy, Clone, Default, derive_more::Display)]
+#[derive(Debug, Copy, Clone, Default, PartialEq, Eq, PartialOrd, Ord, derive_more::Display)]
 pub struct Xbps;
 
-pub struct XbpsModification {
+#[derive(Debug, Clone)]
+pub struct XbpsModificationOptions {
     make_implicit: bool,
 }
 
 impl Backend for Xbps {
     type PackageId = String;
-    type RemoveOptions = ();
-    type InstallOptions = ();
     type QueryInfo = ();
-    type Modification = XbpsModification;
+    type InstallOptions = ();
+    type ModificationOptions = XbpsModificationOptions;
+    type RemoveOptions = ();
 
     fn query_installed_packages(
         _: &Config,
@@ -30,7 +32,7 @@ impl Backend for Xbps {
 
         let mut cmd = Command::new("xbps-query");
         cmd.args(["-l"]);
-        let stdout = run_args_for_stdout(["xbps-query", "-l"])?;
+        let stdout = run_command_for_stdout(["xbps-query", "-l"], Perms::Same)?;
 
         // Removes the package status and description from output
         let re1 = Regex::new(r"^ii |^uu |^hr |^\?\? | .*")?;
@@ -54,11 +56,12 @@ impl Backend for Xbps {
         no_confirm: bool,
         _: &Config,
     ) -> Result<()> {
-        run_args(
+        run_command(
             ["xbps-install", "-S"]
                 .into_iter()
                 .chain(Some("-y").filter(|_| no_confirm))
                 .chain(packages.keys().map(String::as_str)),
+            Perms::AsRoot,
         )
     }
 
@@ -67,25 +70,36 @@ impl Backend for Xbps {
         no_confirm: bool,
         _: &Config,
     ) -> Result<()> {
-        run_args(
+        run_command(
             ["xbps-remove", "-R"]
                 .into_iter()
                 .chain(Some("-y").filter(|_| no_confirm))
                 .chain(packages.keys().map(String::as_str)),
+            Perms::AsRoot,
         )
     }
 
     fn modify_packages(
-        packages: &std::collections::BTreeMap<Self::PackageId, Self::Modification>,
+        packages: &std::collections::BTreeMap<Self::PackageId, Self::ModificationOptions>,
         _: &Config,
     ) -> Result<()> {
-        run_args(
+        run_command(
             ["xbps-pkgdb", "-m", "auto"].into_iter().chain(
                 packages
                     .iter()
                     .filter(|(_, m)| m.make_implicit)
                     .map(|(p, _)| p.as_str()),
             ),
+            Perms::AsRoot,
         )
+    }
+
+    fn try_parse_toml_package(
+        toml: &toml::Value,
+    ) -> Result<(Self::PackageId, Self::InstallOptions)> {
+        match toml {
+            toml::Value::String(x) => Ok((x.to_string(), Default::default())),
+            _ => Err(anyhow!("xbps packages must be a string")),
+        }
     }
 }
