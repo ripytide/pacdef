@@ -33,7 +33,7 @@ macro_rules! to_package_ids {
     };
 }
 
-macro_rules! x {
+macro_rules! package_ids {
     ($($backend:ident),*) => {
         #[derive(Debug, Clone, Default)]
         #[allow(non_snake_case)]
@@ -92,7 +92,12 @@ macro_rules! x {
                 )
             }
         }
+    }
+}
+apply_public_backends!(package_ids);
 
+macro_rules! query_infos {
+    ($($backend:ident),*) => {
         #[derive(Debug, Clone, Default)]
         #[allow(non_snake_case)]
         pub struct QueryInfos {
@@ -113,7 +118,12 @@ macro_rules! x {
                 })
             }
         }
+    }
+}
+apply_public_backends!(query_infos);
 
+macro_rules! install_options {
+    ($($backend:ident),*) => {
         #[derive(Debug, Clone, Default)]
         #[allow(non_snake_case)]
         pub struct InstallOptions {
@@ -134,7 +144,12 @@ macro_rules! x {
                 Ok(())
             }
         }
+    }
+}
+apply_public_backends!(install_options);
 
+macro_rules! modification_options {
+    ($($backend:ident),*) => {
         #[derive(Debug, Clone, Default)]
         #[allow(non_snake_case)]
         pub struct ModificationOptions {
@@ -155,7 +170,12 @@ macro_rules! x {
                 Ok(())
             }
         }
+    }
+}
+apply_public_backends!(modification_options);
 
+macro_rules! remove_options {
+    ($($backend:ident),*) => {
         #[derive(Debug, Clone, Default)]
         #[allow(non_snake_case)]
         pub struct RemoveOptions {
@@ -178,4 +198,4 @@ macro_rules! x {
         }
     };
 }
-apply_public_backends!(x);
+apply_public_backends!(remove_options);
