@@ -12,16 +12,7 @@ impl MainArguments {
             MainSubcommand::Review(review) => review.run(groups, config),
             MainSubcommand::Sync(sync) => sync.run(groups, config),
             MainSubcommand::Unmanaged(unmanaged) => unmanaged.run(groups, config),
-            MainSubcommand::Version(version) => version.run(),
         }
-    }
-}
-
-impl VersionArguments {
-    fn run(self) -> Result<()> {
-        println!("pacdef, version: {}\n", env!("CARGO_PKG_VERSION"));
-
-        Ok(())
     }
 }
 

@@ -27,7 +27,6 @@ pub use crate::cli::MainSubcommand;
 pub use crate::cli::ReviewPackageAction;
 pub use crate::cli::SyncPackageAction;
 pub use crate::cli::UnmanagedPackageAction;
-pub use crate::cli::VersionArguments;
 pub use crate::cmd::Perms;
 pub use crate::config::Config;
 pub use crate::groups::Groups;

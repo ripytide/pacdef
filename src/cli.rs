@@ -21,7 +21,6 @@ pub enum MainSubcommand {
     Review(ReviewPackageAction),
     Sync(SyncPackageAction),
     Unmanaged(UnmanagedPackageAction),
-    Version(VersionArguments),
 }
 
 #[derive(Args)]
@@ -51,6 +50,3 @@ pub struct SyncPackageAction {
 #[command(visible_alias("u"))]
 /// show explicitly installed packages not managed by pacdef
 pub struct UnmanagedPackageAction {}
-
-#[derive(Args)]
-pub struct VersionArguments {}

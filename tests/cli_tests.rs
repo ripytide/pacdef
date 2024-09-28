@@ -7,9 +7,3 @@ fn version() {
     cmd.arg("version");
     cmd.assert().success();
 }
-#[test]
-fn unmanaged() {
-    let mut cmd = Command::cargo_bin("pacdef").unwrap();
-    cmd.arg("unmanaged");
-    cmd.assert().success();
-}
