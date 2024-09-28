@@ -1,0 +1,19 @@
+pacman = ["pacdef", { package = "pacdef", optional_deps = ["git"] }]
+yay = ["pacdef", { package = "pacdef", optional_deps = ["git"] }]
+paru = ["pacdef", { package = "pacdef", optional_deps = ["git"] }]
+cargo = [
+	"pacdef",
+	{ package = "pacdef", version = "0.1.0", git = "https://github.com/ripytide/pacdef", all_features = true, no_default_features = false, features = [
+		"feature1",
+	] },
+]
+pip = ["pacdef"]
+pipx = ["pacdef"]
+apt = ["pacdef"]
+xbps = ["pacdef"]
+flatpak = ["pacdef"]
+dnf = [
+	"pacdef",
+	{ package = "pacdef", repo = "/etc/yum.repos.d/fedora_extras.repo" },
+]
+rustup = ["stable", { package = "stable", components = ["rust-analyzer"] }]

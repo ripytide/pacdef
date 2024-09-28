@@ -1,0 +1,11 @@
+# Extra arguments passed to pacman when removing an arch package.
+aur_rm_args = [""]
+
+# Whether to install flatpak packages systemwide or for the current user.
+flatpak_systemwide = true
+
+# Which group files apply for which hostnames
+[hostname_groups]
+pc = ["core", "cli", "desktop"]
+laptop = ["core", "cli", "desktop"]
+server = ["core", "cli"]

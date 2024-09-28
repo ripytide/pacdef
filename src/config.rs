@@ -9,12 +9,21 @@ use serde::{Deserialize, Serialize};
 #[serde_inline_default]
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Config {
-    #[serde(default)]
+    #[serde_inline_default(Config::default().aur_rm_args)]
     pub aur_rm_args: Vec<String>,
-    #[serde_inline_default(true)]
+    #[serde_inline_default(Config::default().flatpak_systemwide)]
     pub flatpak_systemwide: bool,
-    #[serde(default)]
-    pub hostnames: BTreeMap<String, Vec<String>>,
+    #[serde_inline_default(Config::default().hostname_groups)]
+    pub hostname_groups: BTreeMap<String, Vec<String>>,
+}
+impl Default for Config {
+    fn default() -> Self {
+        Config {
+            aur_rm_args: Vec::new(),
+            flatpak_systemwide: true,
+            hostname_groups: BTreeMap::new(),
+        }
+    }
 }
 
 impl Config {
