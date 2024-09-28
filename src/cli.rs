@@ -1,5 +1,7 @@
 //! The clap declarative command line interface
 
+use std::path::PathBuf;
+
 use clap::{Args, Parser, Subcommand};
 
 #[derive(Parser)]
@@ -8,9 +10,15 @@ use clap::{Args, Parser, Subcommand};
     author,
     about,
     arg_required_else_help(true),
-    subcommand_required(true),
+    subcommand_required(true)
 )]
 pub struct MainArguments {
+    #[arg(short = 'n', long)]
+    /// specify a different hostname
+    pub hostname: Option<String>,
+    #[arg(short, long)]
+    /// specify a different config directory
+    pub config_dir: Option<PathBuf>,
     #[command(subcommand)]
     pub subcommand: MainSubcommand,
 }
@@ -27,7 +35,7 @@ pub enum MainSubcommand {
 #[command(visible_alias("c"))]
 /// remove unmanaged packages
 pub struct CleanPackageAction {
-    #[arg(long)]
+    #[arg(short, long)]
     /// do not ask for any confirmation
     pub no_confirm: bool,
 }
@@ -41,7 +49,7 @@ pub struct ReviewPackageAction {}
 #[command(visible_alias("s"))]
 /// install packages from groups
 pub struct SyncPackageAction {
-    #[arg(long)]
+    #[arg(short, long)]
     /// do not ask for any confirmation
     pub no_confirm: bool,
 }

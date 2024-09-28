@@ -25,7 +25,7 @@ impl Groups {
         self.to_install_options().to_package_ids()
     }
 
-    pub fn load(group_dir: &Path) -> Result<Self> {
+    pub fn load(group_dir: &Path, hostname: &str, config: &Config) -> Result<Self> {
         let mut groups = Self::default();
 
         let group_dir = group_dir.join("groups/");
