@@ -1,5 +1,5 @@
 use crate::prelude::*;
-use anyhow::Result;
+use color_eyre::Result;
 use std::collections::BTreeMap;
 
 #[derive(Debug, Copy, Clone, Default, PartialEq, Eq, PartialOrd, Ord, derive_more::Display)]

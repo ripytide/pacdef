@@ -1,7 +1,7 @@
 use std::collections::{BTreeMap, BTreeSet};
 
-use anyhow::anyhow;
-use anyhow::Result;
+use color_eyre::eyre::eyre;
+use color_eyre::Result;
 
 use crate::cmd::{command_found, run_command, run_command_for_stdout};
 use crate::prelude::*;
@@ -177,7 +177,7 @@ impl Backend for Flatpak {
     ) -> Result<(Self::PackageId, Self::InstallOptions)> {
         match toml {
             toml::Value::String(x) => Ok((x.to_string(), Default::default())),
-            _ => Err(anyhow!("flatpak packages must be a string")),
+            _ => Err(eyre!("flatpak packages must be a string")),
         }
     }
 }

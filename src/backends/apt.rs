@@ -1,7 +1,7 @@
 use std::collections::BTreeMap;
 
-use anyhow::anyhow;
-use anyhow::Result;
+use color_eyre::eyre::eyre;
+use color_eyre::Result;
 use serde::{Deserialize, Serialize};
 
 use crate::cmd::{command_found, run_command, run_command_for_stdout};
@@ -100,7 +100,7 @@ impl Backend for Apt {
     ) -> Result<(Self::PackageId, Self::InstallOptions)> {
         match toml {
             toml::Value::String(x) => Ok((x.to_string(), Default::default())),
-            _ => Err(anyhow!("apt packages must be a string")),
+            _ => Err(eyre!("apt packages must be a string")),
         }
     }
 }

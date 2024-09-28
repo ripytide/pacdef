@@ -1,8 +1,8 @@
 use std::collections::BTreeMap;
 use std::process::Command;
 
-use anyhow::anyhow;
-use anyhow::Result;
+use color_eyre::eyre::eyre;
+use color_eyre::Result;
 use regex::Regex;
 
 use crate::cmd::{command_found, run_command, run_command_for_stdout};
@@ -99,7 +99,7 @@ impl Backend for Xbps {
     ) -> Result<(Self::PackageId, Self::InstallOptions)> {
         match toml {
             toml::Value::String(x) => Ok((x.to_string(), Default::default())),
-            _ => Err(anyhow!("xbps packages must be a string")),
+            _ => Err(eyre!("xbps packages must be a string")),
         }
     }
 }

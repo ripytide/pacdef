@@ -1,9 +1,8 @@
 use std::collections::BTreeMap;
 use std::collections::BTreeSet;
 
-use anyhow::anyhow;
-use anyhow::Context;
-use anyhow::Result;
+use color_eyre::eyre::eyre;
+use color_eyre::Result;
 use serde_json::Value;
 
 use crate::cmd::command_found;
@@ -72,7 +71,7 @@ impl Backend for Pipx {
     ) -> Result<(Self::PackageId, Self::InstallOptions)> {
         match toml {
             toml::Value::String(x) => Ok((x.to_string(), Default::default())),
-            _ => Err(anyhow!("pipx packages must be a string")),
+            _ => Err(eyre!("pipx packages must be a string")),
         }
     }
 }
@@ -82,7 +81,7 @@ fn extract_package_names(stdout: String) -> Result<BTreeSet<String>> {
 
     let result = value["venvs"]
         .as_object()
-        .context("getting inner json object")?
+        .ok_or(eyre!("getting inner json object"))?
         .iter()
         .map(|(name, _)| name.clone())
         .collect();

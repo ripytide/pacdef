@@ -2,8 +2,8 @@ use crate::cmd::command_found;
 use crate::cmd::run_command;
 use crate::cmd::run_command_for_stdout;
 use crate::prelude::*;
-use anyhow::anyhow;
-use anyhow::Result;
+use color_eyre::eyre::eyre;
+use color_eyre::Result;
 use itertools::Itertools;
 use serde::Deserialize;
 use serde::Serialize;
@@ -192,9 +192,7 @@ impl Backend for Rustup {
                 x.clone().try_into::<StringPackageStruct>()?.package,
                 x.clone().try_into()?,
             )),
-            _ => Err(anyhow!(
-                "rustup packages must be either a string or a table"
-            )),
+            _ => Err(eyre!("rustup packages must be either a string or a table")),
         }
     }
 }

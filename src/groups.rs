@@ -1,5 +1,8 @@
 use crate::prelude::*;
-use anyhow::{anyhow, Context, Result};
+use color_eyre::{
+    eyre::{eyre, Context},
+    Result,
+};
 use toml::{Table, Value};
 use walkdir::{DirEntry, WalkDir};
 
@@ -27,7 +30,7 @@ impl Groups {
 
         let group_dir = group_dir.join("groups/");
         if !group_dir.is_dir() {
-            return Err(anyhow!(
+            return Err(eyre!(
                 "the groups directory was not found in the pacdef config folder, please create it"
             ));
         }
@@ -42,15 +45,15 @@ impl Groups {
                 .path()
                 .strip_prefix(&group_dir)?
                 .to_str()
-                .ok_or(anyhow!("will not fail on linux"))?
+                .ok_or(eyre!("will not fail on linux"))?
                 .to_string();
 
             log::info!("parsing group file: {group_name}@{group_file:?}");
 
-            let file_contents = read_to_string(group_file.path()).context("reading group file")?;
+            let file_contents = read_to_string(group_file.path()).wrap_err("reading group file")?;
 
             let install_options: InstallOptions =
-                parse_group_file(&group_name, &file_contents).context("parsing group file")?;
+                parse_group_file(&group_name, &file_contents).wrap_err("parsing group file")?;
 
             groups.insert(group_name, install_options);
         }
@@ -77,8 +80,8 @@ fn parse_toml_key_value(group_name: &str, key: &str, value: &Value) -> Result<In
                 if key.to_lowercase() == $backend.to_string().to_lowercase() {
                     let mut install_options = InstallOptions::default();
 
-                    let packages = value.as_array().context(
-                        anyhow!("the {} backend in the {group_name} group toml file has a non-array value", $backend)
+                    let packages = value.as_array().ok_or(
+                        eyre!("the {} backend in the {group_name} group toml file has a non-array value", $backend)
                     )?;
 
                     for package in packages {
