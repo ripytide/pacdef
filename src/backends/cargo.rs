@@ -1,8 +1,8 @@
 use std::collections::BTreeMap;
 use std::io::ErrorKind::NotFound;
 
-use anyhow::anyhow;
-use anyhow::{bail, Context, Result};
+use color_eyre::eyre::{eyre, Context};
+use color_eyre::Result;
 use serde::{Deserialize, Serialize};
 use serde_inline_default::serde_inline_default;
 use serde_json::Value;
@@ -48,7 +48,7 @@ impl Backend for Cargo {
         }
 
         let file = home::cargo_home()
-            .context("getting the cargo home directory")?
+            .wrap_err("getting the cargo home directory")?
             .join(".crates2.json");
 
         let contents = match std::fs::read_to_string(file) {
@@ -57,10 +57,10 @@ impl Backend for Cargo {
                 log::warn!("no crates file found for cargo. Assuming no crates installed yet.");
                 return Ok(BTreeMap::new());
             }
-            Err(err) => bail!(err),
+            Err(err) => return Err(err.into()),
         };
 
-        extract_packages(&contents).context("extracting packages from crates file")
+        extract_packages(&contents).wrap_err("extracting packages from crates file")
     }
 
     fn install_packages(
@@ -126,19 +126,19 @@ impl Backend for Cargo {
                 x.clone().try_into::<StringPackageStruct>()?.package,
                 x.clone().try_into()?,
             )),
-            _ => Err(anyhow!("cargo packages must be either a string or a table")),
+            _ => Err(eyre!("cargo packages must be either a string or a table")),
         }
     }
 }
 
 fn extract_packages(contents: &str) -> Result<BTreeMap<String, CargoQueryInfo>> {
-    let json: Value = serde_json::from_str(contents).context("parsing JSON from crates file")?;
+    let json: Value = serde_json::from_str(contents).wrap_err("parsing JSON from crates file")?;
 
     let result: BTreeMap<String, CargoQueryInfo> = json
         .get("installs")
-        .context("get 'installs' field from json")?
+        .ok_or(eyre!("get 'installs' field from json"))?
         .as_object()
-        .context("getting object")?
+        .ok_or(eyre!("getting object"))?
         .into_iter()
         .map(|(name, value)| {
             let value = value.as_object().unwrap();

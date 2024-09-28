@@ -1,8 +1,8 @@
-use anyhow::anyhow;
+use color_eyre::eyre::{eyre, Context};
 use serde_inline_default::serde_inline_default;
 use std::{collections::BTreeMap, path::Path};
 
-use anyhow::{Context, Result};
+use color_eyre::Result;
 use serde::{Deserialize, Serialize};
 
 // Update README if fields change.
@@ -22,10 +22,10 @@ impl Config {
         let config_file_path = pacdef_dir.join("config.toml");
 
         if !config_file_path.is_file() {
-            return Err(anyhow!("config file not found at: {config_file_path:?}"));
+            return Err(eyre!("config file not found at: {config_file_path:?}"));
         }
 
-        toml::from_str(&std::fs::read_to_string(config_file_path).context("reading config file")?)
-            .context("parsing toml config")
+        toml::from_str(&std::fs::read_to_string(config_file_path).wrap_err("reading config file")?)
+            .wrap_err("parsing toml config")
     }
 }

@@ -1,7 +1,7 @@
 use std::collections::{BTreeMap, BTreeSet};
 
 use crate::prelude::*;
-use anyhow::Result;
+use color_eyre::Result;
 
 macro_rules! append {
     ($($backend:ident),*) => {

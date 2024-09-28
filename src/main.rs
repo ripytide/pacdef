@@ -14,21 +14,25 @@
     missing_docs
 )]
 
-use anyhow::{Context, Result};
+use color_eyre::{
+    eyre::{eyre, Context},
+    Result,
+};
 
 use clap::Parser;
 use pacdef::{Config, Groups, MainArguments};
 
 fn main() -> Result<()> {
     pretty_env_logger::init();
+    color_eyre::install()?;
 
     let main_arguments = MainArguments::parse();
 
     let pacdef_dir = dirs::config_dir()
         .map(|path| path.join("pacdef/"))
-        .context("getting the pacdef config directory")?;
-    let config = Config::load(&pacdef_dir).context("loading config file")?;
-    let groups = Groups::load(&pacdef_dir).context("failed to load groups")?;
+        .ok_or(eyre!("getting the pacdef config directory"))?;
+    let config = Config::load(&pacdef_dir).wrap_err(eyre!("loading config file"))?;
+    let groups = Groups::load(&pacdef_dir).wrap_err(eyre!("failed to load groups"))?;
 
     if groups.is_empty() {
         log::warn!("no group files found");

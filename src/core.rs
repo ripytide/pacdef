@@ -1,4 +1,5 @@
-use anyhow::{Context, Result};
+use color_eyre::eyre::{eyre, Context};
+use color_eyre::Result;
 use dialoguer::Confirm;
 
 use crate::prelude::*;
@@ -42,7 +43,7 @@ impl CleanPackageAction {
             .default(true)
             .show_default(true)
             .interact()
-            .context("getting user confirmation")?
+            .wrap_err(eyre!("getting user confirmation"))?
         {
             return Ok(());
         }
@@ -77,7 +78,7 @@ impl SyncPackageAction {
             .default(true)
             .show_default(true)
             .interact()
-            .context("getting user confirmation")?
+            .wrap_err(eyre!("getting user confirmation"))?
         {
             return Ok(());
         }

@@ -1,6 +1,5 @@
-use anyhow::anyhow;
-use anyhow::Context;
-use anyhow::Result;
+use color_eyre::eyre::eyre;
+use color_eyre::Result;
 use serde_json::Value;
 use std::collections::BTreeMap;
 use std::collections::BTreeSet;
@@ -86,7 +85,7 @@ impl Backend for Pip {
     ) -> Result<(Self::PackageId, Self::InstallOptions)> {
         match toml {
             toml::Value::String(x) => Ok((x.to_string(), Default::default())),
-            _ => Err(anyhow!("pip packages must be a string")),
+            _ => Err(eyre!("pip packages must be a string")),
         }
     }
 }
@@ -96,7 +95,7 @@ fn extract_package_names(stdout: String) -> Result<BTreeSet<String>> {
 
     Ok(value
         .as_array()
-        .context("getting inner json array")?
+        .ok_or(eyre!("getting inner json array"))?
         .iter()
         .map(|node| node["name"].as_str().expect("should always be a string"))
         .map(String::from)

@@ -15,7 +15,7 @@ pub mod yay;
 use std::collections::BTreeMap;
 
 use crate::prelude::*;
-use anyhow::Result;
+use color_eyre::Result;
 use serde::{Deserialize, Serialize};
 
 macro_rules! apply_public_backends {

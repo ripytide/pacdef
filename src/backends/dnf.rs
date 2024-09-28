@@ -1,7 +1,7 @@
 use std::collections::BTreeMap;
 
-use anyhow::anyhow;
-use anyhow::Result;
+use color_eyre::eyre::eyre;
+use color_eyre::Result;
 use serde::{Deserialize, Serialize};
 
 use crate::cmd::{command_found, run_command, run_command_for_stdout};
@@ -115,9 +115,7 @@ impl Backend for Dnf {
                 x.clone().try_into::<StringPackageStruct>()?.package,
                 x.clone().try_into()?,
             )),
-            _ => Err(anyhow!(
-                "dnf packages must be either be a string or a table"
-            )),
+            _ => Err(eyre!("dnf packages must be either be a string or a table")),
         }
     }
 }

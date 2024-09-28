@@ -1,5 +1,5 @@
-use anyhow::anyhow;
-use anyhow::Result;
+use color_eyre::eyre::eyre;
+use color_eyre::Result;
 use serde::{Deserialize, Serialize};
 use serde_inline_default::serde_inline_default;
 use std::collections::BTreeMap;
@@ -119,7 +119,9 @@ impl Arch {
                 x.clone().try_into::<StringPackageStruct>()?.package,
                 x.clone().try_into()?,
             )),
-            _ => Err(anyhow!("pacman/yay/paru packages must be either a string or a table")),
+            _ => Err(eyre!(
+                "pacman/yay/paru packages must be either a string or a table"
+            )),
         }
     }
 }

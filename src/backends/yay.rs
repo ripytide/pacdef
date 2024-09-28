@@ -1,5 +1,5 @@
 use crate::prelude::*;
-use anyhow::Result;
+use color_eyre::Result;
 use std::collections::BTreeMap;
 
 #[derive(Debug, Copy, Clone, Default, PartialEq, Eq, PartialOrd, Ord, derive_more::Display)]
@@ -41,8 +41,8 @@ impl Backend for Yay {
         Self::YAY.remove_packages(packages, no_confirm, config)
     }
     fn try_parse_toml_package(
-            toml: &toml::Value,
-        ) -> Result<(Self::PackageId, Self::InstallOptions)> {
+        toml: &toml::Value,
+    ) -> Result<(Self::PackageId, Self::InstallOptions)> {
         Self::YAY.try_parse_toml_package(toml)
     }
 }

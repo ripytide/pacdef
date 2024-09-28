@@ -1,6 +1,6 @@
 use std::process::Command;
 
-use anyhow::{anyhow, Result};
+use color_eyre::{eyre::eyre, Result};
 
 pub fn command_found(command: &str) -> bool {
     if let Ok(path) = std::env::var("PATH") {
@@ -33,7 +33,7 @@ where
     let args: Vec<String> = command.into_iter().map(Into::into).collect::<Vec<_>>();
 
     if args.is_empty() {
-        return Err(anyhow!("cannot run an empty command"));
+        return Err(eyre!("cannot run an empty command"));
     }
 
     let args = Some("sudo".to_string())
@@ -49,7 +49,7 @@ where
     if output.status.success() {
         Ok(String::from_utf8(output.stdout)?)
     } else {
-        Err(anyhow::anyhow!("command failed: {:?}", args))
+        Err(eyre!("command failed: {:?}", args))
     }
 }
 
