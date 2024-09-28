@@ -63,7 +63,7 @@ packages that can be installed respective package manager.
 
 This image illustrates the relationship.
 
-```
+```ini
        1   n       1   n         1   n
 pacdef ----> group ----> section ----> package
 ```
@@ -139,7 +139,7 @@ run one of the two commands.
 
 This tree shows my pacdef repository (not the `pacdef` config dir).
 
-```
+```ini
 .
 ├── generic
 │   ├── audio
