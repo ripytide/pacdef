@@ -6,12 +6,10 @@ use clap::{Args, Parser, Subcommand};
 #[command(
     version,
     author,
+    about,
     arg_required_else_help(true),
     subcommand_required(true),
-    disable_help_subcommand(true),
-    disable_version_flag(true)
 )]
-/// multi-backend declarative package manager for Linux
 pub struct MainArguments {
     #[command(subcommand)]
     pub subcommand: MainSubcommand,
@@ -41,8 +39,8 @@ pub struct CleanPackageAction {
 pub struct ReviewPackageAction {}
 
 #[derive(Args)]
-#[command(visible_alias("sy"))]
-/// install packages from all imported groups
+#[command(visible_alias("s"))]
+/// install packages from groups
 pub struct SyncPackageAction {
     #[arg(long)]
     /// do not ask for any confirmation
