@@ -23,7 +23,7 @@ pub(crate) use apply_public_backends;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct StringPackageStruct {
-    package: String,
+    pub package: String,
 }
 
 pub trait Backend {
@@ -53,8 +53,4 @@ pub trait Backend {
         no_confirm: bool,
         config: &Config,
     ) -> Result<()>;
-
-    fn try_parse_toml_package(
-        toml: &toml::Value,
-    ) -> Result<(Self::PackageId, Self::InstallOptions)>;
 }

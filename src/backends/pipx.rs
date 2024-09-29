@@ -3,6 +3,8 @@ use std::collections::BTreeSet;
 
 use color_eyre::eyre::eyre;
 use color_eyre::Result;
+use serde::Deserialize;
+use serde::Serialize;
 use serde_json::Value;
 
 use crate::cmd::command_found;
@@ -13,10 +15,13 @@ use crate::prelude::*;
 #[derive(Debug, Copy, Clone, Default, PartialEq, Eq, PartialOrd, Ord, derive_more::Display)]
 pub struct Pipx;
 
+#[derive(Debug, Clone, Default, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
+pub struct PipxInstallOptions {}
+
 impl Backend for Pipx {
     type PackageId = String;
     type QueryInfo = ();
-    type InstallOptions = ();
+    type InstallOptions = PipxInstallOptions;
     type ModificationOptions = ();
     type RemoveOptions = ();
 
@@ -64,15 +69,6 @@ impl Backend for Pipx {
                 .chain(packages.keys().map(String::as_str)),
             Perms::AsRoot,
         )
-    }
-
-    fn try_parse_toml_package(
-        toml: &toml::Value,
-    ) -> Result<(Self::PackageId, Self::InstallOptions)> {
-        match toml {
-            toml::Value::String(x) => Ok((x.to_string(), Default::default())),
-            _ => Err(eyre!("pipx packages must be a string")),
-        }
     }
 }
 

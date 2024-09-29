@@ -79,7 +79,16 @@ fn parse_toml_key_value(group_name: &str, key: &str, value: &Value) -> Result<In
                     )?;
 
                     for package in packages {
-                        let (package_id, package_install_options) = $backend::try_parse_toml_package(package)?;
+                        let (package_id, package_install_options) =
+                            match package {
+                                toml::Value::String(x) => (x.to_string(), Default::default()),
+                                toml::Value::Table(x) => (
+                                    x.clone().try_into::<StringPackageStruct>()?.package,
+                                    x.clone().try_into()?,
+                                ),
+                                _ => return Err(eyre!("the {} backend in the {group_name} group toml file has a package which is neither a string or a table", $backend)),
+                            };
+
                         install_options.$backend.insert(package_id, package_install_options);
                     }
 

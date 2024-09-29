@@ -2,7 +2,6 @@ use crate::cmd::command_found;
 use crate::cmd::run_command;
 use crate::cmd::run_command_for_stdout;
 use crate::prelude::*;
-use color_eyre::eyre::eyre;
 use color_eyre::Result;
 use itertools::Itertools;
 use serde::Deserialize;
@@ -181,18 +180,5 @@ impl Backend for Rustup {
         }
 
         Ok(())
-    }
-
-    fn try_parse_toml_package(
-        toml: &toml::Value,
-    ) -> Result<(Self::PackageId, Self::InstallOptions)> {
-        match toml {
-            toml::Value::String(x) => Ok((x.to_string(), Default::default())),
-            toml::Value::Table(x) => Ok((
-                x.clone().try_into::<StringPackageStruct>()?.package,
-                x.clone().try_into()?,
-            )),
-            _ => Err(eyre!("rustup packages must be either a string or a table")),
-        }
     }
 }

@@ -116,19 +116,6 @@ impl Backend for Cargo {
             Perms::AsRoot,
         )
     }
-
-    fn try_parse_toml_package(
-        toml: &toml::Value,
-    ) -> Result<(Self::PackageId, Self::InstallOptions)> {
-        match toml {
-            toml::Value::String(x) => Ok((x.to_string(), Default::default())),
-            toml::Value::Table(x) => Ok((
-                x.clone().try_into::<StringPackageStruct>()?.package,
-                x.clone().try_into()?,
-            )),
-            _ => Err(eyre!("cargo packages must be either a string or a table")),
-        }
-    }
 }
 
 fn extract_packages(contents: &str) -> Result<BTreeMap<String, CargoQueryInfo>> {
