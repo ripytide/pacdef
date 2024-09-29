@@ -10,8 +10,6 @@ use crate::prelude::*;
 #[derive(Debug, Copy, Clone, Default, PartialEq, Eq, PartialOrd, Ord, derive_more::Display)]
 pub struct Arch;
 
-pub type ArchPackageId = String;
-
 #[derive(Debug, Clone)]
 pub struct ArchQueryInfo {
     pub explicit: bool,
@@ -26,17 +24,22 @@ pub struct ArchModificationOptions {
 #[derive(Debug, Clone, Default, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 pub struct ArchInstallOptions {
     #[serde_inline_default(ArchInstallOptions::default().optional_deps)]
-    pub optional_deps: Vec<ArchPackageId>,
+    pub optional_deps: Vec<String>,
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct ArchRemoveOptions {}
 
-impl Arch {
-    pub fn query_installed_packages(
-        &self,
+impl Backend for Arch {
+    type PackageId = String;
+    type QueryInfo = ArchQueryInfo;
+    type InstallOptions = ArchInstallOptions;
+    type ModificationOptions = ArchModificationOptions;
+    type RemoveOptions = ArchRemoveOptions;
+
+    fn query_installed_packages(
         config: &Config,
-    ) -> Result<BTreeMap<ArchPackageId, ArchQueryInfo>> {
+    ) -> Result<BTreeMap<Self::PackageId, Self::QueryInfo>> {
         if !command_found(&config.arch_package_manager) {
             return Ok(BTreeMap::new());
         }
@@ -66,9 +69,8 @@ impl Arch {
             .collect())
     }
 
-    pub fn install_packages(
-        &self,
-        packages: &BTreeMap<ArchPackageId, ArchInstallOptions>,
+    fn install_packages(
+        packages: &BTreeMap<Self::PackageId, Self::InstallOptions>,
         no_confirm: bool,
         config: &Config,
     ) -> Result<()> {
@@ -84,9 +86,8 @@ impl Arch {
         )
     }
 
-    pub fn modify_packages(
-        &self,
-        packages: &BTreeMap<ArchPackageId, ArchModificationOptions>,
+    fn modify_packages(
+        packages: &BTreeMap<Self::PackageId, Self::ModificationOptions>,
         config: &Config,
     ) -> Result<()> {
         run_command(
@@ -102,9 +103,8 @@ impl Arch {
         )
     }
 
-    pub fn remove_packages(
-        &self,
-        packages: &BTreeMap<ArchPackageId, ArchRemoveOptions>,
+    fn remove_packages(
+        packages: &BTreeMap<Self::PackageId, Self::RemoveOptions>,
         no_confirm: bool,
         config: &Config,
     ) -> Result<()> {
@@ -118,10 +118,9 @@ impl Arch {
         )
     }
 
-    pub fn try_parse_toml_package(
-        &self,
+    fn try_parse_toml_package(
         toml: &toml::Value,
-    ) -> Result<(ArchPackageId, ArchInstallOptions)> {
+    ) -> Result<(Self::PackageId, Self::InstallOptions)> {
         match toml {
             toml::Value::String(x) => Ok((x.to_string(), Default::default())),
             toml::Value::Table(x) => Ok((
