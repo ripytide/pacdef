@@ -35,7 +35,7 @@ impl Groups {
         }
 
         for group_name in config.hostname_groups.get(hostname).wrap_err(format!(
-            "no hostname entry in hostname_groups config for the hostname: {hostname}"
+            "no hostname entry in the hostname_groups config for the hostname: {hostname}"
         ))? {
             let mut group_file = group_dir.join(group_name);
             group_file.set_extension("toml");

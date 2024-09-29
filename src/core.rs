@@ -23,9 +23,9 @@ impl MainArguments {
                 .ok_or(eyre!("getting the default pacdef config directory"))?
         };
 
-        let config = Config::load(&config_dir).context("loading config file")?;
+        let config = Config::load(&config_dir).wrap_err("loading config file")?;
         let groups =
-            Groups::load(&config_dir, &hostname, &config).context("failed to load groups")?;
+            Groups::load(&config_dir, &hostname, &config).wrap_err("failed to load groups")?;
 
         if groups.is_empty() {
             log::warn!("no group files found");

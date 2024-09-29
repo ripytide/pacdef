@@ -4,7 +4,6 @@ pub mod arch;
 pub mod cargo;
 pub mod dnf;
 pub mod flatpak;
-pub mod pip;
 pub mod pipx;
 pub mod rustup;
 pub mod xbps;
@@ -17,7 +16,7 @@ use serde::{Deserialize, Serialize};
 
 macro_rules! apply_public_backends {
     ($macro:ident) => {
-        $macro! { Arch, Apt, Cargo, Dnf, Flatpak, Pip, Pipx, Rustup, Xbps }
+        $macro! { Arch, Apt, Cargo, Dnf, Flatpak, Pipx, Rustup, Xbps }
     };
 }
 pub(crate) use apply_public_backends;

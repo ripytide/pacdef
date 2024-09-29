@@ -9,7 +9,6 @@ pub use crate::backends::arch::{
 pub use crate::backends::cargo::Cargo;
 pub use crate::backends::dnf::{Dnf, DnfInstallOptions, DnfQueryInfo};
 pub use crate::backends::flatpak::{Flatpak, FlatpakQueryInfo};
-pub use crate::backends::pip::{Pip, PipQueryInfo};
 pub use crate::backends::pipx::Pipx;
 pub use crate::backends::rustup::{
     Rustup, RustupInstallOptions, RustupModificationOptions, RustupQueryInfo,

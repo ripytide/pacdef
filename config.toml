@@ -10,7 +10,7 @@ flatpak_systemwide = true
 
 # Backends to disable from all pacdef behavior. See the README.md for
 # the list of backend names
-disabled_backends = ["pip"]
+disabled_backends = ["apt"]
 
 # Which group files apply for which hostnames
 [hostname_groups]
