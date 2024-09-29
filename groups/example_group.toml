@@ -1,16 +1,51 @@
-arch = ["pacdef", { package = "pacdef", optional_deps = ["git"] }]
+# Declared Packages in toml format can come in two formats, short-form
+# and long-form:
+#
+# short-form syntax is simply a string of the name of the package.
+#
+# long-form syntax is a table which contains several fields which can
+# optionally be set to specify install options on a per-package basis.
+# The "package" field in the table specifies the name of the package.
+#
+# For example, the following two packages are equivalent:
+# arch = [
+# 	"pacdef",
+# 	{ package = "pacdef" }
+# ]
+
+arch = [
+	"pacdef",
+	# optional_deps: additional packages to install with this package, short-form syntax only
+	{ package = "pacdef",  optional_deps = ["git"] }
+]
 cargo = [
 	"pacdef",
-	{ package = "pacdef", version = "0.1.0", git = "https://github.com/ripytide/pacdef", all_features = true, no_default_features = false, features = [
-		"feature1",
-	] },
+	# see cargo docs for info on the options
+	{ package = "pacdef", version = "0.1.0", git = "https://github.com/ripytide/pacdef", all_features = true, no_default_features = false, features = [ "feature1", ] },
 ]
-pipx = ["pacdef"]
-apt = ["pacdef"]
-xbps = ["pacdef"]
-flatpak = ["pacdef"]
+pipx = [
+	"pacdef",
+	{ package = "packdef" }
+]
+apt = [
+	"pacdef",
+	{ package = "packdef" }
+]
+xbps = [
+	"pacdef",
+	{ package = "packdef" }
+]
+flatpak = [
+	"pacdef",
+	{ package = "packdef" }
+]
 dnf = [
 	"pacdef",
+	# see dnf docs for more info on these options
 	{ package = "pacdef", repo = "/etc/yum.repos.d/fedora_extras.repo" },
 ]
-rustup = ["stable", { package = "stable", components = ["rust-analyzer"] }]
+rustup = [
+	"stable",
+	# components: extra non-default components to install with this toolchain
+	{ package = "stable", components = ["rust-analyzer"] }
+]
