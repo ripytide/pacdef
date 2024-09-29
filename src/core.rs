@@ -20,7 +20,7 @@ impl MainArguments {
         } else {
             dirs::config_dir()
                 .map(|path| path.join("pacdef/"))
-                .context("getting the default pacdef config directory")?
+                .ok_or(eyre!("getting the default pacdef config directory"))?
         };
 
         let config = Config::load(&config_dir).context("loading config file")?;
@@ -58,7 +58,7 @@ impl CleanPackageAction {
             .default(true)
             .show_default(true)
             .interact()
-            .wrap_err(eyre!("getting user confirmation"))?
+            .wrap_err("getting user confirmation")?
         {
             return Ok(());
         }
@@ -93,7 +93,7 @@ impl SyncPackageAction {
             .default(true)
             .show_default(true)
             .interact()
-            .wrap_err(eyre!("getting user confirmation"))?
+            .wrap_err("getting user confirmation")?
         {
             return Ok(());
         }

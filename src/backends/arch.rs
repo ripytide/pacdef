@@ -8,9 +8,7 @@ use crate::cmd::{command_found, run_command, run_command_for_stdout};
 use crate::prelude::*;
 
 #[derive(Debug, Copy, Clone, Default, PartialEq, Eq, PartialOrd, Ord, derive_more::Display)]
-pub struct Arch {
-    pub command: &'static str,
-}
+pub struct Arch;
 
 pub type ArchPackageId = String;
 
@@ -37,16 +35,25 @@ pub struct ArchRemoveOptions {}
 impl Arch {
     pub fn query_installed_packages(
         &self,
-        _: &Config,
+        config: &Config,
     ) -> Result<BTreeMap<ArchPackageId, ArchQueryInfo>> {
-        if !command_found("pacman") {
+        if !command_found(&config.arch_package_manager) {
             return Ok(BTreeMap::new());
         }
 
-        let explicit =
-            run_command_for_stdout(["pacman", "--query", "--explicit", "--quiet"], Perms::Same)?;
-        let dependency =
-            run_command_for_stdout(["pacman", "--query", "--deps", "--quiet"], Perms::Same)?;
+        let explicit = run_command_for_stdout(
+            [
+                &config.arch_package_manager,
+                "--query",
+                "--explicit",
+                "--quiet",
+            ],
+            Perms::Same,
+        )?;
+        let dependency = run_command_for_stdout(
+            [&config.arch_package_manager, "--query", "--deps", "--quiet"],
+            Perms::Same,
+        )?;
 
         Ok(dependency
             .lines()
@@ -63,10 +70,10 @@ impl Arch {
         &self,
         packages: &BTreeMap<ArchPackageId, ArchInstallOptions>,
         no_confirm: bool,
-        _: &Config,
+        config: &Config,
     ) -> Result<()> {
         run_command(
-            [self.command, "--sync"]
+            [&config.arch_package_manager, "--sync"]
                 .into_iter()
                 .chain(Some("--no_confirm").filter(|_| no_confirm))
                 .chain(packages.keys().map(String::as_str))
@@ -80,15 +87,17 @@ impl Arch {
     pub fn modify_packages(
         &self,
         packages: &BTreeMap<ArchPackageId, ArchModificationOptions>,
-        _: &Config,
+        config: &Config,
     ) -> Result<()> {
         run_command(
-            [self.command, "--database", "--asdeps"].into_iter().chain(
-                packages
-                    .iter()
-                    .filter(|(_, m)| m.make_implicit)
-                    .map(|(p, _)| p.as_str()),
-            ),
+            [&config.arch_package_manager, "--database", "--asdeps"]
+                .into_iter()
+                .chain(
+                    packages
+                        .iter()
+                        .filter(|(_, m)| m.make_implicit)
+                        .map(|(p, _)| p.as_str()),
+                ),
             Perms::AsRoot,
         )
     }
@@ -100,9 +109,9 @@ impl Arch {
         config: &Config,
     ) -> Result<()> {
         run_command(
-            [self.command, "--remove", "--recursive"]
+            [&config.arch_package_manager, "--remove", "--recursive"]
                 .into_iter()
-                .chain(config.aur_rm_args.iter().map(String::as_str))
+                .chain(config.arch_rm_args.iter().map(String::as_str))
                 .chain(Some("--no_confirm").filter(|_| no_confirm))
                 .chain(packages.keys().map(String::as_str)),
             Perms::AsRoot,
@@ -119,9 +128,7 @@ impl Arch {
                 x.clone().try_into::<StringPackageStruct>()?.package,
                 x.clone().try_into()?,
             )),
-            _ => Err(eyre!(
-                "pacman/yay/paru packages must be either a string or a table"
-            )),
+            _ => Err(eyre!("arch packages must be either a string or a table")),
         }
     }
 }

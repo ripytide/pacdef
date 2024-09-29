@@ -1,11 +1,19 @@
+# Which arch package manager to use. For example: pacman, paru, yay,
+# etc..
+arch_package_manager = "paru"
+
 # Extra arguments passed to pacman when removing an arch package.
-aur_rm_args = [""]
+arch_rm_args = [""]
 
 # Whether to install flatpak packages systemwide or for the current user.
 flatpak_systemwide = true
 
+# Backends to disable from all pacdef behavior. See the README.md for
+# the list of backend names
+disabled_backends = ["pip"]
+
 # Which group files apply for which hostnames
 [hostname_groups]
-pc = ["example_config"]
-laptop = ["example_config"]
-server = ["example_config"]
+pc = ["example_group"]
+laptop = ["example_group"]
+server = ["example_group"]

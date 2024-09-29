@@ -14,11 +14,8 @@
     missing_docs
 )]
 
-use color_eyre::{
-    eyre::{eyre, Context},
-    Result,
-};
 use clap::Parser;
+use color_eyre::Result;
 use pacdef::MainArguments;
 
 fn main() -> Result<()> {

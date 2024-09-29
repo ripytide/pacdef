@@ -210,7 +210,7 @@ can be set. The listed values are the defaults.
 
 ```toml
 aur_helper = "paru"  # AUR helper to use on Arch Linux (paru, yay, ...)
-aur_rm_args = []  # additional args to pass to AUR helper when removing packages (optional)
+arch_rm_args = []  # additional args to pass to AUR helper when removing packages (optional)
 disabled_backends = []  # backends that pacdef should not manage, e.g. ["python"], this can reduce runtime if the package manager is notoriously slow (like pip)
 
 warn_not_symlinks = true  # warn if a group file is not a symlink
