@@ -1,6 +1,6 @@
 [package]
 name = "pacdef"
-description = "multi-backend declarative package manager for Linux"
+description = "multi-backend declarative package manager"
 version = "1.6.0"
 edition = "2021"
 license = "GPL-3.0-or-later"

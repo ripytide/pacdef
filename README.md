@@ -1,42 +1,31 @@
-[![check](https://github.com/steven-omaha/pacdef/actions/workflows/check.yml/badge.svg)](https://github.com/steven-omaha/pacdef/actions/workflows/check.yml)
-
 # pacdef
 
-multi-backend declarative package manager for Linux
+multi-backend declarative package manager
 
 ## Installation
 
 ### Arch Linux
 
-`pacdef` is available in the AUR [as stable
-release](https://aur.archlinux.org/packages/pacdef) or [development
-version](https://aur.archlinux.org/packages/pacdef-git) or [binary
-version](https://aur.archlinux.org/packages/pacdef-bin).
+`pacdef` is available in the Arch User Repository in the
+[`pacdef`](https://aur.archlinux.org/packages/pacdef) and
+[`pacdef-bin`](https://aur.archlinux.org/packages/pacdef-bin)
+packages.
 
-### binaries for other Linux versions
+### Cargo
 
-For every release since 1.5.0 you can download binaries for some other
-Linux versions. Check out the assets for the [latest
-release](https://github.com/steven-omaha/pacdef/releases).
-
-### from source
-
-Install it from [crates.io](https://crates.io/crates/pacdef) using
-this command.
+To install `pacdef` using cargo:
 
 ```bash
-$ cargo install [-F <backend>[,...]] pacdef
+cargo install pacdef
+# or using cargo-binstall
+cargo binstall pacdef
 ```
 
-See below ("[supported backends](#supported-backends)") for the
-feature flags you will need for your distribution.
+### Binary
 
-### shell completion
-
-For Arch Linux, zsh completion will work automatically when you
-install pacdef from the AUR packages. For other distributions you must
-copy the `_completion.zsh` file to the right folder manually and
-rename it to `_pacdef`.
+Check out the releases page for downloading `pacdef` binaries for
+various architectures: [latest
+release](https://github.com/steven-omaha/pacdef/releases).
 
 ## Use-case
 
@@ -50,76 +39,46 @@ any VCS, like git.
 
 If you work with multiple Linux machines and have asked yourself "_Why
 do I have the program that I use every day on my other machine not
-	installed here?_", then `pacdef` is the tool for you.
+installed here?_", then `pacdef` is the tool for you.
 
-### Of groups, sections, and packages
+## Multi-Backend
 
-`pacdef` manages multiple package groups (group files) that, e.g., may
-be tied to a specific use-case. Each group has one or more section(s)
-which correspond to a specific backend, like your system's package
-manager (`pacman`, `apt`, ...), or your programming languages package
-manger (`cargo`, `pip`, ...). Each section contains one or more
-packages that can be installed respective package manager.
+`pacdef` is a sort of meta package manager in that it does not
+directly possess the functionality to install packages on your system,
+instead it provides a single standardized interface for a whole bunch
+of other non-meta package managers. See the [Supported
+Backends](#supported-backends) section for a list of the currently
+supported backend package managers.
 
-This image illustrates the relationship.
+## Declarative
 
-```ini
-       1   n       1   n         1   n
-pacdef ----> group ----> section ----> package
-```
+`pacdef` is a declarative package manager, that means that you declare
+in `.toml` group files the packages you would like installed on your
+system and then run one of the `pacdef` commands which read these
+group files and then operate on your system to do some function such
+as install packages in your group files that are not present on your
+system yet (`pacdef sync`), or remove packages present on your system
+but not in your group files (`pacdef clean`).
 
-### Example
-
-Let's assume you have the following group files.
-
-`base`:
-
-```ini
-[arch]
-paru
-zsh
-
-[rust]
-pacdef
-topgrade
-```
-
-`development`:
-
-```ini
-[arch]
-rustup
-rust-analyzer
-
-[rust]
-cargo-tree
-flamegraph
-```
-
-Pacdef will make sure you have the following packages installed for
-each package manager:
-
-- Arch (`pacman`, AUR helpers): paru, zsh, rustup, rust-analyzer
-- Rust (`cargo`): pacdef, topgrade, cargo-tree, flamegraph
-
-Note that the name of the section corresponds to the ecosystem it
-relates to, rather than the package manager it uses.
-
-## Supported backends
+## Supported Backends
 
 At the moment, supported backends are the following. Pull requests for
 additional backends are welcome!
 
-| Application  | Package Manager | Section     | feature flag | Notes                                                                                    |
-| ------------ | --------------- | ----------- | ------------ | ---------------------------------------------------------------------------------------- |
-| Arch Linux   | `pacman`        | `[arch]`    | `arch`       | includes pacman-wrapping AUR helpers (configurable)                                      |
-| Debian       | `apt`           | `[debian]`  | `debian`     | minimum supported apt-version 2.0.2 ([see upstream](https://gitlab.com/volian/rust-apt)) |
-| Fedora Linux | `dnf`           | `[fedora]`  | built-in     |                                                                                          |
-| Flatpak      | `flatpak`       | `[flatpak]` | built-in     | can manage either system-wide or per-user installation (configurable)                    |
-| Python       | `pip`           | `[python]`  | built-in     |                                                                                          |
-| Rust         | `cargo`         | `[rust]`    | built-in     |                                                                                          |
-| Rustup       | `rustup`        | `[rustup]`  | built-in     | See the comments [below](#rustup) about the syntax of the packages in the group file.    |
-| Void Linux   | `xbps`          | `[void]`    | built-in     |                                                                                          |
+Package Manager | Group Name     | Notes                                                                                    |
+--------------- | ----------- | ---------------------------------------------------------------------------------------- |
+`pacman`        | `[arch]`    | only one of `pacman`/`paru`/`yay` can
+be used at once since they operate on the same local package database,
+configure which one via the `arch_package_manager` config option|
+`paru`        | `[arch]`    | includes pacman-wrapping AUR helpers (configurable)                                      |
+`yay`        | `[arch]`    | includes pacman-wrapping AUR helpers (configurable)                                      |
+`apt`           | `[debian]`  | minimum supported apt-version 2.0.2 ([see upstream](https://gitlab.com/volian/rust-apt)) |
+`dnf`           | `[fedora]`  |                                                                                          |
+`flatpak`       | `[flatpak]` | can manage either system-wide or per-user installation (configurable)                    |
+`pip`           | `[python]`  |                                                                                          |
+`cargo`         | `[rust]`    |                                                                                          |
+`rustup`        | `[rustup]`  | See the comments [below](#rustup) about the syntax of the packages in the group file.    |
+`xbps`          | `[void]`    |                                                                                          |
 
 Backends that have a `feature flag` require setting the respective
 flag for the build process. The appropriate system libraries and their
@@ -176,6 +135,43 @@ Usage on different machines:
 - home server: `base private hostname_a`
 - private PC: `audio base desktop private rust wayland hostname_b`
 - work PC: `base desktop rust work xorg hostname_c`
+
+### Example
+
+Let's assume you have the following group files.
+
+`base`:
+
+```ini
+[arch]
+paru
+zsh
+
+[rust]
+pacdef
+topgrade
+```
+
+`development`:
+
+```ini
+[arch]
+rustup
+rust-analyzer
+
+[rust]
+cargo-tree
+flamegraph
+```
+
+Pacdef will make sure you have the following packages installed for
+each package manager:
+
+- Arch (`pacman`, AUR helpers): paru, zsh, rustup, rust-analyzer
+- Rust (`cargo`): pacdef, topgrade, cargo-tree, flamegraph
+
+Note that the name of the section corresponds to the ecosystem it
+relates to, rather than the package manager it uses.
 
 ## Commands
 
