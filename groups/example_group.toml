@@ -21,23 +21,23 @@ arch = [
 cargo = [
 	"pacdef",
 	# see cargo docs for info on the options
-	{ package = "pacdef", version = "0.1.0", git = "https://github.com/ripytide/pacdef", all_features = true, no_default_features = false, features = [ "feature1", ] },
+	{ package = "pacdef", git = "https://github.com/ripytide/pacdef", all_features = true, no_default_features = false, features = [ "feature1", ] },
 ]
 pipx = [
 	"pacdef",
-	{ package = "packdef" }
+	{ package = "pacdef" }
 ]
 apt = [
 	"pacdef",
-	{ package = "packdef" }
+	{ package = "pacdef" }
 ]
 xbps = [
 	"pacdef",
-	{ package = "packdef" }
+	{ package = "pacdef" }
 ]
 flatpak = [
 	"pacdef",
-	{ package = "packdef" }
+	{ package = "pacdef" }
 ]
 dnf = [
 	"pacdef",

@@ -16,7 +16,6 @@ pub struct Cargo;
 #[serde_inline_default]
 #[derive(Debug, Clone, Default, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 pub struct CargoInstallOptions {
-    version: Option<String>,
     git: Option<String>,
     #[serde_inline_default(CargoInstallOptions::default().all_features)]
     all_features: bool,
