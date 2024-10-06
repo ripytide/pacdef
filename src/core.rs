@@ -111,7 +111,7 @@ impl UnmanagedPackageAction {
         if unmanaged.is_empty() {
             eprintln!("no unmanaged packages");
         } else {
-            println!("{unmanaged}");
+            println!("{}", toml::to_string_pretty(&unmanaged)?);
         }
 
         Ok(())

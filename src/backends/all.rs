@@ -1,3 +1,4 @@
+use serde::Serialize;
 use std::collections::{BTreeMap, BTreeSet};
 
 use crate::prelude::*;
@@ -35,7 +36,7 @@ macro_rules! to_package_ids {
 
 macro_rules! package_ids {
     ($($backend:ident),*) => {
-        #[derive(Debug, Clone, Default)]
+        #[derive(Debug, Clone, Default, Serialize)]
         #[allow(non_snake_case)]
         pub struct PackageIds {
             $(
