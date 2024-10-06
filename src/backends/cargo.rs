@@ -16,7 +16,6 @@ pub struct Cargo;
 #[serde_inline_default]
 #[derive(Debug, Clone, Default, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 pub struct CargoInstallOptions {
-    version: Option<String>,
     git: Option<String>,
     #[serde_inline_default(CargoInstallOptions::default().all_features)]
     all_features: bool,
@@ -115,19 +114,6 @@ impl Backend for Cargo {
                 .chain(packages.keys().map(String::as_str)),
             Perms::AsRoot,
         )
-    }
-
-    fn try_parse_toml_package(
-        toml: &toml::Value,
-    ) -> Result<(Self::PackageId, Self::InstallOptions)> {
-        match toml {
-            toml::Value::String(x) => Ok((x.to_string(), Default::default())),
-            toml::Value::Table(x) => Ok((
-                x.clone().try_into::<StringPackageStruct>()?.package,
-                x.clone().try_into()?,
-            )),
-            _ => Err(eyre!("cargo packages must be either a string or a table")),
-        }
     }
 }
 

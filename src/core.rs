@@ -6,22 +6,37 @@ use crate::prelude::*;
 use crate::review::review;
 
 impl MainArguments {
-    pub fn run(self, groups: &Groups, config: &Config) -> Result<()> {
-        match self.subcommand {
-            MainSubcommand::Clean(clean) => clean.run(groups, config),
-            MainSubcommand::Review(review) => review.run(groups, config),
-            MainSubcommand::Sync(sync) => sync.run(groups, config),
-            MainSubcommand::Unmanaged(unmanaged) => unmanaged.run(groups, config),
-            MainSubcommand::Version(version) => version.run(),
+    pub fn run(self) -> Result<()> {
+        let hostname = if let Some(x) = self.hostname {
+            x
+        } else {
+            hostname::get()?
+                .into_string()
+                .or(Err(eyre!("getting hostname")))?
+        };
+
+        let config_dir = if let Some(x) = self.config_dir {
+            x
+        } else {
+            dirs::config_dir()
+                .map(|path| path.join("pacdef/"))
+                .ok_or(eyre!("getting the default pacdef config directory"))?
+        };
+
+        let config = Config::load(&config_dir).wrap_err("loading config file")?;
+        let groups =
+            Groups::load(&config_dir, &hostname, &config).wrap_err("failed to load groups")?;
+
+        if groups.is_empty() {
+            log::warn!("no group files found");
         }
-    }
-}
 
-impl VersionArguments {
-    fn run(self) -> Result<()> {
-        println!("pacdef, version: {}\n", env!("CARGO_PKG_VERSION"));
-
-        Ok(())
+        match self.subcommand {
+            MainSubcommand::Clean(clean) => clean.run(&groups, &config),
+            MainSubcommand::Review(review) => review.run(&groups, &config),
+            MainSubcommand::Sync(sync) => sync.run(&groups, &config),
+            MainSubcommand::Unmanaged(unmanaged) => unmanaged.run(&groups, &config),
+        }
     }
 }
 
@@ -43,7 +58,7 @@ impl CleanPackageAction {
             .default(true)
             .show_default(true)
             .interact()
-            .wrap_err(eyre!("getting user confirmation"))?
+            .wrap_err("getting user confirmation")?
         {
             return Ok(());
         }
@@ -78,7 +93,7 @@ impl SyncPackageAction {
             .default(true)
             .show_default(true)
             .interact()
-            .wrap_err(eyre!("getting user confirmation"))?
+            .wrap_err("getting user confirmation")?
         {
             return Ok(());
         }

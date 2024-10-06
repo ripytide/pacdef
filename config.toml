@@ -1,0 +1,34 @@
+# By default the `pacdef` `config.toml` file is expected in the
+# `XDG_CONFIG_HOME/pacdef` directory (`~/.config/pacdef/config.toml`)
+# unless using the `--config-dir` cli option.
+
+# To decide which group files are relevant for the current machine
+# `pacdef` uses the machine's hostname in the `hostname_groups` table in
+# the config file to get a list of group file names.
+
+# Since pacman, yay and paru all operate on the same package database
+# they are mutally exclusive and so you must pick which one you want
+# pacdef to use.
+# Examples include: "pacman", "paru", "yay"
+# Default: "pacman"
+arch_package_manager = "paru"
+
+# Extra arguments passed to pacman when removing an arch package.
+# Default: []
+arch_rm_args = ["-ns"]
+
+# Whether to install flatpak packages systemwide or for the current user.
+# Default: true
+flatpak_systemwide = true
+
+# Backends to disable from all pacdef behavior. See the README.md for
+# the list of backend names
+# Default: []
+disabled_backends = ["apt"]
+
+# Which group files apply for which hostnames
+# Default: None
+[hostname_groups]
+pc = ["example_group"]
+laptop = ["example_group"]
+server = ["example_group"]

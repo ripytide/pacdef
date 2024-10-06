@@ -1,10 +1,9 @@
 use crate::prelude::*;
 use color_eyre::{
-    eyre::{eyre, Context},
+    eyre::{eyre, Context, ContextCompat},
     Result,
 };
 use toml::{Table, Value};
-use walkdir::{DirEntry, WalkDir};
 
 use std::{collections::BTreeMap, fs::read_to_string, path::Path};
 
@@ -25,7 +24,7 @@ impl Groups {
         self.to_install_options().to_package_ids()
     }
 
-    pub fn load(group_dir: &Path) -> Result<Self> {
+    pub fn load(group_dir: &Path, hostname: &str, config: &Config) -> Result<Self> {
         let mut groups = Self::default();
 
         let group_dir = group_dir.join("groups/");
@@ -35,28 +34,23 @@ impl Groups {
             ));
         }
 
-        let group_files: Vec<DirEntry> = WalkDir::new(&group_dir)
-            .follow_links(true)
-            .into_iter()
-            .collect::<Result<_, _>>()?;
-
-        for group_file in group_files.iter().filter(|path| path.path().is_file()) {
-            let group_name = group_file
-                .path()
-                .strip_prefix(&group_dir)?
-                .to_str()
-                .ok_or(eyre!("will not fail on linux"))?
-                .to_string();
+        for group_name in config.hostname_groups.get(hostname).wrap_err(format!(
+            "no hostname entry in the hostname_groups config for the hostname: {hostname}"
+        ))? {
+            let mut group_file = group_dir.join(group_name);
+            group_file.set_extension("toml");
 
             log::info!("parsing group file: {group_name}@{group_file:?}");
 
-            let file_contents = read_to_string(group_file.path()).wrap_err("reading group file")?;
+            let file_contents = read_to_string(&group_file)
+                .wrap_err(format!("reading group file {group_name}@{group_file:?}"))?;
 
-            let install_options: InstallOptions =
-                parse_group_file(&group_name, &file_contents).wrap_err("parsing group file")?;
+            let install_options: InstallOptions = parse_group_file(group_name, &file_contents)
+                .wrap_err(format!("parsing group file {group_name}@{group_file:?}"))?;
 
-            groups.insert(group_name, install_options);
+            groups.insert(group_name.clone(), install_options);
         }
+
         Ok(groups)
     }
 }
@@ -85,7 +79,16 @@ fn parse_toml_key_value(group_name: &str, key: &str, value: &Value) -> Result<In
                     )?;
 
                     for package in packages {
-                        let (package_id, package_install_options) = $backend::try_parse_toml_package(package)?;
+                        let (package_id, package_install_options) =
+                            match package {
+                                toml::Value::String(x) => (x.to_string(), Default::default()),
+                                toml::Value::Table(x) => (
+                                    x.clone().try_into::<StringPackageStruct>()?.package,
+                                    x.clone().try_into()?,
+                                ),
+                                _ => return Err(eyre!("the {} backend in the {group_name} group toml file has a package which is neither a string or a table", $backend)),
+                            };
+
                         install_options.$backend.insert(package_id, package_install_options);
                     }
 

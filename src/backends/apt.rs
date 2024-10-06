@@ -1,6 +1,5 @@
 use std::collections::BTreeMap;
 
-use color_eyre::eyre::eyre;
 use color_eyre::Result;
 use serde::{Deserialize, Serialize};
 
@@ -15,6 +14,10 @@ pub struct AptQueryInfo {
     pub explicit: bool,
 }
 
+#[derive(Debug, Clone, Default, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
+pub struct AptInstallOptions {
+}
+
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct AptModificationOptions {
     make_implicit: bool,
@@ -23,7 +26,7 @@ pub struct AptModificationOptions {
 impl Backend for Apt {
     type PackageId = String;
     type QueryInfo = AptQueryInfo;
-    type InstallOptions = ();
+    type InstallOptions = AptInstallOptions;
     type ModificationOptions = AptModificationOptions;
     type RemoveOptions = ();
 
@@ -93,14 +96,5 @@ impl Backend for Apt {
                 .chain(packages.keys().map(String::as_str)),
             Perms::AsRoot,
         )
-    }
-
-    fn try_parse_toml_package(
-        toml: &toml::Value,
-    ) -> Result<(Self::PackageId, Self::InstallOptions)> {
-        match toml {
-            toml::Value::String(x) => Ok((x.to_string(), Default::default())),
-            _ => Err(eyre!("apt packages must be a string")),
-        }
     }
 }

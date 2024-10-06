@@ -1,7 +1,7 @@
 use std::collections::{BTreeMap, BTreeSet};
 
-use color_eyre::eyre::eyre;
 use color_eyre::Result;
+use serde::{Deserialize, Serialize};
 
 use crate::cmd::{command_found, run_command, run_command_for_stdout};
 use crate::prelude::*;
@@ -15,10 +15,13 @@ pub struct FlatpakQueryInfo {
     pub systemwide: bool,
 }
 
+#[derive(Debug, Clone, Default, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
+pub struct FlatpakInstallOptions {}
+
 impl Backend for Flatpak {
     type PackageId = String;
     type QueryInfo = FlatpakQueryInfo;
-    type InstallOptions = ();
+    type InstallOptions = FlatpakInstallOptions;
     type ModificationOptions = ();
     type RemoveOptions = ();
 
@@ -170,14 +173,5 @@ impl Backend for Flatpak {
             .chain(packages.keys().map(String::as_str)),
             Perms::AsRoot,
         )
-    }
-
-    fn try_parse_toml_package(
-        toml: &toml::Value,
-    ) -> Result<(Self::PackageId, Self::InstallOptions)> {
-        match toml {
-            toml::Value::String(x) => Ok((x.to_string(), Default::default())),
-            _ => Err(eyre!("flatpak packages must be a string")),
-        }
     }
 }

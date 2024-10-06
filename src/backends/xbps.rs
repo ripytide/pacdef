@@ -1,15 +1,19 @@
 use std::collections::BTreeMap;
 use std::process::Command;
 
-use color_eyre::eyre::eyre;
 use color_eyre::Result;
 use regex::Regex;
+use serde::{Deserialize, Serialize};
 
 use crate::cmd::{command_found, run_command, run_command_for_stdout};
 use crate::prelude::*;
 
 #[derive(Debug, Copy, Clone, Default, PartialEq, Eq, PartialOrd, Ord, derive_more::Display)]
 pub struct Xbps;
+
+#[derive(Debug, Clone, Default, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
+pub struct XbpsInstallOptions {
+}
 
 #[derive(Debug, Clone)]
 pub struct XbpsModificationOptions {
@@ -19,7 +23,7 @@ pub struct XbpsModificationOptions {
 impl Backend for Xbps {
     type PackageId = String;
     type QueryInfo = ();
-    type InstallOptions = ();
+    type InstallOptions = XbpsInstallOptions;
     type ModificationOptions = XbpsModificationOptions;
     type RemoveOptions = ();
 
@@ -92,14 +96,5 @@ impl Backend for Xbps {
             ),
             Perms::AsRoot,
         )
-    }
-
-    fn try_parse_toml_package(
-        toml: &toml::Value,
-    ) -> Result<(Self::PackageId, Self::InstallOptions)> {
-        match toml {
-            toml::Value::String(x) => Ok((x.to_string(), Default::default())),
-            _ => Err(eyre!("xbps packages must be a string")),
-        }
     }
 }

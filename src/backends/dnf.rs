@@ -1,6 +1,5 @@
 use std::collections::BTreeMap;
 
-use color_eyre::eyre::eyre;
 use color_eyre::Result;
 use serde::{Deserialize, Serialize};
 
@@ -104,19 +103,6 @@ impl Backend for Dnf {
                 .chain(packages.keys().map(String::as_str)),
             Perms::AsRoot,
         )
-    }
-
-    fn try_parse_toml_package(
-        toml: &toml::Value,
-    ) -> Result<(Self::PackageId, Self::InstallOptions)> {
-        match toml {
-            toml::Value::String(x) => Ok((x.to_string(), Default::default())),
-            toml::Value::Table(x) => Ok((
-                x.clone().try_into::<StringPackageStruct>()?.package,
-                x.clone().try_into()?,
-            )),
-            _ => Err(eyre!("dnf packages must be either be a string or a table")),
-        }
     }
 }
 

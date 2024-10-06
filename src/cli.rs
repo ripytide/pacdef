@@ -1,18 +1,24 @@
 //! The clap declarative command line interface
 
+use std::path::PathBuf;
+
 use clap::{Args, Parser, Subcommand};
 
 #[derive(Parser)]
 #[command(
     version,
     author,
+    about,
     arg_required_else_help(true),
-    subcommand_required(true),
-    disable_help_subcommand(true),
-    disable_version_flag(true)
+    subcommand_required(true)
 )]
-/// multi-backend declarative package manager for Linux
 pub struct MainArguments {
+    #[arg(short = 'n', long)]
+    /// specify a different hostname
+    pub hostname: Option<String>,
+    #[arg(short, long)]
+    /// specify a different config directory
+    pub config_dir: Option<PathBuf>,
     #[command(subcommand)]
     pub subcommand: MainSubcommand,
 }
@@ -23,14 +29,13 @@ pub enum MainSubcommand {
     Review(ReviewPackageAction),
     Sync(SyncPackageAction),
     Unmanaged(UnmanagedPackageAction),
-    Version(VersionArguments),
 }
 
 #[derive(Args)]
 #[command(visible_alias("c"))]
 /// remove unmanaged packages
 pub struct CleanPackageAction {
-    #[arg(long)]
+    #[arg(short, long)]
     /// do not ask for any confirmation
     pub no_confirm: bool,
 }
@@ -41,10 +46,10 @@ pub struct CleanPackageAction {
 pub struct ReviewPackageAction {}
 
 #[derive(Args)]
-#[command(visible_alias("sy"))]
-/// install packages from all imported groups
+#[command(visible_alias("s"))]
+/// install packages from groups
 pub struct SyncPackageAction {
-    #[arg(long)]
+    #[arg(short, long)]
     /// do not ask for any confirmation
     pub no_confirm: bool,
 }
@@ -53,6 +58,3 @@ pub struct SyncPackageAction {
 #[command(visible_alias("u"))]
 /// show explicitly installed packages not managed by pacdef
 pub struct UnmanagedPackageAction {}
-
-#[derive(Args)]
-pub struct VersionArguments {}

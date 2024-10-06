@@ -113,7 +113,12 @@ macro_rules! query_infos {
             pub fn query_installed_packages(config: &Config) -> Result<Self> {
                 Ok(Self {
                     $(
-                        $backend: $backend::query_installed_packages(config)?,
+                        $backend:
+                            if is_enabled(&$backend.to_string(), config) {
+                                $backend::query_installed_packages(config)?
+                            } else {
+                                Default::default()
+                            },
                     )*
                 })
             }
@@ -138,7 +143,9 @@ macro_rules! install_options {
 
             pub fn install_packages(self, no_confirm: bool, config: &Config) -> Result<()> {
                 $(
-                    $backend::install_packages(&self.$backend, no_confirm, config)?;
+                    if is_enabled(&$backend.to_string(), config) {
+                        $backend::install_packages(&self.$backend, no_confirm, config)?;
+                    }
                 )*
 
                 Ok(())
@@ -164,7 +171,9 @@ macro_rules! modification_options {
 
             pub fn modify_packages(self, config: &Config) -> Result<()> {
                 $(
-                    $backend::modify_packages(&self.$backend, config)?;
+                    if is_enabled(&$backend.to_string(), config) {
+                        $backend::modify_packages(&self.$backend, config)?;
+                    }
                 )*
 
                 Ok(())
@@ -190,7 +199,9 @@ macro_rules! remove_options {
 
             pub fn remove_packages(self, no_confirm: bool, config: &Config) -> Result<()> {
                 $(
-                    $backend::remove_packages(&self.$backend, no_confirm, config)?;
+                    if is_enabled(&$backend.to_string(), config) {
+                        $backend::remove_packages(&self.$backend, no_confirm, config)?;
+                    }
                 )*
 
                 Ok(())
@@ -199,3 +210,10 @@ macro_rules! remove_options {
     };
 }
 apply_public_backends!(remove_options);
+
+fn is_enabled(backend: &str, config: &Config) -> bool {
+    !config
+        .disabled_backends
+        .iter()
+        .any(|x| x.to_lowercase() == backend.to_lowercase())
+}
