@@ -5,17 +5,21 @@ use color_eyre::{
 };
 use toml::{Table, Value};
 
-use std::{collections::BTreeMap, fs::read_to_string, path::Path};
+use std::{
+    collections::BTreeMap,
+    fs::read_to_string,
+    path::{Path, PathBuf},
+};
 
 #[derive(Debug, Default, derive_more::Deref, derive_more::DerefMut)]
-pub struct Groups(BTreeMap<String, InstallOptions>);
+pub struct Groups(BTreeMap<PathBuf, InstallOptions>);
 
 impl Groups {
-    pub fn contains(&self, backend: AnyBackend, package: &String) -> Vec<String> {
+    pub fn contains(&self, backend: AnyBackend, package: &String) -> Vec<PathBuf> {
         let mut result = Vec::new();
-        for (group_name, install_options) in self.0.iter() {
+        for (group_file, install_options) in self.0.iter() {
             if install_options.to_package_ids().contains(backend, package) {
-                result.push(group_name.clone());
+                result.push(group_file.clone());
             }
         }
         result
@@ -42,7 +46,7 @@ impl Groups {
         }
 
         let group_files = if config.hostname_groups_enabled {
-            let group_names = config.hostname_groups.get(hostname).wrap_err(format!(
+            let group_names = config.hostname_groups.get(hostname).wrap_err(eyre!(
                 "no hostname entry in the hostname_groups config for the hostname: {hostname}"
             ))?;
 
@@ -51,7 +55,7 @@ impl Groups {
                 .map(|group_name| group_dir.join(group_name).with_extension("toml"))
                 .collect::<Vec<_>>()
         } else {
-            walkdir::WalkDir::new(&group_dir)
+            walkdir::WalkDir::new(group_dir)
                 .follow_links(true)
                 .into_iter()
                 .filter_map(Result::ok)
@@ -63,38 +67,32 @@ impl Groups {
         let mut groups = Self::default();
 
         for group_file in group_files {
-            let group_name = group_file
-                .strip_prefix(&group_dir)?
-                .to_str()
-                .ok_or(eyre!("will not fail on linux"))?
-                .to_string();
+            let file_contents =
+                read_to_string(&group_file).wrap_err(eyre!("reading group file {group_file:?}"))?;
 
-            let file_contents = read_to_string(&group_file)
-                .wrap_err(format!("reading group file {group_name}@{group_file:?}"))?;
+            let install_options: InstallOptions = parse_group_file(&group_file, &file_contents)
+                .wrap_err(eyre!("parsing group file {group_file:?}"))?;
 
-            let install_options: InstallOptions = parse_group_file(&group_name, &file_contents)
-                .wrap_err(format!("parsing group file {group_name}@{group_file:?}"))?;
-
-            groups.insert(group_name.clone(), install_options);
+            groups.insert(group_file, install_options);
         }
 
         Ok(groups)
     }
 }
 
-fn parse_group_file(group_name: &str, contents: &str) -> Result<InstallOptions> {
+fn parse_group_file(group_file: &Path, contents: &str) -> Result<InstallOptions> {
     let mut install_options = InstallOptions::default();
 
     let toml = toml::from_str::<Table>(contents)?;
 
     for (key, value) in toml.iter() {
-        install_options.append(&mut parse_toml_key_value(group_name, key, value)?);
+        install_options.append(&mut parse_toml_key_value(group_file, key, value)?);
     }
 
     Ok(install_options)
 }
 
-fn parse_toml_key_value(group_name: &str, key: &str, value: &Value) -> Result<InstallOptions> {
+fn parse_toml_key_value(group_file: &Path, key: &str, value: &Value) -> Result<InstallOptions> {
     macro_rules! x {
         ($($backend:ident),*) => {
             $(
@@ -102,7 +100,7 @@ fn parse_toml_key_value(group_name: &str, key: &str, value: &Value) -> Result<In
                     let mut install_options = InstallOptions::default();
 
                     let packages = value.as_array().ok_or(
-                        eyre!("the {} backend in the {group_name} group toml file has a non-array value", $backend)
+                        eyre!("the {} backend in the {group_file:?} group file has a non-array value", $backend)
                     )?;
 
                     for package in packages {
@@ -113,7 +111,7 @@ fn parse_toml_key_value(group_name: &str, key: &str, value: &Value) -> Result<In
                                     x.clone().try_into::<StringPackageStruct>()?.package,
                                     x.clone().try_into()?,
                                 ),
-                                _ => return Err(eyre!("the {} backend in the {group_name} group toml file has a package which is neither a string or a table", $backend)),
+                                _ => return Err(eyre!("the {} backend in the {group_file:?} group file has a package which is neither a string or a table", $backend)),
                             };
 
                         install_options.$backend.insert(package_id, package_install_options);
@@ -126,7 +124,7 @@ fn parse_toml_key_value(group_name: &str, key: &str, value: &Value) -> Result<In
     }
     apply_public_backends!(x);
 
-    log::warn!("unrecognised backend: {key} in group file: {group_name}");
+    log::warn!("unrecognised backend: {key} in group file: {group_file:?}");
 
     Ok(InstallOptions::default())
 }

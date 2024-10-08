@@ -1,5 +1,5 @@
 pub use crate::backends::all::{
-    InstallOptions, ModificationOptions, PackageIds, QueryInfos, RemoveOptions, AnyBackend,
+    AnyBackend, InstallOptions, ModificationOptions, PackageIds, QueryInfos, RemoveOptions,
 };
 pub(crate) use crate::backends::apply_public_backends;
 pub use crate::backends::apt::{Apt, AptModificationOptions, AptQueryInfo};
@@ -16,8 +16,8 @@ pub use crate::backends::rustup::{
 pub use crate::backends::xbps::{Xbps, XbpsModificationOptions};
 pub use crate::backends::Backend;
 pub use crate::backends::StringPackageStruct;
-pub use crate::cli::CleanPackage;
 pub use crate::cli::AddPackage;
+pub use crate::cli::CleanPackage;
 pub use crate::cli::MainArguments;
 pub use crate::cli::MainSubcommand;
 pub use crate::cli::ReviewPackage;
