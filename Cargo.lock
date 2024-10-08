@@ -558,6 +558,7 @@ dependencies = [
  "serde_json",
  "strum",
  "toml",
+ "toml_edit",
  "walkdir",
 ]
 

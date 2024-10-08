@@ -45,10 +45,16 @@ macro_rules! any {
 apply_public_backends!(any);
 
 #[derive(Debug, Clone, Default, Serialize)]
+#[serde(transparent)]
 pub struct PackageIds {
     inner: BTreeMap<AnyBackend, BTreeSet<String>>,
 }
 impl PackageIds {
+    pub fn simplified(mut self) -> Self {
+        self.inner.retain(|_, x| !x.is_empty());
+        self
+    }
+
     pub fn append(&mut self, other: &mut Self) {
         for (backend, packages) in other.inner.iter_mut() {
             self.inner.entry(*backend).or_default().append(packages);
@@ -57,6 +63,12 @@ impl PackageIds {
 
     pub fn is_empty(&self) -> bool {
         self.inner.values().all(|x| x.is_empty())
+    }
+
+    pub fn contains(&self, backend: AnyBackend, package: &String) -> bool {
+        self.inner
+            .get(&backend)
+            .is_some_and(|x| x.contains(package))
     }
 
     pub fn difference(&self, other: &Self) -> Self {

@@ -11,6 +11,16 @@ use std::{collections::BTreeMap, fs::read_to_string, path::Path};
 pub struct Groups(BTreeMap<String, InstallOptions>);
 
 impl Groups {
+    pub fn contains(&self, backend: AnyBackend, package: &String) -> Vec<String> {
+        let mut result = Vec::new();
+        for (group_name, install_options) in self.0.iter() {
+            if install_options.to_package_ids().contains(backend, package) {
+                result.push(group_name.clone());
+            }
+        }
+        result
+    }
+
     pub fn to_install_options(&self) -> InstallOptions {
         let mut install_options = InstallOptions::default();
 
@@ -25,8 +35,6 @@ impl Groups {
     }
 
     pub fn load(group_dir: &Path, hostname: &str, config: &Config) -> Result<Self> {
-        let group_dir = group_dir.join("groups/");
-
         if !group_dir.is_dir() {
             log::warn!("the groups directory: {group_dir:?}, was not found, assuming there are no group files. If this was intentional please create an empty groups folder.");
 
@@ -60,8 +68,6 @@ impl Groups {
                 .to_str()
                 .ok_or(eyre!("will not fail on linux"))?
                 .to_string();
-
-            log::info!("parsing group file: {group_name}@{group_file:?}");
 
             let file_contents = read_to_string(&group_file)
                 .wrap_err(format!("reading group file {group_name}@{group_file:?}"))?;

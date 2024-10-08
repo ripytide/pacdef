@@ -1,6 +1,10 @@
-use color_eyre::eyre::{eyre, Context};
+use std::fs::read_to_string;
+use std::path::Path;
+
+use color_eyre::eyre::{eyre, Context, ContextCompat};
 use color_eyre::Result;
 use dialoguer::Confirm;
+use toml_edit::DocumentMut;
 
 use crate::prelude::*;
 use crate::review::review;
@@ -23,9 +27,11 @@ impl MainArguments {
                 .ok_or(eyre!("getting the default pacdef config directory"))?
         };
 
+        let group_dir = config_dir.join("groups/");
+
         let config = Config::load(&config_dir).wrap_err("loading config file")?;
         let groups =
-            Groups::load(&config_dir, &hostname, &config).wrap_err("failed to load groups")?;
+            Groups::load(&group_dir, &hostname, &config).wrap_err("failed to load groups")?;
 
         if groups.is_empty() {
             log::warn!("no group files found");
@@ -33,7 +39,7 @@ impl MainArguments {
 
         match self.subcommand {
             MainSubcommand::Clean(clean) => clean.run(&groups, &config),
-            MainSubcommand::Add(add) => add.run(&groups, &config),
+            MainSubcommand::Add(add) => add.run(&group_dir, &groups),
             MainSubcommand::Review(review) => review.run(&groups, &config),
             MainSubcommand::Sync(sync) => sync.run(&groups, &config),
             MainSubcommand::Unmanaged(unmanaged) => unmanaged.run(&groups, &config),
@@ -71,8 +77,29 @@ impl CleanPackage {
 }
 
 impl AddPackage {
-    fn run(self, groups: &Groups, config: &Config) -> Result<()> {
-        todo!()
+    fn run(self, group_dir: &Path, groups: &Groups) -> Result<()> {
+        let containing_group_names = groups.contains(self.backend, &self.package);
+        if !containing_group_names.is_empty() {
+            log::info!("the {} package for the {} backend is already installed in the {containing_group_names:?} group files", self.package, self.backend);
+        }
+
+        let group_file = group_dir.join(&self.group).with_extension("toml");
+
+        log::info!("parsing group file: {}@{group_file:?}", &self.group);
+
+        let file_contents = read_to_string(&group_file)
+            .wrap_err(format!("reading group file {}@{group_file:?}", &self.group))?;
+
+        let mut doc = file_contents
+            .parse::<DocumentMut>()
+            .wrap_err(format!("parsing group file {}@{group_file:?}", &self.group))?;
+
+        doc.entry(&self.backend.to_string().to_lowercase())
+            .or_insert(self.package.clone().into())
+            .as_array_mut().wrap_err(format!("the {} backend packages array in the {group_file:?} group file is a non-array toml item", self.backend))?
+            .push(self.package);
+
+        Ok(())
     }
 }
 
@@ -113,7 +140,7 @@ impl SyncPackage {
 
 impl UnmanagedPackage {
     fn run(self, groups: &Groups, config: &Config) -> Result<()> {
-        let unmanaged = unmanaged(groups, config)?;
+        let unmanaged = unmanaged(groups, config)?.simplified();
 
         if unmanaged.is_empty() {
             eprintln!("no unmanaged packages");
