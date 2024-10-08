@@ -33,6 +33,7 @@ impl MainArguments {
 
         match self.subcommand {
             MainSubcommand::Clean(clean) => clean.run(&groups, &config),
+            MainSubcommand::Add(add) => add.run(&groups, &config),
             MainSubcommand::Review(review) => review.run(&groups, &config),
             MainSubcommand::Sync(sync) => sync.run(&groups, &config),
             MainSubcommand::Unmanaged(unmanaged) => unmanaged.run(&groups, &config),
@@ -40,7 +41,7 @@ impl MainArguments {
     }
 }
 
-impl CleanPackageAction {
+impl CleanPackage {
     fn run(self, groups: &Groups, config: &Config) -> Result<()> {
         let unmanaged = unmanaged(groups, config)?;
 
@@ -69,13 +70,21 @@ impl CleanPackageAction {
     }
 }
 
-impl ReviewPackageAction {
+impl AddPackage {
+    fn run(self, groups: &Groups, config: &Config) -> Result<()> {
+        if groups.to_package_ids().{
+
+        }
+    }
+}
+
+impl ReviewPackage {
     fn run(self, _: &Groups, _: &Config) -> Result<()> {
         review()
     }
 }
 
-impl SyncPackageAction {
+impl SyncPackage {
     fn run(self, groups: &Groups, config: &Config) -> Result<()> {
         let missing = missing(groups, config)?;
 
@@ -104,7 +113,7 @@ impl SyncPackageAction {
     }
 }
 
-impl UnmanagedPackageAction {
+impl UnmanagedPackage {
     fn run(self, groups: &Groups, config: &Config) -> Result<()> {
         let unmanaged = unmanaged(groups, config)?;
 

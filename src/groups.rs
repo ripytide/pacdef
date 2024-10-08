@@ -25,27 +25,48 @@ impl Groups {
     }
 
     pub fn load(group_dir: &Path, hostname: &str, config: &Config) -> Result<Self> {
-        let mut groups = Self::default();
-
         let group_dir = group_dir.join("groups/");
+
         if !group_dir.is_dir() {
-            return Err(eyre!(
-                "the groups directory was not found in the pacdef config folder, please create it"
-            ));
+            log::warn!("the groups directory: {group_dir:?}, was not found, assuming there are no group files. If this was intentional please create an empty groups folder.");
+
+            return Ok(Groups::default());
         }
 
-        for group_name in config.hostname_groups.get(hostname).wrap_err(format!(
-            "no hostname entry in the hostname_groups config for the hostname: {hostname}"
-        ))? {
-            let mut group_file = group_dir.join(group_name);
-            group_file.set_extension("toml");
+        let group_files = if config.hostname_groups_enabled {
+            let group_names = config.hostname_groups.get(hostname).wrap_err(format!(
+                "no hostname entry in the hostname_groups config for the hostname: {hostname}"
+            ))?;
+
+            group_names
+                .iter()
+                .map(|group_name| group_dir.join(group_name).with_extension("toml"))
+                .collect::<Vec<_>>()
+        } else {
+            walkdir::WalkDir::new(&group_dir)
+                .follow_links(true)
+                .into_iter()
+                .filter_map(Result::ok)
+                .filter(|x| !x.file_type().is_dir())
+                .map(|x| x.path().to_path_buf())
+                .collect::<Vec<_>>()
+        };
+
+        let mut groups = Self::default();
+
+        for group_file in group_files {
+            let group_name = group_file
+                .strip_prefix(&group_dir)?
+                .to_str()
+                .ok_or(eyre!("will not fail on linux"))?
+                .to_string();
 
             log::info!("parsing group file: {group_name}@{group_file:?}");
 
             let file_contents = read_to_string(&group_file)
                 .wrap_err(format!("reading group file {group_name}@{group_file:?}"))?;
 
-            let install_options: InstallOptions = parse_group_file(group_name, &file_contents)
+            let install_options: InstallOptions = parse_group_file(&group_name, &file_contents)
                 .wrap_err(format!("parsing group file {group_name}@{group_file:?}"))?;
 
             groups.insert(group_name.clone(), install_options);

@@ -15,7 +15,7 @@ macro_rules! append {
 }
 macro_rules! is_empty {
     ($($backend:ident),*) => {
-        pub fn is_empty(&self) ->bool {
+        pub fn is_empty(&self) -> bool {
             $(
                 self.$backend.is_empty() &&
             )* true
