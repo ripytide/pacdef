@@ -30,26 +30,24 @@ impl MainArguments {
         let group_dir = config_dir.join("groups/");
 
         let config = Config::load(&config_dir).wrap_err("loading config file")?;
-        let groups =
-            Groups::load(&group_dir, &hostname, &config).wrap_err("failed to load groups")?;
+        let groups = Groups::load(&group_dir, &hostname, &config)
+            .wrap_err("failed to load package install options from groups")?;
 
-        if groups.is_empty() {
-            log::warn!("no group files found");
-        }
+        let install_options = groups.to_install_options();
 
         match self.subcommand {
-            MainSubcommand::Clean(clean) => clean.run(&groups, &config),
+            MainSubcommand::Clean(clean) => clean.run(&install_options, &config),
             MainSubcommand::Add(add) => add.run(&group_dir, &groups),
-            MainSubcommand::Review(review) => review.run(&groups, &config),
-            MainSubcommand::Sync(sync) => sync.run(&groups, &config),
-            MainSubcommand::Unmanaged(unmanaged) => unmanaged.run(&groups, &config),
+            MainSubcommand::Review(review) => review.run(&install_options, &config),
+            MainSubcommand::Sync(sync) => sync.run(&install_options, &config),
+            MainSubcommand::Unmanaged(unmanaged) => unmanaged.run(&install_options, &config),
         }
     }
 }
 
-impl CleanPackage {
-    fn run(self, groups: &Groups, config: &Config) -> Result<()> {
-        let unmanaged = unmanaged(groups, config)?;
+impl CleanCommand {
+    fn run(self, install_options: &InstallOptions, config: &Config) -> Result<()> {
+        let unmanaged = unmanaged(install_options, config)?;
 
         if unmanaged.is_empty() {
             log::info!("nothing to do since there are no unmanaged packages");
@@ -76,7 +74,7 @@ impl CleanPackage {
     }
 }
 
-impl AddPackage {
+impl AddCommand {
     fn run(self, group_dir: &Path, groups: &Groups) -> Result<()> {
         let containing_group_files = groups.contains(self.backend, &self.package);
         if !containing_group_files.is_empty() {
@@ -119,15 +117,15 @@ impl AddPackage {
     }
 }
 
-impl ReviewPackage {
-    fn run(self, _: &Groups, _: &Config) -> Result<()> {
+impl ReviewCommand {
+    fn run(self, _: &InstallOptions, _: &Config) -> Result<()> {
         review()
     }
 }
 
-impl SyncPackage {
-    fn run(self, groups: &Groups, config: &Config) -> Result<()> {
-        let missing = missing(groups, config)?;
+impl SyncCommand {
+    fn run(self, install_options: &InstallOptions, config: &Config) -> Result<()> {
+        let missing = missing(install_options, config)?;
 
         if missing.is_empty() {
             log::info!("nothing to do as there are no missing packages");
@@ -154,9 +152,9 @@ impl SyncPackage {
     }
 }
 
-impl UnmanagedPackage {
-    fn run(self, groups: &Groups, config: &Config) -> Result<()> {
-        let unmanaged = unmanaged(groups, config)?.simplified();
+impl UnmanagedCommand {
+    fn run(self, install_options: &InstallOptions, config: &Config) -> Result<()> {
+        let unmanaged = unmanaged(install_options, config)?.simplified();
 
         if unmanaged.is_empty() {
             eprintln!("no unmanaged packages");
@@ -168,13 +166,13 @@ impl UnmanagedPackage {
     }
 }
 
-fn unmanaged(groups: &Groups, config: &Config) -> Result<PackageIds> {
+fn unmanaged(install_options: &InstallOptions, config: &Config) -> Result<PackageIds> {
     Ok(QueryInfos::query_installed_packages(config)?
         .to_package_ids()
-        .difference(&groups.to_package_ids()))
+        .difference(&install_options.to_package_ids()))
 }
-fn missing(groups: &Groups, config: &Config) -> Result<PackageIds> {
-    Ok(groups
+fn missing(install_options: &InstallOptions, config: &Config) -> Result<PackageIds> {
+    Ok(install_options
         .to_package_ids()
         .difference(&QueryInfos::query_installed_packages(config)?.to_package_ids()))
 }

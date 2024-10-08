@@ -8,37 +8,54 @@ use toml::{Table, Value};
 use std::{
     collections::BTreeMap,
     fs::read_to_string,
+    ops::Add,
     path::{Path, PathBuf},
 };
 
 #[derive(Debug, Default, derive_more::Deref, derive_more::DerefMut)]
-pub struct Groups(BTreeMap<PathBuf, InstallOptions>);
+pub struct Groups(BTreeMap<PathBuf, RawInstallOptions>);
 
 impl Groups {
     pub fn contains(&self, backend: AnyBackend, package: &String) -> Vec<PathBuf> {
         let mut result = Vec::new();
-        for (group_file, install_options) in self.0.iter() {
-            if install_options.to_package_ids().contains(backend, package) {
+        for (group_file, raw_install_options) in self.0.iter() {
+            if raw_install_options
+                .to_raw_package_ids()
+                .contains(backend, package)
+            {
                 result.push(group_file.clone());
             }
         }
         result
     }
 
-    pub fn to_install_options(&self) -> InstallOptions {
-        let mut install_options = InstallOptions::default();
+    pub fn to_install_options(
+        &self,
+    ) -> InstallOptions {
+        let mut reoriented: BTreeMap<(AnyBackend, String), BTreeMap<PathBuf, u32>> =
+            BTreeMap::new();
 
-        for x in self.0.values() {
-            install_options.append(&mut x.clone())
+        let mut result = InstallOptions::default();
+
+        for (group_file, raw_install_options) in self.iter() {
+            for (backend, package_ids) in raw_install_options.to_raw_package_ids().iter() {
+                for package_id in package_ids {
+                    reoriented
+                        .entry((*backend, package_id.clone()))
+                        .or_default()
+                        .entry(group_file.clone())
+                        .or_default()
+                        .add(1);
+                }
+            }
         }
 
-        install_options
-    }
-    pub fn to_package_ids(&self) -> PackageIds {
-        self.to_install_options().to_package_ids()
+        //warn user about duplicated packages and output a deduplicated InstallOptions
+
+        todo!()
     }
 
-    pub fn load(group_dir: &Path, hostname: &str, config: &Config) -> Result<Self> {
+    pub fn load(group_dir: &Path, hostname: &str, config: &Config) -> Result<Groups> {
         if !group_dir.is_dir() {
             log::warn!("the groups directory: {group_dir:?}, was not found, assuming there are no group files. If this was intentional please create an empty groups folder.");
 
@@ -70,34 +87,34 @@ impl Groups {
             let file_contents =
                 read_to_string(&group_file).wrap_err(eyre!("reading group file {group_file:?}"))?;
 
-            let install_options: InstallOptions = parse_group_file(&group_file, &file_contents)
+            let raw_install_options = parse_group_file(&group_file, &file_contents)
                 .wrap_err(eyre!("parsing group file {group_file:?}"))?;
 
-            groups.insert(group_file, install_options);
+            groups.insert(group_file, raw_install_options);
         }
 
         Ok(groups)
     }
 }
 
-fn parse_group_file(group_file: &Path, contents: &str) -> Result<InstallOptions> {
-    let mut install_options = InstallOptions::default();
+fn parse_group_file(group_file: &Path, contents: &str) -> Result<RawInstallOptions> {
+    let mut raw_install_options = RawInstallOptions::default();
 
     let toml = toml::from_str::<Table>(contents)?;
 
     for (key, value) in toml.iter() {
-        install_options.append(&mut parse_toml_key_value(group_file, key, value)?);
+        raw_install_options.append(&mut parse_toml_key_value(group_file, key, value)?);
     }
 
-    Ok(install_options)
+    Ok(raw_install_options)
 }
 
-fn parse_toml_key_value(group_file: &Path, key: &str, value: &Value) -> Result<InstallOptions> {
+fn parse_toml_key_value(group_file: &Path, key: &str, value: &Value) -> Result<RawInstallOptions> {
     macro_rules! x {
         ($($backend:ident),*) => {
             $(
                 if key.to_lowercase() == $backend.to_string().to_lowercase() {
-                    let mut install_options = InstallOptions::default();
+                    let mut raw_install_options = RawInstallOptions::default();
 
                     let packages = value.as_array().ok_or(
                         eyre!("the {} backend in the {group_file:?} group file has a non-array value", $backend)
@@ -114,10 +131,10 @@ fn parse_toml_key_value(group_file: &Path, key: &str, value: &Value) -> Result<I
                                 _ => return Err(eyre!("the {} backend in the {group_file:?} group file has a package which is neither a string or a table", $backend)),
                             };
 
-                        install_options.$backend.insert(package_id, package_install_options);
+                        raw_install_options.$backend.push((package_id, package_install_options));
                     }
 
-                    return Ok(install_options);
+                    return Ok(raw_install_options);
                 }
             )*
         };
@@ -126,5 +143,5 @@ fn parse_toml_key_value(group_file: &Path, key: &str, value: &Value) -> Result<I
 
     log::warn!("unrecognised backend: {key} in group file: {group_file:?}");
 
-    Ok(InstallOptions::default())
+    Ok(RawInstallOptions::default())
 }

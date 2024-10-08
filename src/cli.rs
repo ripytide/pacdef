@@ -25,17 +25,17 @@ pub struct MainArguments {
 
 #[derive(Subcommand)]
 pub enum MainSubcommand {
-    Clean(CleanPackage),
-    Add(AddPackage),
-    Review(ReviewPackage),
-    Sync(SyncPackage),
-    Unmanaged(UnmanagedPackage),
+    Clean(CleanCommand),
+    Add(AddCommand),
+    Review(ReviewCommand),
+    Sync(SyncCommand),
+    Unmanaged(UnmanagedCommand),
 }
 
 #[derive(Args)]
 #[command(visible_alias("c"))]
 /// remove unmanaged packages
-pub struct CleanPackage {
+pub struct CleanCommand {
     #[arg(short, long)]
     /// do not ask for any confirmation
     pub no_confirm: bool,
@@ -46,7 +46,7 @@ pub struct CleanPackage {
 /// add a package for the given backend and group file
 ///
 /// if the group file does not exist a new one will be created
-pub struct AddPackage {
+pub struct AddCommand {
     #[arg(short, long)]
     /// the backend for the package
     pub backend: AnyBackend,
@@ -61,12 +61,12 @@ pub struct AddPackage {
 #[derive(Args)]
 #[command(visible_alias("r"))]
 /// review unmanaged packages
-pub struct ReviewPackage {}
+pub struct ReviewCommand {}
 
 #[derive(Args)]
 #[command(visible_alias("s"))]
 /// install packages from groups
-pub struct SyncPackage {
+pub struct SyncCommand {
     #[arg(short, long)]
     /// do not ask for any confirmation
     pub no_confirm: bool,
@@ -75,4 +75,4 @@ pub struct SyncPackage {
 #[derive(Args)]
 #[command(visible_alias("u"))]
 /// show explicitly installed packages not managed by pacdef
-pub struct UnmanagedPackage {}
+pub struct UnmanagedCommand {}
