@@ -27,7 +27,6 @@ pub struct StringPackageStruct {
 }
 
 pub trait Backend {
-    type PackageId;
     type QueryInfo;
     type InstallOptions;
     type ModificationOptions;
@@ -35,21 +34,21 @@ pub trait Backend {
 
     fn query_installed_packages(
         config: &Config,
-    ) -> Result<BTreeMap<Self::PackageId, Self::QueryInfo>>;
+    ) -> Result<BTreeMap<String, Self::QueryInfo>>;
 
     fn install_packages(
-        packages: &BTreeMap<Self::PackageId, Self::InstallOptions>,
+        packages: &BTreeMap<String, Self::InstallOptions>,
         no_confirm: bool,
         config: &Config,
     ) -> Result<()>;
 
     fn modify_packages(
-        packages: &BTreeMap<Self::PackageId, Self::ModificationOptions>,
+        packages: &BTreeMap<String, Self::ModificationOptions>,
         config: &Config,
     ) -> Result<()>;
 
     fn remove_packages(
-        packages: &BTreeMap<Self::PackageId, Self::RemoveOptions>,
+        packages: &BTreeMap<String, Self::RemoveOptions>,
         no_confirm: bool,
         config: &Config,
     ) -> Result<()>;

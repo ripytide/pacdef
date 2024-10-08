@@ -1,7 +1,6 @@
 pub use crate::backends::all::{
-    InstallOptions, ModificationOptions, PackageIds, QueryInfos, RemoveOptions,
+    InstallOptions, ModificationOptions, PackageIds, QueryInfos, RemoveOptions, AnyBackend,
 };
-pub use crate::backends::any::AnyBackend;
 pub(crate) use crate::backends::apply_public_backends;
 pub use crate::backends::apt::{Apt, AptModificationOptions, AptQueryInfo};
 pub use crate::backends::arch::{

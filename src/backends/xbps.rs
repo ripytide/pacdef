@@ -21,7 +21,6 @@ pub struct XbpsModificationOptions {
 }
 
 impl Backend for Xbps {
-    type PackageId = String;
     type QueryInfo = ();
     type InstallOptions = XbpsInstallOptions;
     type ModificationOptions = XbpsModificationOptions;
@@ -29,7 +28,7 @@ impl Backend for Xbps {
 
     fn query_installed_packages(
         _: &Config,
-    ) -> Result<std::collections::BTreeMap<Self::PackageId, Self::QueryInfo>> {
+    ) -> Result<std::collections::BTreeMap<String, Self::QueryInfo>> {
         if !command_found("xbps-query") {
             return Ok(BTreeMap::new());
         }
@@ -56,7 +55,7 @@ impl Backend for Xbps {
     }
 
     fn install_packages(
-        packages: &std::collections::BTreeMap<Self::PackageId, Self::InstallOptions>,
+        packages: &std::collections::BTreeMap<String, Self::InstallOptions>,
         no_confirm: bool,
         _: &Config,
     ) -> Result<()> {
@@ -70,7 +69,7 @@ impl Backend for Xbps {
     }
 
     fn remove_packages(
-        packages: &std::collections::BTreeMap<Self::PackageId, Self::RemoveOptions>,
+        packages: &std::collections::BTreeMap<String, Self::RemoveOptions>,
         no_confirm: bool,
         _: &Config,
     ) -> Result<()> {
@@ -84,7 +83,7 @@ impl Backend for Xbps {
     }
 
     fn modify_packages(
-        packages: &std::collections::BTreeMap<Self::PackageId, Self::ModificationOptions>,
+        packages: &std::collections::BTreeMap<String, Self::ModificationOptions>,
         _: &Config,
     ) -> Result<()> {
         run_command(

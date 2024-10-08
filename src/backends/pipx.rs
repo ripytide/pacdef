@@ -19,13 +19,12 @@ pub struct Pipx;
 pub struct PipxInstallOptions {}
 
 impl Backend for Pipx {
-    type PackageId = String;
     type QueryInfo = ();
     type InstallOptions = PipxInstallOptions;
     type ModificationOptions = ();
     type RemoveOptions = ();
 
-    fn query_installed_packages(_: &Config) -> Result<BTreeMap<Self::PackageId, Self::QueryInfo>> {
+    fn query_installed_packages(_: &Config) -> Result<BTreeMap<String, Self::QueryInfo>> {
         if !command_found("pipx") {
             return Ok(BTreeMap::new());
         }
@@ -39,7 +38,7 @@ impl Backend for Pipx {
     }
 
     fn install_packages(
-        packages: &BTreeMap<Self::PackageId, Self::InstallOptions>,
+        packages: &BTreeMap<String, Self::InstallOptions>,
         _: bool,
         _: &Config,
     ) -> Result<()> {
@@ -52,14 +51,14 @@ impl Backend for Pipx {
     }
 
     fn modify_packages(
-        _: &BTreeMap<Self::PackageId, Self::ModificationOptions>,
+        _: &BTreeMap<String, Self::ModificationOptions>,
         _: &Config,
     ) -> Result<()> {
         unimplemented!()
     }
 
     fn remove_packages(
-        packages: &BTreeMap<Self::PackageId, Self::RemoveOptions>,
+        packages: &BTreeMap<String, Self::RemoveOptions>,
         _: bool,
         _: &Config,
     ) -> Result<()> {

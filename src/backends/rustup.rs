@@ -31,13 +31,12 @@ pub struct RustupModificationOptions {
 }
 
 impl Backend for Rustup {
-    type PackageId = String;
     type QueryInfo = RustupQueryInfo;
     type InstallOptions = RustupInstallOptions;
     type ModificationOptions = RustupModificationOptions;
     type RemoveOptions = ();
 
-    fn query_installed_packages(_: &Config) -> Result<BTreeMap<Self::PackageId, Self::QueryInfo>> {
+    fn query_installed_packages(_: &Config) -> Result<BTreeMap<String, Self::QueryInfo>> {
         if !command_found("rustup") {
             return Ok(BTreeMap::new());
         }
@@ -81,7 +80,7 @@ impl Backend for Rustup {
     }
 
     fn install_packages(
-        packages: &BTreeMap<Self::PackageId, Self::InstallOptions>,
+        packages: &BTreeMap<String, Self::InstallOptions>,
         _: bool,
         _: &Config,
     ) -> Result<()> {
@@ -111,7 +110,7 @@ impl Backend for Rustup {
     }
 
     fn modify_packages(
-        packages: &BTreeMap<Self::PackageId, Self::ModificationOptions>,
+        packages: &BTreeMap<String, Self::ModificationOptions>,
         _: &Config,
     ) -> Result<()> {
         for (toolchain, rustup_modification_options) in packages.iter() {
@@ -168,7 +167,7 @@ impl Backend for Rustup {
     }
 
     fn remove_packages(
-        packages: &BTreeMap<Self::PackageId, Self::RemoveOptions>,
+        packages: &BTreeMap<String, Self::RemoveOptions>,
         _: bool,
         _: &Config,
     ) -> Result<()> {

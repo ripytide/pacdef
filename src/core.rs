@@ -72,9 +72,7 @@ impl CleanPackage {
 
 impl AddPackage {
     fn run(self, groups: &Groups, config: &Config) -> Result<()> {
-        if groups.to_package_ids().{
-
-        }
+        todo!()
     }
 }
 

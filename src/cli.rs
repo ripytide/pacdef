@@ -42,7 +42,7 @@ pub struct CleanPackage {
 }
 
 #[derive(Args)]
-#[command(visible_alias("c"))]
+#[command(visible_alias("a"))]
 /// add a package for the given backend and group file
 ///
 /// if the group file does not exist a new one will be created

@@ -30,7 +30,6 @@ pub struct ArchModificationOptions {
 pub struct ArchRemoveOptions {}
 
 impl Backend for Arch {
-    type PackageId = String;
     type QueryInfo = ArchQueryInfo;
     type InstallOptions = ArchInstallOptions;
     type ModificationOptions = ArchModificationOptions;
@@ -38,7 +37,7 @@ impl Backend for Arch {
 
     fn query_installed_packages(
         config: &Config,
-    ) -> Result<BTreeMap<Self::PackageId, Self::QueryInfo>> {
+    ) -> Result<BTreeMap<String, Self::QueryInfo>> {
         if !command_found(&config.arch_package_manager) {
             return Ok(BTreeMap::new());
         }
@@ -69,7 +68,7 @@ impl Backend for Arch {
     }
 
     fn install_packages(
-        packages: &BTreeMap<Self::PackageId, Self::InstallOptions>,
+        packages: &BTreeMap<String, Self::InstallOptions>,
         no_confirm: bool,
         config: &Config,
     ) -> Result<()> {
@@ -86,7 +85,7 @@ impl Backend for Arch {
     }
 
     fn modify_packages(
-        packages: &BTreeMap<Self::PackageId, Self::ModificationOptions>,
+        packages: &BTreeMap<String, Self::ModificationOptions>,
         config: &Config,
     ) -> Result<()> {
         run_command(
@@ -103,7 +102,7 @@ impl Backend for Arch {
     }
 
     fn remove_packages(
-        packages: &BTreeMap<Self::PackageId, Self::RemoveOptions>,
+        packages: &BTreeMap<String, Self::RemoveOptions>,
         no_confirm: bool,
         config: &Config,
     ) -> Result<()> {
