@@ -13,17 +13,28 @@ pub struct Dnf;
 pub struct DnfQueryInfo {
     pub user: bool,
 }
+impl PossibleQueryInfo for DnfQueryInfo {
+    fn explicit(&self) -> Option<bool> {
+        None
+    }
+}
 
 #[derive(Debug, Clone, Default, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 pub struct DnfInstallOptions {
     repo: Option<String>,
 }
 
+#[derive(Debug, Clone, Default, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
+pub struct DnfModificationOptions {}
+
+#[derive(Debug, Clone, Default, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
+pub struct DnfRemoveOptions {}
+
 impl Backend for Dnf {
     type QueryInfo = DnfQueryInfo;
     type InstallOptions = DnfInstallOptions;
-    type ModificationOptions = ();
-    type RemoveOptions = ();
+    type ModificationOptions = DnfModificationOptions;
+    type RemoveOptions = DnfRemoveOptions;
 
     fn query_installed_packages(_: &Config) -> Result<BTreeMap<String, Self::QueryInfo>> {
         if !command_found("dnf") {
@@ -83,10 +94,7 @@ impl Backend for Dnf {
         )
     }
 
-    fn modify_packages(
-        _: &BTreeMap<String, Self::ModificationOptions>,
-        _: &Config,
-    ) -> Result<()> {
+    fn modify_packages(_: &BTreeMap<String, Self::ModificationOptions>, _: &Config) -> Result<()> {
         unimplemented!()
     }
 

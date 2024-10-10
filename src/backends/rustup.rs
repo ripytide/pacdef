@@ -16,6 +16,11 @@ pub struct Rustup;
 pub struct RustupQueryInfo {
     pub components: Vec<String>,
 }
+impl PossibleQueryInfo for RustupQueryInfo {
+    fn explicit(&self) -> Option<bool> {
+        None
+    }
+}
 
 #[serde_inline_default]
 #[derive(Debug, Clone, Default, Deserialize, Serialize)]
@@ -30,11 +35,15 @@ pub struct RustupModificationOptions {
     pub remove_components: Vec<String>,
 }
 
+#[derive(Debug, Clone, Default, Deserialize, Serialize)]
+pub struct RustupRemoveOptions {
+}
+
 impl Backend for Rustup {
     type QueryInfo = RustupQueryInfo;
     type InstallOptions = RustupInstallOptions;
     type ModificationOptions = RustupModificationOptions;
-    type RemoveOptions = ();
+    type RemoveOptions = RustupRemoveOptions;
 
     fn query_installed_packages(_: &Config) -> Result<BTreeMap<String, Self::QueryInfo>> {
         if !command_found("rustup") {

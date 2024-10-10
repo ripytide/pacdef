@@ -13,6 +13,11 @@ pub struct Apt;
 pub struct AptQueryInfo {
     pub explicit: bool,
 }
+impl PossibleQueryInfo for AptQueryInfo {
+    fn explicit(&self) -> Option<bool> {
+        Some(self.explicit)
+    }
+}
 
 #[derive(Debug, Clone, Default, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 pub struct AptInstallOptions {

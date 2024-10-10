@@ -13,6 +13,20 @@ use crate::prelude::*;
 #[derive(Debug, Copy, Clone, Default, PartialEq, Eq, PartialOrd, Ord, derive_more::Display)]
 pub struct Cargo;
 
+#[derive(Debug, Clone, Default, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
+pub struct CargoQueryInfo {
+    version: String,
+    git: Option<String>,
+    all_features: bool,
+    no_default_features: bool,
+    features: Vec<String>,
+}
+impl PossibleQueryInfo for CargoQueryInfo {
+    fn explicit(&self) -> Option<bool> {
+        None
+    }
+}
+
 #[serde_inline_default]
 #[derive(Debug, Clone, Default, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 pub struct CargoInstallOptions {
@@ -26,19 +40,16 @@ pub struct CargoInstallOptions {
 }
 
 #[derive(Debug, Clone, Default, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
-pub struct CargoQueryInfo {
-    version: String,
-    git: Option<String>,
-    all_features: bool,
-    no_default_features: bool,
-    features: Vec<String>,
-}
+pub struct CargoModificationOptions {}
+
+#[derive(Debug, Clone, Default, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
+pub struct CargoRemoveOptions {}
 
 impl Backend for Cargo {
     type QueryInfo = CargoQueryInfo;
     type InstallOptions = CargoInstallOptions;
-    type ModificationOptions = ();
-    type RemoveOptions = ();
+    type ModificationOptions = CargoModificationOptions;
+    type RemoveOptions = CargoRemoveOptions;
 
     fn query_installed_packages(_: &Config) -> Result<BTreeMap<String, Self::QueryInfo>> {
         if !command_found("cargo") {
@@ -95,10 +106,7 @@ impl Backend for Cargo {
         Ok(())
     }
 
-    fn modify_packages(
-        _: &BTreeMap<String, Self::ModificationOptions>,
-        _: &Config,
-    ) -> Result<()> {
+    fn modify_packages(_: &BTreeMap<String, Self::ModificationOptions>, _: &Config) -> Result<()> {
         unimplemented!()
     }
 

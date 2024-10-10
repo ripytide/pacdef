@@ -12,19 +12,29 @@ use crate::prelude::*;
 pub struct Xbps;
 
 #[derive(Debug, Clone, Default, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
-pub struct XbpsInstallOptions {
+pub struct XbpsQueryInfo {}
+impl PossibleQueryInfo for XbpsQueryInfo {
+    fn explicit(&self) -> Option<bool> {
+        None
+    }
 }
+
+#[derive(Debug, Clone, Default, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
+pub struct XbpsInstallOptions {}
 
 #[derive(Debug, Clone)]
 pub struct XbpsModificationOptions {
     make_implicit: bool,
 }
 
+#[derive(Debug, Clone, Default, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
+pub struct XbpsRemoveOptions {}
+
 impl Backend for Xbps {
-    type QueryInfo = ();
+    type QueryInfo = XbpsQueryInfo;
     type InstallOptions = XbpsInstallOptions;
     type ModificationOptions = XbpsModificationOptions;
-    type RemoveOptions = ();
+    type RemoveOptions = XbpsRemoveOptions;
 
     fn query_installed_packages(
         _: &Config,
@@ -47,7 +57,10 @@ impl Backend for Xbps {
             .map(|line| {
                 let mid_result = re1.replace_all(line, "");
 
-                (re2.replace_all(&mid_result, "").to_string(), ())
+                (
+                    re2.replace_all(&mid_result, "").to_string(),
+                    XbpsQueryInfo {},
+                )
             })
             .collect();
 

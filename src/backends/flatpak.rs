@@ -14,15 +14,26 @@ pub struct FlatpakQueryInfo {
     pub explicit: bool,
     pub systemwide: bool,
 }
+impl PossibleQueryInfo for FlatpakQueryInfo {
+    fn explicit(&self) -> Option<bool> {
+        Some(self.explicit)
+    }
+}
 
 #[derive(Debug, Clone, Default, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 pub struct FlatpakInstallOptions {}
 
+#[derive(Debug, Clone, Default, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
+pub struct FlatpakModificationOptions {}
+
+#[derive(Debug, Clone, Default, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
+pub struct FlatpakRemoveOptions {}
+
 impl Backend for Flatpak {
     type QueryInfo = FlatpakQueryInfo;
     type InstallOptions = FlatpakInstallOptions;
-    type ModificationOptions = ();
-    type RemoveOptions = ();
+    type ModificationOptions = FlatpakModificationOptions;
+    type RemoveOptions = FlatpakRemoveOptions;
 
     fn query_installed_packages(_: &Config) -> Result<BTreeMap<String, Self::QueryInfo>> {
         if !command_found("flatpak") {
@@ -145,10 +156,7 @@ impl Backend for Flatpak {
         )
     }
 
-    fn modify_packages(
-        _: &BTreeMap<String, Self::ModificationOptions>,
-        _: &Config,
-    ) -> Result<()> {
+    fn modify_packages(_: &BTreeMap<String, Self::ModificationOptions>, _: &Config) -> Result<()> {
         unimplemented!()
     }
 

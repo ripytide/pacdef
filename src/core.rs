@@ -54,23 +54,29 @@ impl CleanCommand {
             return Ok(());
         }
 
-        println!("would remove the following packages:\n\n{unmanaged}");
-
         if self.no_confirm {
             log::info!("proceeding without confirmation");
-        } else if !Confirm::new()
-            .with_prompt("do you want to continue?")
-            .default(true)
-            .show_default(true)
-            .interact()
-            .wrap_err("getting user confirmation")?
-        {
-            return Ok(());
-        }
 
-        unmanaged
-            .to_remove_options()
-            .remove_packages(self.no_confirm, config)
+            unmanaged
+                .to_remove_options()
+                .remove_packages(self.no_confirm, config)
+        } else {
+            println!("would remove the following packages:\n\n{unmanaged}");
+
+            if Confirm::new()
+                .with_prompt("do you want to continue?")
+                .default(true)
+                .show_default(true)
+                .interact()
+                .wrap_err("getting user confirmation")?
+            {
+                unmanaged
+                    .to_remove_options()
+                    .remove_packages(self.no_confirm, config)
+            } else {
+                Ok(())
+            }
+        }
     }
 }
 
@@ -154,7 +160,7 @@ impl SyncCommand {
 
 impl UnmanagedCommand {
     fn run(self, install_options: &InstallOptions, config: &Config) -> Result<()> {
-        let unmanaged = unmanaged(install_options, config)?.simplified();
+        let unmanaged = unmanaged(install_options, config)?;
 
         if unmanaged.is_empty() {
             eprintln!("no unmanaged packages");
@@ -169,7 +175,8 @@ impl UnmanagedCommand {
 fn unmanaged(install_options: &InstallOptions, config: &Config) -> Result<PackageIds> {
     Ok(QueryInfos::query_installed_packages(config)?
         .to_package_ids()
-        .difference(&install_options.to_package_ids()))
+        .difference(&install_options.to_package_ids())
+        .simplified())
 }
 fn missing(install_options: &InstallOptions, config: &Config) -> Result<PackageIds> {
     Ok(install_options

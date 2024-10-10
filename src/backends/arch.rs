@@ -13,6 +13,11 @@ pub struct Arch;
 pub struct ArchQueryInfo {
     pub explicit: bool,
 }
+impl PossibleQueryInfo for ArchQueryInfo {
+    fn explicit(&self) -> Option<bool> {
+        Some(self.explicit)
+    }
+}
 
 #[serde_inline_default]
 #[derive(Debug, Clone, Default, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]

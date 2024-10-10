@@ -16,13 +16,27 @@ use crate::prelude::*;
 pub struct Pipx;
 
 #[derive(Debug, Clone, Default, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
+pub struct PipxQueryOptions {}
+impl PossibleQueryInfo for PipxQueryOptions {
+    fn explicit(&self) -> Option<bool> {
+        None
+    }
+}
+
+#[derive(Debug, Clone, Default, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 pub struct PipxInstallOptions {}
 
+#[derive(Debug, Clone, Default, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
+pub struct PipxModificationOptions {}
+
+#[derive(Debug, Clone, Default, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
+pub struct PipxRemoveOptions {}
+
 impl Backend for Pipx {
-    type QueryInfo = ();
+    type QueryInfo = PipxQueryOptions;
     type InstallOptions = PipxInstallOptions;
-    type ModificationOptions = ();
-    type RemoveOptions = ();
+    type ModificationOptions = PipxModificationOptions;
+    type RemoveOptions = PipxRemoveOptions;
 
     fn query_installed_packages(_: &Config) -> Result<BTreeMap<String, Self::QueryInfo>> {
         if !command_found("pipx") {
@@ -34,7 +48,10 @@ impl Backend for Pipx {
             Perms::Same,
         )?)?;
 
-        Ok(names.into_iter().map(|x| (x, ())).collect())
+        Ok(names
+            .into_iter()
+            .map(|x| (x, PipxQueryOptions {}))
+            .collect())
     }
 
     fn install_packages(
@@ -50,10 +67,7 @@ impl Backend for Pipx {
         )
     }
 
-    fn modify_packages(
-        _: &BTreeMap<String, Self::ModificationOptions>,
-        _: &Config,
-    ) -> Result<()> {
+    fn modify_packages(_: &BTreeMap<String, Self::ModificationOptions>, _: &Config) -> Result<()> {
         unimplemented!()
     }
 
