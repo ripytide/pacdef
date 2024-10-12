@@ -46,11 +46,10 @@ impl Groups {
             }
         }
 
-        //warn user about duplicated packages and output a deduplicated InstallOptions
+        //warn the user about duplicated packages and output a deduplicated InstallOptions
         for ((backend, package_id), group_files) in reoriented.iter() {
             if group_files.len() > 1 {
-                log::warn!("duplicate package in group files: {package_id} for the {backend} backend, found in the following group files:");
-                log::warn!("{:?}", group_files);
+                log::warn!("duplicate {package_id:?} package in group files: {group_files:?} for the {backend} backend");
                 log::warn!("only one of the duplicated will be used which could may cause unintended behaviour if the duplicates have different install options");
             }
         }
@@ -153,6 +152,8 @@ fn parse_toml_key_value(group_file: &Path, key: &str, value: &Value) -> Result<R
                     }
 
                     return Ok(raw_install_options);
+                } else {
+                    log::warn!("unrecognised non-backend key: {key:?} found in group file: {group_file:?}");
                 }
             )*
         };

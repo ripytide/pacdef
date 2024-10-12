@@ -41,7 +41,7 @@ impl Config {
 
         if !config_file_path.is_file() {
             log::trace!(
-                "not config file found at {config_file_path:?}, using default config instead"
+                "no config file found at {config_file_path:?}, using default config instead"
             );
 
             Ok(Self::default())

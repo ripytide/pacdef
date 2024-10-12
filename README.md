@@ -45,7 +45,7 @@ installed here?_", then `pacdef` is the tool for you.
 
 `pacdef` is a sort of meta package manager in that it does not
 directly possess the functionality to install packages on your system,
-instead it provides a single standardized interface for a whole bunch
+instead it provides a single standardised interface for a whole bunch
 of other non-meta package managers. See the [Supported
 Backends](#supported-backends) section for a list of the currently
 supported backend package managers.

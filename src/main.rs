@@ -19,7 +19,9 @@ use color_eyre::Result;
 use pacdef::MainArguments;
 
 fn main() -> Result<()> {
-    pretty_env_logger::init();
+    pretty_env_logger::formatted_builder()
+        .filter_level(log::LevelFilter::Trace)
+        .init();
     color_eyre::install()?;
 
     MainArguments::parse().run()
