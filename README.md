@@ -96,7 +96,6 @@ flatpak_systemwide = true
 # Default: []
 disabled_backends = ["apt"]
 
-
 # Whether to use the [hostname_groups] config table to decide which
 # group files to use or to use all files in the groups folder.
 # Default: false
@@ -175,13 +174,6 @@ rustup = [
 
 Run `pacdef -h` to see an overview of the commands available with
 `pacdef`.
-
-## Miscellaneous
-
-### Automation
-
-Pacdef is supported by
-[`topgrade`](https://github.com/topgrade-rs/topgrade).
 
 ## Naming
 

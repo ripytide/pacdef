@@ -26,7 +26,6 @@ flatpak_systemwide = true
 # Default: []
 disabled_backends = ["apt"]
 
-
 # Whether to use the [hostname_groups] config table to decide which
 # group files to use or to use all files in the groups folder.
 # Default: false
