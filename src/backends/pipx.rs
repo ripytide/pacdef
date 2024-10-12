@@ -16,16 +16,29 @@ use crate::prelude::*;
 pub struct Pipx;
 
 #[derive(Debug, Clone, Default, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
+pub struct PipxQueryOptions {}
+impl PossibleQueryInfo for PipxQueryOptions {
+    fn explicit(&self) -> Option<bool> {
+        None
+    }
+}
+
+#[derive(Debug, Clone, Default, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 pub struct PipxInstallOptions {}
 
-impl Backend for Pipx {
-    type PackageId = String;
-    type QueryInfo = ();
-    type InstallOptions = PipxInstallOptions;
-    type ModificationOptions = ();
-    type RemoveOptions = ();
+#[derive(Debug, Clone, Default, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
+pub struct PipxModificationOptions {}
 
-    fn query_installed_packages(_: &Config) -> Result<BTreeMap<Self::PackageId, Self::QueryInfo>> {
+#[derive(Debug, Clone, Default, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
+pub struct PipxRemoveOptions {}
+
+impl Backend for Pipx {
+    type QueryInfo = PipxQueryOptions;
+    type InstallOptions = PipxInstallOptions;
+    type ModificationOptions = PipxModificationOptions;
+    type RemoveOptions = PipxRemoveOptions;
+
+    fn query_installed_packages(_: &Config) -> Result<BTreeMap<String, Self::QueryInfo>> {
         if !command_found("pipx") {
             return Ok(BTreeMap::new());
         }
@@ -35,11 +48,14 @@ impl Backend for Pipx {
             Perms::Same,
         )?)?;
 
-        Ok(names.into_iter().map(|x| (x, ())).collect())
+        Ok(names
+            .into_iter()
+            .map(|x| (x, PipxQueryOptions {}))
+            .collect())
     }
 
     fn install_packages(
-        packages: &BTreeMap<Self::PackageId, Self::InstallOptions>,
+        packages: &BTreeMap<String, Self::InstallOptions>,
         _: bool,
         _: &Config,
     ) -> Result<()> {
@@ -51,15 +67,12 @@ impl Backend for Pipx {
         )
     }
 
-    fn modify_packages(
-        _: &BTreeMap<Self::PackageId, Self::ModificationOptions>,
-        _: &Config,
-    ) -> Result<()> {
+    fn modify_packages(_: &BTreeMap<String, Self::ModificationOptions>, _: &Config) -> Result<()> {
         unimplemented!()
     }
 
     fn remove_packages(
-        packages: &BTreeMap<Self::PackageId, Self::RemoveOptions>,
+        packages: &BTreeMap<String, Self::RemoveOptions>,
         _: bool,
         _: &Config,
     ) -> Result<()> {

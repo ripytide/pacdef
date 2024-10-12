@@ -1,8 +1,8 @@
 //! The clap declarative command line interface
 
-use std::path::PathBuf;
-
+use crate::prelude::*;
 use clap::{Args, Parser, Subcommand};
+use std::path::PathBuf;
 
 #[derive(Parser)]
 #[command(
@@ -25,30 +25,54 @@ pub struct MainArguments {
 
 #[derive(Subcommand)]
 pub enum MainSubcommand {
-    Clean(CleanPackageAction),
-    Review(ReviewPackageAction),
-    Sync(SyncPackageAction),
-    Unmanaged(UnmanagedPackageAction),
+    Clean(CleanCommand),
+    Add(AddCommand),
+    Review(ReviewCommand),
+    Sync(SyncCommand),
+    Unmanaged(UnmanagedCommand),
 }
 
 #[derive(Args)]
 #[command(visible_alias("c"))]
 /// remove unmanaged packages
-pub struct CleanPackageAction {
+pub struct CleanCommand {
     #[arg(short, long)]
     /// do not ask for any confirmation
     pub no_confirm: bool,
+    #[arg(short, long)]
+    /// include implicitly installed packages in the visual output
+    ///
+    /// implicit packages are removed regardless of whether this
+    /// options is set, this only affects the visual output
+    pub include_implicit: bool,
+}
+
+#[derive(Args)]
+#[command(visible_alias("a"))]
+/// add a package for the given backend and group file
+///
+/// if the group file does not exist a new one will be created
+pub struct AddCommand {
+    #[arg(short, long)]
+    /// the backend for the package
+    pub backend: AnyBackend,
+    #[arg(short, long)]
+    /// the package name
+    pub package: String,
+    #[arg(short, long, default_value = "default")]
+    /// the group name
+    pub group: String,
 }
 
 #[derive(Args)]
 #[command(visible_alias("r"))]
 /// review unmanaged packages
-pub struct ReviewPackageAction {}
+pub struct ReviewCommand {}
 
 #[derive(Args)]
 #[command(visible_alias("s"))]
 /// install packages from groups
-pub struct SyncPackageAction {
+pub struct SyncCommand {
     #[arg(short, long)]
     /// do not ask for any confirmation
     pub no_confirm: bool,
@@ -57,4 +81,8 @@ pub struct SyncPackageAction {
 #[derive(Args)]
 #[command(visible_alias("u"))]
 /// show explicitly installed packages not managed by pacdef
-pub struct UnmanagedPackageAction {}
+pub struct UnmanagedCommand {
+    #[arg(short, long)]
+    /// include implicitly installed packages
+    pub include_implicit: bool,
+}

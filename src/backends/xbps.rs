@@ -12,24 +12,33 @@ use crate::prelude::*;
 pub struct Xbps;
 
 #[derive(Debug, Clone, Default, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
-pub struct XbpsInstallOptions {
+pub struct XbpsQueryInfo {}
+impl PossibleQueryInfo for XbpsQueryInfo {
+    fn explicit(&self) -> Option<bool> {
+        None
+    }
 }
+
+#[derive(Debug, Clone, Default, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
+pub struct XbpsInstallOptions {}
 
 #[derive(Debug, Clone)]
 pub struct XbpsModificationOptions {
     make_implicit: bool,
 }
 
+#[derive(Debug, Clone, Default, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
+pub struct XbpsRemoveOptions {}
+
 impl Backend for Xbps {
-    type PackageId = String;
-    type QueryInfo = ();
+    type QueryInfo = XbpsQueryInfo;
     type InstallOptions = XbpsInstallOptions;
     type ModificationOptions = XbpsModificationOptions;
-    type RemoveOptions = ();
+    type RemoveOptions = XbpsRemoveOptions;
 
     fn query_installed_packages(
         _: &Config,
-    ) -> Result<std::collections::BTreeMap<Self::PackageId, Self::QueryInfo>> {
+    ) -> Result<std::collections::BTreeMap<String, Self::QueryInfo>> {
         if !command_found("xbps-query") {
             return Ok(BTreeMap::new());
         }
@@ -48,7 +57,10 @@ impl Backend for Xbps {
             .map(|line| {
                 let mid_result = re1.replace_all(line, "");
 
-                (re2.replace_all(&mid_result, "").to_string(), ())
+                (
+                    re2.replace_all(&mid_result, "").to_string(),
+                    XbpsQueryInfo {},
+                )
             })
             .collect();
 
@@ -56,7 +68,7 @@ impl Backend for Xbps {
     }
 
     fn install_packages(
-        packages: &std::collections::BTreeMap<Self::PackageId, Self::InstallOptions>,
+        packages: &std::collections::BTreeMap<String, Self::InstallOptions>,
         no_confirm: bool,
         _: &Config,
     ) -> Result<()> {
@@ -70,7 +82,7 @@ impl Backend for Xbps {
     }
 
     fn remove_packages(
-        packages: &std::collections::BTreeMap<Self::PackageId, Self::RemoveOptions>,
+        packages: &std::collections::BTreeMap<String, Self::RemoveOptions>,
         no_confirm: bool,
         _: &Config,
     ) -> Result<()> {
@@ -84,7 +96,7 @@ impl Backend for Xbps {
     }
 
     fn modify_packages(
-        packages: &std::collections::BTreeMap<Self::PackageId, Self::ModificationOptions>,
+        packages: &std::collections::BTreeMap<String, Self::ModificationOptions>,
         _: &Config,
     ) -> Result<()> {
         run_command(

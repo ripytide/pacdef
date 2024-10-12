@@ -13,10 +13,14 @@ pub struct Apt;
 pub struct AptQueryInfo {
     pub explicit: bool,
 }
+impl PossibleQueryInfo for AptQueryInfo {
+    fn explicit(&self) -> Option<bool> {
+        Some(self.explicit)
+    }
+}
 
 #[derive(Debug, Clone, Default, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
-pub struct AptInstallOptions {
-}
+pub struct AptInstallOptions {}
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct AptModificationOptions {
@@ -24,13 +28,12 @@ pub struct AptModificationOptions {
 }
 
 impl Backend for Apt {
-    type PackageId = String;
     type QueryInfo = AptQueryInfo;
     type InstallOptions = AptInstallOptions;
     type ModificationOptions = AptModificationOptions;
     type RemoveOptions = ();
 
-    fn query_installed_packages(_: &Config) -> Result<BTreeMap<Self::PackageId, Self::QueryInfo>> {
+    fn query_installed_packages(_: &Config) -> Result<BTreeMap<String, Self::QueryInfo>> {
         if !command_found("apt-mark") {
             return Ok(BTreeMap::new());
         }
@@ -56,7 +59,7 @@ impl Backend for Apt {
     }
 
     fn install_packages(
-        packages: &BTreeMap<Self::PackageId, Self::InstallOptions>,
+        packages: &BTreeMap<String, Self::InstallOptions>,
         no_confirm: bool,
         _: &Config,
     ) -> Result<()> {
@@ -70,7 +73,7 @@ impl Backend for Apt {
     }
 
     fn modify_packages(
-        packages: &BTreeMap<Self::PackageId, Self::ModificationOptions>,
+        packages: &BTreeMap<String, Self::ModificationOptions>,
         _: &Config,
     ) -> Result<()> {
         run_command(
@@ -85,7 +88,7 @@ impl Backend for Apt {
     }
 
     fn remove_packages(
-        packages: &BTreeMap<Self::PackageId, Self::RemoveOptions>,
+        packages: &BTreeMap<String, Self::RemoveOptions>,
         no_confirm: bool,
         _: &Config,
     ) -> Result<()> {

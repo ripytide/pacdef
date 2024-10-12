@@ -1,4 +1,4 @@
-use color_eyre::eyre::{eyre, Context};
+use color_eyre::eyre::Context;
 use serde_inline_default::serde_inline_default;
 use std::{collections::BTreeMap, path::Path};
 
@@ -17,6 +17,8 @@ pub struct Config {
     pub flatpak_systemwide: bool,
     #[serde_inline_default(Config::default().disabled_backends)]
     pub disabled_backends: Vec<String>,
+    #[serde_inline_default(Config::default().hostname_groups_enabled)]
+    pub hostname_groups_enabled: bool,
     #[serde_inline_default(Config::default().hostname_groups)]
     pub hostname_groups: BTreeMap<String, Vec<String>>,
 }
@@ -27,6 +29,7 @@ impl Default for Config {
             arch_rm_args: Vec::new(),
             flatpak_systemwide: true,
             disabled_backends: Vec::new(),
+            hostname_groups_enabled: false,
             hostname_groups: BTreeMap::new(),
         }
     }
@@ -37,10 +40,16 @@ impl Config {
         let config_file_path = pacdef_dir.join("config.toml");
 
         if !config_file_path.is_file() {
-            return Err(eyre!("config file not found at: {config_file_path:?}"));
-        }
+            log::trace!(
+                "no config file found at {config_file_path:?}, using default config instead"
+            );
 
-        toml::from_str(&std::fs::read_to_string(config_file_path).wrap_err("reading config file")?)
+            Ok(Self::default())
+        } else {
+            toml::from_str(
+                &std::fs::read_to_string(config_file_path).wrap_err("reading config file")?,
+            )
             .wrap_err("parsing toml config")
+        }
     }
 }

@@ -16,6 +16,11 @@ pub struct Rustup;
 pub struct RustupQueryInfo {
     pub components: Vec<String>,
 }
+impl PossibleQueryInfo for RustupQueryInfo {
+    fn explicit(&self) -> Option<bool> {
+        None
+    }
+}
 
 #[serde_inline_default]
 #[derive(Debug, Clone, Default, Deserialize, Serialize)]
@@ -30,14 +35,16 @@ pub struct RustupModificationOptions {
     pub remove_components: Vec<String>,
 }
 
+#[derive(Debug, Clone, Default, Deserialize, Serialize)]
+pub struct RustupRemoveOptions {}
+
 impl Backend for Rustup {
-    type PackageId = String;
     type QueryInfo = RustupQueryInfo;
     type InstallOptions = RustupInstallOptions;
     type ModificationOptions = RustupModificationOptions;
-    type RemoveOptions = ();
+    type RemoveOptions = RustupRemoveOptions;
 
-    fn query_installed_packages(_: &Config) -> Result<BTreeMap<Self::PackageId, Self::QueryInfo>> {
+    fn query_installed_packages(_: &Config) -> Result<BTreeMap<String, Self::QueryInfo>> {
         if !command_found("rustup") {
             return Ok(BTreeMap::new());
         }
@@ -81,7 +88,7 @@ impl Backend for Rustup {
     }
 
     fn install_packages(
-        packages: &BTreeMap<Self::PackageId, Self::InstallOptions>,
+        packages: &BTreeMap<String, Self::InstallOptions>,
         _: bool,
         _: &Config,
     ) -> Result<()> {
@@ -111,7 +118,7 @@ impl Backend for Rustup {
     }
 
     fn modify_packages(
-        packages: &BTreeMap<Self::PackageId, Self::ModificationOptions>,
+        packages: &BTreeMap<String, Self::ModificationOptions>,
         _: &Config,
     ) -> Result<()> {
         for (toolchain, rustup_modification_options) in packages.iter() {
@@ -168,7 +175,7 @@ impl Backend for Rustup {
     }
 
     fn remove_packages(
-        packages: &BTreeMap<Self::PackageId, Self::RemoveOptions>,
+        packages: &BTreeMap<String, Self::RemoveOptions>,
         _: bool,
         _: &Config,
     ) -> Result<()> {

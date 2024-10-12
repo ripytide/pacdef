@@ -26,30 +26,31 @@ pub struct StringPackageStruct {
     pub package: String,
 }
 
+pub trait PossibleQueryInfo {
+    fn explicit(&self) -> Option<bool>;
+}
+
 pub trait Backend {
-    type PackageId;
-    type QueryInfo;
+    type QueryInfo: PossibleQueryInfo;
     type InstallOptions;
     type ModificationOptions;
     type RemoveOptions;
 
-    fn query_installed_packages(
-        config: &Config,
-    ) -> Result<BTreeMap<Self::PackageId, Self::QueryInfo>>;
+    fn query_installed_packages(config: &Config) -> Result<BTreeMap<String, Self::QueryInfo>>;
 
     fn install_packages(
-        packages: &BTreeMap<Self::PackageId, Self::InstallOptions>,
+        packages: &BTreeMap<String, Self::InstallOptions>,
         no_confirm: bool,
         config: &Config,
     ) -> Result<()>;
 
     fn modify_packages(
-        packages: &BTreeMap<Self::PackageId, Self::ModificationOptions>,
+        packages: &BTreeMap<String, Self::ModificationOptions>,
         config: &Config,
     ) -> Result<()>;
 
     fn remove_packages(
-        packages: &BTreeMap<Self::PackageId, Self::RemoveOptions>,
+        packages: &BTreeMap<String, Self::RemoveOptions>,
         no_confirm: bool,
         config: &Config,
     ) -> Result<()>;
