@@ -1,4 +1,8 @@
-# Declared Packages in toml format can come in two formats, short-form
+# Group files (like this one) should be placed in the
+# XDG_CONFIG_HOME/pacdef directory (usually ~/.config/pacdef/config.toml)
+# unless using the --config-dir cli option.
+#
+# The packages for each backend in group files can come in two formats, short-form
 # and long-form:
 #
 # short-form syntax is simply a string of the name of the package.

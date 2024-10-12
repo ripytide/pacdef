@@ -6,26 +6,15 @@ multi-backend declarative package manager
 
 ### Arch Linux
 
-`pacdef` is available in the Arch User Repository in the
-[`pacdef`](https://aur.archlinux.org/packages/pacdef) and
-[`pacdef-bin`](https://aur.archlinux.org/packages/pacdef-bin)
-packages.
+An AUR package will be made shortly.
 
 ### Cargo
 
 To install `pacdef` using cargo:
 
 ```bash
-cargo install pacdef
-# or using cargo-binstall
-cargo binstall pacdef
+cargo install pacdef --git https://github.com/ripytide/pacdef
 ```
-
-### Binary
-
-Check out the releases page for downloading `pacdef` binaries for
-various architectures: [latest
-release](https://github.com/steven-omaha/pacdef/releases).
 
 ## Use-case
 
@@ -79,12 +68,12 @@ additional backends are welcome!
 ## Config
 
 ```toml
-# By default the `pacdef` `config.toml` file is expected in the
-# `XDG_CONFIG_HOME/pacdef` directory (`~/.config/pacdef/config.toml`)
-# unless using the `--config-dir` cli option.
+# The pacdef config.toml file is expected in the
+# XDG_CONFIG_HOME/pacdef directory (usually ~/.config/pacdef/config.toml)
+# unless using the --config-dir cli option.
 
 # To decide which group files are relevant for the current machine
-# `pacdef` uses the machine's hostname in the `hostname_groups` table in
+# pacdef uses the machine's hostname in the hostname_groups table in
 # the config file to get a list of group file names.
 
 # Since pacman, yay and paru all operate on the same package database
@@ -107,7 +96,14 @@ flatpak_systemwide = true
 # Default: []
 disabled_backends = ["apt"]
 
+
+# Whether to use the [hostname_groups] config table to decide which
+# group files to use or to use all files in the groups folder.
+# Default: false
+hostname_groups_enabled = true
+
 # Which group files apply for which hostnames
+# paths starting without a / are relative to the groups folder
 # Default: None
 [hostname_groups]
 pc = ["example_group"]
@@ -118,7 +114,11 @@ server = ["example_group"]
 ## Group Files
 
 ```toml
-# Declared Packages in toml format can come in two formats, short-form
+# Group files (like this one) should be placed in the
+# XDG_CONFIG_HOME/pacdef directory (usually ~/.config/pacdef/config.toml)
+# unless using the --config-dir cli option.
+#
+# The packages for each backend in group files can come in two formats, short-form
 # and long-form:
 #
 # short-form syntax is simply a string of the name of the package.
