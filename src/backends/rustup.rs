@@ -36,8 +36,7 @@ pub struct RustupModificationOptions {
 }
 
 #[derive(Debug, Clone, Default, Deserialize, Serialize)]
-pub struct RustupRemoveOptions {
-}
+pub struct RustupRemoveOptions {}
 
 impl Backend for Rustup {
     type QueryInfo = RustupQueryInfo;

@@ -40,9 +40,7 @@ impl Backend for Arch {
     type ModificationOptions = ArchModificationOptions;
     type RemoveOptions = ArchRemoveOptions;
 
-    fn query_installed_packages(
-        config: &Config,
-    ) -> Result<BTreeMap<String, Self::QueryInfo>> {
+    fn query_installed_packages(config: &Config) -> Result<BTreeMap<String, Self::QueryInfo>> {
         if !command_found(&config.arch_package_manager) {
             return Ok(BTreeMap::new());
         }

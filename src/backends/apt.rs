@@ -20,8 +20,7 @@ impl PossibleQueryInfo for AptQueryInfo {
 }
 
 #[derive(Debug, Clone, Default, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
-pub struct AptInstallOptions {
-}
+pub struct AptInstallOptions {}
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct AptModificationOptions {
