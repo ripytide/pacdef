@@ -20,7 +20,7 @@ use pacdef::MainArguments;
 
 fn main() -> Result<()> {
     pretty_env_logger::formatted_builder()
-        .filter_level(log::LevelFilter::Trace)
+        .filter_level(log::LevelFilter::Info)
         .init();
     color_eyre::install()?;
 

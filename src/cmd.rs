@@ -20,7 +20,7 @@ pub enum Perms {
     Same,
 }
 
-pub fn run_command_for_stdout<I, S>(command: I, perms: Perms) -> Result<String>
+pub fn run_command_for_stdout<I, S>(args: I, perms: Perms) -> Result<String>
 where
     S: Into<String>,
     I: IntoIterator<Item = S>,
@@ -30,7 +30,7 @@ where
         uid == 0
     };
 
-    let args: Vec<String> = command.into_iter().map(Into::into).collect::<Vec<_>>();
+    let args: Vec<String> = args.into_iter().map(Into::into).collect::<Vec<_>>();
 
     if args.is_empty() {
         return Err(eyre!("cannot run an empty command"));
@@ -42,14 +42,18 @@ where
         .chain(args)
         .collect::<Vec<_>>();
 
-    let (command, args) = args.split_first().unwrap();
+    let (first_arg, remaining_args) = args.split_first().unwrap();
 
-    let output = Command::new(command).args(args).output()?;
+    let output = Command::new(first_arg).args(remaining_args).output()?;
 
     if output.status.success() {
         Ok(String::from_utf8(output.stdout)?)
     } else {
-        Err(eyre!("command failed: {:?}", args))
+        Err(eyre!(
+            "command failed: {:?}, stderr: {:?}",
+            remaining_args,
+            String::from_utf8(output.stderr)?,
+        ))
     }
 }
 
