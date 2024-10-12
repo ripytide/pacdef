@@ -47,7 +47,7 @@ impl MainArguments {
 
 impl CleanCommand {
     fn run(self, install_options: &InstallOptions, config: &Config) -> Result<()> {
-        let unmanaged = unmanaged(install_options, config)?;
+        let (unmanaged, unmanaged_explicit) = unmanaged(install_options, config)?;
 
         if unmanaged.is_empty() {
             log::info!("nothing to do since there are no unmanaged packages");
@@ -61,7 +61,13 @@ impl CleanCommand {
                 .to_remove_options()
                 .remove_packages(self.no_confirm, config)
         } else {
-            println!("would remove the following packages:\n\n{unmanaged}");
+            let packages_to_print = if self.include_implicit {
+                unmanaged.clone().simplified()
+            } else {
+                unmanaged_explicit.simplified()
+            };
+
+            println!("would remove the following packages:\n\n{packages_to_print}");
 
             if Confirm::new()
                 .with_prompt("do you want to continue?")
@@ -160,23 +166,51 @@ impl SyncCommand {
 
 impl UnmanagedCommand {
     fn run(self, install_options: &InstallOptions, config: &Config) -> Result<()> {
-        let unmanaged = unmanaged(install_options, config)?;
+        let (unmanaged, unmanaged_explicit) = unmanaged(install_options, config)?;
 
         if unmanaged.is_empty() {
             eprintln!("no unmanaged packages");
         } else {
-            println!("{}", toml::to_string_pretty(&unmanaged)?);
+            let packages_to_print = if self.include_implicit {
+                unmanaged.simplified()
+            } else {
+                unmanaged_explicit.simplified()
+            };
+
+            println!("{}", toml::to_string_pretty(&packages_to_print)?);
         }
 
         Ok(())
     }
 }
 
-fn unmanaged(install_options: &InstallOptions, config: &Config) -> Result<PackageIds> {
-    Ok(QueryInfos::query_installed_packages(config)?
+fn unmanaged(
+    install_options: &InstallOptions,
+    config: &Config,
+) -> Result<(PackageIds, PackageIds)> {
+    let installed = QueryInfos::query_installed_packages(config)?;
+    let mut installed_explicit = installed.clone();
+
+    macro_rules! x {
+            ($($backend:ident),*) => {
+                $(
+                    installed_explicit.$backend.retain(|_, y| match y.explicit() {
+                        None | Some(true) => true,
+                        Some(false) => false,
+                    });
+                )*
+            };
+        }
+    apply_public_backends!(x);
+
+    let unmanaged = installed
         .to_package_ids()
-        .difference(&install_options.to_package_ids())
-        .simplified())
+        .difference(&install_options.to_package_ids());
+    let unmanaged_explicit = installed_explicit
+        .to_package_ids()
+        .difference(&install_options.to_package_ids());
+
+    Ok((unmanaged, unmanaged_explicit))
 }
 fn missing(install_options: &InstallOptions, config: &Config) -> Result<PackageIds> {
     Ok(install_options

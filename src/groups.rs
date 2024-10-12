@@ -8,7 +8,7 @@ use toml::{Table, Value};
 use std::{
     collections::BTreeMap,
     fs::read_to_string,
-    ops::Add,
+    ops::AddAssign,
     path::{Path, PathBuf},
 };
 
@@ -29,13 +29,9 @@ impl Groups {
         result
     }
 
-    pub fn to_install_options(
-        &self,
-    ) -> InstallOptions {
+    pub fn to_install_options(&self) -> InstallOptions {
         let mut reoriented: BTreeMap<(AnyBackend, String), BTreeMap<PathBuf, u32>> =
             BTreeMap::new();
-
-        let mut result = InstallOptions::default();
 
         for (group_file, raw_install_options) in self.iter() {
             for (backend, package_ids) in raw_install_options.to_raw_package_ids().iter() {
@@ -45,14 +41,36 @@ impl Groups {
                         .or_default()
                         .entry(group_file.clone())
                         .or_default()
-                        .add(1);
+                        .add_assign(1);
                 }
             }
         }
 
         //warn user about duplicated packages and output a deduplicated InstallOptions
+        for ((backend, package_id), group_files) in reoriented.iter() {
+            if group_files.len() > 1 {
+                log::warn!("duplicate package in group files: {package_id} for the {backend} backend, found in the following group files:");
+                log::warn!("{:?}", group_files);
+                log::warn!("only one of the duplicated will be used which could may cause unintended behaviour if the duplicates have different install options");
+            }
+        }
 
-        todo!()
+        let mut merged_raw_install_options = RawInstallOptions::default();
+        for mut raw_install_options in self.values().cloned() {
+            merged_raw_install_options.append(&mut raw_install_options);
+        }
+
+        let mut install_options = InstallOptions::default();
+        macro_rules! x {
+                ($($backend:ident),*) => {
+                    $(
+                        install_options.$backend = merged_raw_install_options.$backend.into_iter().collect();
+                    )*
+                };
+        }
+        apply_public_backends!(x);
+
+        install_options
     }
 
     pub fn load(group_dir: &Path, hostname: &str, config: &Config) -> Result<Groups> {
