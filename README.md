@@ -4,10 +4,6 @@ multi-backend declarative package manager
 
 ## Installation
 
-### Arch Linux
-
-An AUR package will be made shortly.
-
 ### Cargo
 
 To install `pacdef` using cargo:
