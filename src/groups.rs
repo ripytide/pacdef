@@ -152,15 +152,13 @@ fn parse_toml_key_value(group_file: &Path, key: &str, value: &Value) -> Result<R
                     }
 
                     return Ok(raw_install_options);
-                } else {
-                    log::warn!("unrecognised non-backend key: {key:?} found in group file: {group_file:?}");
                 }
             )*
         };
     }
     apply_public_backends!(x);
 
-    log::warn!("unrecognised backend: {key} in group file: {group_file:?}");
+    log::warn!("unrecognised backend: {key:?} in group file: {group_file:?}");
 
     Ok(RawInstallOptions::default())
 }
