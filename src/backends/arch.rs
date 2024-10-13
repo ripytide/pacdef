@@ -1,7 +1,7 @@
 use color_eyre::Result;
 use serde::{Deserialize, Serialize};
 use serde_inline_default::serde_inline_default;
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 
 use crate::cmd::{command_found, run_command, run_command_for_stdout};
 use crate::prelude::*;
@@ -12,6 +12,7 @@ pub struct Arch;
 #[derive(Debug, Clone)]
 pub struct ArchQueryInfo {
     pub explicit: bool,
+    pub dependencies: BTreeSet<String>,
 }
 impl PossibleQueryInfo for ArchQueryInfo {
     fn explicit(&self) -> Option<bool> {
@@ -45,29 +46,37 @@ impl Backend for Arch {
             return Ok(BTreeMap::new());
         }
 
-        let explicit = run_command_for_stdout(
+        let packages = run_command_for_stdout(
             [
                 &config.arch_package_manager,
                 "--query",
-                "--explicit",
-                "--quiet",
+                "--info",
             ],
             Perms::Same,
         )?;
-        let dependency = run_command_for_stdout(
-            [&config.arch_package_manager, "--query", "--deps", "--quiet"],
-            Perms::Same,
-        )?;
 
-        Ok(dependency
-            .lines()
-            .map(|x| (x.to_string(), ArchQueryInfo { explicit: false }))
-            .chain(
-                explicit
-                    .lines()
-                    .map(|x| (x.to_string(), ArchQueryInfo { explicit: true })),
-            )
-            .collect())
+        let mut packages: Vec<&str> = packages.split("\n\n").collect();
+        //there's an expty double line at the end of the output
+        packages.pop();
+
+        let mut result = BTreeMap::new();
+
+        for package in packages {
+            let parts: BTreeMap<&str, &str> = package.lines().map(|x| {
+                let (name, value) = x.split_once(":").unwrap();
+                (name.trim(), value.trim())
+            }).collect();
+
+            let explicit = parts.get("Install Reason").unwrap().contains("Explicitly");
+            let dependencies = parts.get("Depends On").unwrap().split_ascii_whitespace().map(|x| x.split_once(delimiter))
+
+            ArchQueryInfo {
+                explicit,
+                dependencies,
+            }
+        }
+
+        Ok(BTreeMap::default())
     }
 
     fn install_packages(
