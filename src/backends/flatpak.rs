@@ -18,6 +18,9 @@ impl PossibleQueryInfo for FlatpakQueryInfo {
     fn explicit(&self) -> Option<bool> {
         Some(self.explicit)
     }
+    fn dependencies(&self) -> Option<&BTreeSet<String>> {
+        None
+    }
 }
 
 #[derive(Debug, Clone, Default, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]

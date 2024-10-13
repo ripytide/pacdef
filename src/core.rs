@@ -33,21 +33,21 @@ impl MainArguments {
         let groups = Groups::load(&group_dir, &hostname, &config)
             .wrap_err("failed to load package install options from groups")?;
 
-        let install_options = groups.to_install_options();
+        let managed = groups.to_install_options();
 
         match self.subcommand {
-            MainSubcommand::Clean(clean) => clean.run(&install_options, &config),
+            MainSubcommand::Clean(clean) => clean.run(&managed, &config),
             MainSubcommand::Add(add) => add.run(&group_dir, &groups),
-            MainSubcommand::Review(review) => review.run(&install_options, &config),
-            MainSubcommand::Sync(sync) => sync.run(&install_options, &config),
-            MainSubcommand::Unmanaged(unmanaged) => unmanaged.run(&install_options, &config),
+            MainSubcommand::Review(review) => review.run(&managed, &config),
+            MainSubcommand::Sync(sync) => sync.run(&managed, &config),
+            MainSubcommand::Unmanaged(unmanaged) => unmanaged.run(&managed, &config),
         }
     }
 }
 
 impl CleanCommand {
-    fn run(self, install_options: &InstallOptions, config: &Config) -> Result<()> {
-        let (unmanaged, unmanaged_explicit) = unmanaged(install_options, config)?;
+    fn run(self, managed: &InstallOptions, config: &Config) -> Result<()> {
+        let (unmanaged, unmanaged_explicit) = unmanaged(managed, config)?;
 
         if unmanaged.is_empty() {
             log::info!("nothing to do since there are no unmanaged packages");
@@ -136,8 +136,8 @@ impl ReviewCommand {
 }
 
 impl SyncCommand {
-    fn run(self, install_options: &InstallOptions, config: &Config) -> Result<()> {
-        let missing = missing(install_options, config)?;
+    fn run(self, managed: &InstallOptions, config: &Config) -> Result<()> {
+        let missing = missing(managed, config)?;
 
         if missing.is_empty() {
             log::info!("nothing to do as there are no missing packages");
@@ -165,8 +165,8 @@ impl SyncCommand {
 }
 
 impl UnmanagedCommand {
-    fn run(self, install_options: &InstallOptions, config: &Config) -> Result<()> {
-        let (unmanaged, unmanaged_explicit) = unmanaged(install_options, config)?;
+    fn run(self, managed: &InstallOptions, config: &Config) -> Result<()> {
+        let (unmanaged, unmanaged_explicit) = unmanaged(managed, config)?;
 
         if unmanaged.is_empty() {
             eprintln!("no unmanaged packages");
@@ -184,36 +184,35 @@ impl UnmanagedCommand {
     }
 }
 
-fn unmanaged(
-    install_options: &InstallOptions,
-    config: &Config,
-) -> Result<(PackageIds, PackageIds)> {
-    let installed = QueryInfos::query_installed_packages(config)?;
-    let mut installed_explicit = installed.clone();
+fn unmanaged(managed: &InstallOptions, config: &Config) -> Result<(PackageIds, PackageIds)> {
+    let installed_query_infos = QueryInfos::query_installed_packages(config)?;
 
-    macro_rules! x {
-            ($($backend:ident),*) => {
-                $(
-                    installed_explicit.$backend.retain(|_, y| match y.explicit() {
-                        None | Some(true) => true,
-                        Some(false) => false,
-                    });
-                )*
-            };
+    let mut unmanaged = installed_query_infos.to_package_ids();
+    for (backend, packages) in managed.to_package_ids().iter() {
+        for package_id in packages {
+            unmanaged.remove(*backend, package_id);
+
+            if let Some(dependencies) = installed_query_infos.dependencies(*backend, package_id) {
+                for dependency in dependencies {
+                    unmanaged.remove(*backend, dependency);
+                }
+            }
         }
-    apply_public_backends!(x);
+    }
 
-    let unmanaged = installed
-        .to_package_ids()
-        .difference(&install_options.to_package_ids());
-    let unmanaged_explicit = installed_explicit
-        .to_package_ids()
-        .difference(&install_options.to_package_ids());
+    let mut unmanaged_explicit = PackageIds::default();
+    for (backend, packages) in unmanaged.iter() {
+        for package_id in packages {
+            if let Some(true) | None = installed_query_infos.explicit(*backend, package_id) {
+                unmanaged_explicit.insert(*backend, package_id.clone());
+            }
+        }
+    }
 
     Ok((unmanaged, unmanaged_explicit))
 }
-fn missing(install_options: &InstallOptions, config: &Config) -> Result<PackageIds> {
-    Ok(install_options
+fn missing(managed: &InstallOptions, config: &Config) -> Result<PackageIds> {
+    Ok(managed
         .to_package_ids()
         .difference(&QueryInfos::query_installed_packages(config)?.to_package_ids()))
 }

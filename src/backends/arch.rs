@@ -18,6 +18,9 @@ impl PossibleQueryInfo for ArchQueryInfo {
     fn explicit(&self) -> Option<bool> {
         Some(self.explicit)
     }
+    fn dependencies(&self) -> Option<&BTreeSet<String>> {
+        Some(&self.dependencies)
+    }
 }
 
 #[serde_inline_default]
@@ -46,37 +49,43 @@ impl Backend for Arch {
             return Ok(BTreeMap::new());
         }
 
-        let packages = run_command_for_stdout(
+        let explicit_packages = run_command_for_stdout(
             [
                 &config.arch_package_manager,
                 "--query",
-                "--info",
+                "--explicit",
+                "--quiet",
             ],
             Perms::Same,
         )?;
-
-        let mut packages: Vec<&str> = packages.split("\n\n").collect();
-        //there's an expty double line at the end of the output
-        packages.pop();
+        let dependency_packages = run_command_for_stdout(
+            [&config.arch_package_manager, "--query", "--deps", "--quiet"],
+            Perms::Same,
+        )?;
 
         let mut result = BTreeMap::new();
 
-        for package in packages {
-            let parts: BTreeMap<&str, &str> = package.lines().map(|x| {
-                let (name, value) = x.split_once(":").unwrap();
-                (name.trim(), value.trim())
-            }).collect();
-
-            let explicit = parts.get("Install Reason").unwrap().contains("Explicitly");
-            let dependencies = parts.get("Depends On").unwrap().split_ascii_whitespace().map(|x| x.split_once(delimiter))
-
-            ArchQueryInfo {
-                explicit,
-                dependencies,
-            }
+        for package in explicit_packages.lines() {
+            result.insert(
+                package.to_string(),
+                ArchQueryInfo {
+                    explicit: true,
+                    dependencies: get_dependencies(package)?,
+                },
+            );
         }
 
-        Ok(BTreeMap::default())
+        for package in dependency_packages.lines() {
+            result.insert(
+                package.to_string(),
+                ArchQueryInfo {
+                    explicit: false,
+                    dependencies: get_dependencies(package)?,
+                },
+            );
+        }
+
+        Ok(result)
     }
 
     fn install_packages(
@@ -127,4 +136,13 @@ impl Backend for Arch {
             Perms::AsRoot,
         )
     }
+}
+
+fn get_dependencies(package: &str) -> Result<BTreeSet<String>> {
+    Ok(
+        run_command_for_stdout(["pactree", "--unique", package], Perms::Same)?
+            .lines()
+            .map(String::from)
+            .collect(),
+    )
 }

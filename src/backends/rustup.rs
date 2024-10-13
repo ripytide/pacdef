@@ -8,6 +8,7 @@ use serde::Deserialize;
 use serde::Serialize;
 use serde_inline_default::serde_inline_default;
 use std::collections::BTreeMap;
+use std::collections::BTreeSet;
 
 #[derive(Debug, Copy, Clone, Default, PartialEq, Eq, PartialOrd, Ord, derive_more::Display)]
 pub struct Rustup;
@@ -18,6 +19,9 @@ pub struct RustupQueryInfo {
 }
 impl PossibleQueryInfo for RustupQueryInfo {
     fn explicit(&self) -> Option<bool> {
+        None
+    }
+    fn dependencies(&self) -> Option<&BTreeSet<String>> {
         None
     }
 }
