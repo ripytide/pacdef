@@ -1,4 +1,4 @@
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 use std::process::Command;
 
 use color_eyre::Result;
@@ -15,6 +15,9 @@ pub struct Xbps;
 pub struct XbpsQueryInfo {}
 impl PossibleQueryInfo for XbpsQueryInfo {
     fn explicit(&self) -> Option<bool> {
+        None
+    }
+    fn dependencies(&self) -> Option<&BTreeSet<String>> {
         None
     }
 }

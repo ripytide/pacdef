@@ -72,8 +72,19 @@ impl PackageIds {
         self.values().all(|x| x.is_empty())
     }
 
-    pub fn contains(&self, backend: AnyBackend, package: &String) -> bool {
+    pub fn contains(&self, backend: AnyBackend, package: &str) -> bool {
         self.get(&backend).is_some_and(|x| x.contains(package))
+    }
+
+    pub fn insert(&mut self, backend: AnyBackend, package: String) -> bool {
+        self.entry(backend).or_default().insert(package)
+    }
+    pub fn remove(&mut self, backend: AnyBackend, package: &str) -> bool {
+        if let Some(packages) = self.get_mut(&backend) {
+            packages.remove(package)
+        } else {
+            false
+        }
     }
 
     pub fn difference(&self, other: &Self) -> Self {
@@ -161,6 +172,25 @@ macro_rules! query_infos {
                             },
                     )*
                 })
+            }
+
+            pub fn explicit(&self, backend: AnyBackend, package_id: &str) -> Option<bool> {
+                match backend {
+                    $(
+                        AnyBackend::$backend => {
+                            self.$backend.get(package_id).and_then(|x| x.explicit())
+                        }
+                    )*
+                }
+            }
+            pub fn dependencies(&self, backend: AnyBackend, package_id: &str) -> Option<&BTreeSet<String>> {
+                match backend {
+                    $(
+                        AnyBackend::$backend => {
+                            self.$backend.get(package_id).and_then(|x| x.dependencies())
+                        }
+                    )*
+                }
             }
         }
     }

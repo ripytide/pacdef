@@ -1,4 +1,4 @@
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 
 use color_eyre::Result;
 use serde::{Deserialize, Serialize};
@@ -16,6 +16,9 @@ pub struct AptQueryInfo {
 impl PossibleQueryInfo for AptQueryInfo {
     fn explicit(&self) -> Option<bool> {
         Some(self.explicit)
+    }
+    fn dependencies(&self) -> Option<&BTreeSet<String>> {
+        None
     }
 }
 
