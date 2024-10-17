@@ -47,7 +47,7 @@ impl MainArguments {
 
 impl CleanCommand {
     fn run(self, managed: &InstallOptions, config: &Config) -> Result<()> {
-        let unmanaged = unmanaged(managed, config)?.simplified();
+        let unmanaged = unmanaged(managed, config)?;
 
         if unmanaged.is_empty() {
             log::info!("nothing to do since there are no unmanaged packages");
@@ -61,7 +61,9 @@ impl CleanCommand {
                 .to_remove_options()
                 .remove_packages(self.no_confirm, config)
         } else {
-            println!("would remove the following packages:\n\n{unmanaged}");
+            println!("{unmanaged}");
+
+            println!("these packages will be removed\n");
 
             if Confirm::new()
                 .with_prompt("do you want to continue?")
@@ -138,7 +140,9 @@ impl SyncCommand {
             return Ok(());
         }
 
-        println!("would install the following packages:\n\n{missing}");
+        println!("{missing}");
+
+        println!("these packages will be installed\n");
 
         if self.no_confirm {
             log::info!("proceeding without confirmation");
@@ -160,7 +164,7 @@ impl SyncCommand {
 
 impl UnmanagedCommand {
     fn run(self, managed: &InstallOptions, config: &Config) -> Result<()> {
-        let unmanaged = unmanaged(managed, config)?.simplified();
+        let unmanaged = unmanaged(managed, config)?;
 
         if unmanaged.is_empty() {
             eprintln!("no unmanaged packages");
