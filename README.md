@@ -79,10 +79,6 @@ additional backends are welcome!
 # Default: "pacman"
 arch_package_manager = "paru"
 
-# Extra arguments passed to pacman when removing an arch package.
-# Default: []
-arch_rm_args = ["-ns"]
-
 # Whether to install flatpak packages systemwide or for the current user.
 # Default: true
 flatpak_systemwide = true

@@ -1,4 +1,4 @@
-use std::collections::{BTreeMap, BTreeSet};
+use std::collections::BTreeMap;
 
 use color_eyre::Result;
 use serde::{Deserialize, Serialize};
@@ -10,17 +10,7 @@ use crate::prelude::*;
 pub struct Apt;
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
-pub struct AptQueryInfo {
-    pub explicit: bool,
-}
-impl PossibleQueryInfo for AptQueryInfo {
-    fn explicit(&self) -> Option<bool> {
-        Some(self.explicit)
-    }
-    fn dependencies(&self) -> Option<&BTreeSet<String>> {
-        None
-    }
-}
+pub struct AptQueryInfo {}
 
 #[derive(Debug, Clone, Default, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 pub struct AptInstallOptions {}
@@ -48,16 +38,10 @@ impl Backend for Apt {
         // lots of different methods all of which seem to have
         // caveats.
         let explicit = run_command_for_stdout(["apt-mark", "showmanual"], Perms::Same)?;
-        let dependency = run_command_for_stdout(["apt-mark", "showauto"], Perms::Same)?;
 
-        Ok(dependency
+        Ok(explicit
             .lines()
-            .map(|x| (x.to_string(), AptQueryInfo { explicit: false }))
-            .chain(
-                explicit
-                    .lines()
-                    .map(|x| (x.to_string(), AptQueryInfo { explicit: true })),
-            )
+            .map(|x| (x.to_string(), AptQueryInfo {}))
             .collect())
     }
 

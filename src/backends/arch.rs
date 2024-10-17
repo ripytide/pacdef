@@ -1,7 +1,7 @@
 use color_eyre::Result;
 use serde::{Deserialize, Serialize};
 use serde_inline_default::serde_inline_default;
-use std::collections::{BTreeMap, BTreeSet};
+use std::collections::BTreeMap;
 
 use crate::cmd::{command_found, run_command, run_command_for_stdout};
 use crate::prelude::*;
@@ -10,18 +10,7 @@ use crate::prelude::*;
 pub struct Arch;
 
 #[derive(Debug, Clone)]
-pub struct ArchQueryInfo {
-    pub explicit: bool,
-    pub dependencies: BTreeSet<String>,
-}
-impl PossibleQueryInfo for ArchQueryInfo {
-    fn explicit(&self) -> Option<bool> {
-        Some(self.explicit)
-    }
-    fn dependencies(&self) -> Option<&BTreeSet<String>> {
-        Some(&self.dependencies)
-    }
-}
+pub struct ArchQueryInfo {}
 
 #[serde_inline_default]
 #[derive(Debug, Clone, Default, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
@@ -58,31 +47,11 @@ impl Backend for Arch {
             ],
             Perms::Same,
         )?;
-        let dependency_packages = run_command_for_stdout(
-            [&config.arch_package_manager, "--query", "--deps", "--quiet"],
-            Perms::Same,
-        )?;
 
         let mut result = BTreeMap::new();
 
         for package in explicit_packages.lines() {
-            result.insert(
-                package.to_string(),
-                ArchQueryInfo {
-                    explicit: true,
-                    dependencies: get_dependencies(package)?,
-                },
-            );
-        }
-
-        for package in dependency_packages.lines() {
-            result.insert(
-                package.to_string(),
-                ArchQueryInfo {
-                    explicit: false,
-                    dependencies: get_dependencies(package)?,
-                },
-            );
+            result.insert(package.to_string(), ArchQueryInfo {});
         }
 
         Ok(result)
@@ -130,19 +99,9 @@ impl Backend for Arch {
         run_command(
             [&config.arch_package_manager, "--remove", "--recursive"]
                 .into_iter()
-                .chain(config.arch_rm_args.iter().map(String::as_str))
                 .chain(Some("--no_confirm").filter(|_| no_confirm))
                 .chain(packages.keys().map(String::as_str)),
             Perms::AsRoot,
         )
     }
-}
-
-fn get_dependencies(package: &str) -> Result<BTreeSet<String>> {
-    Ok(
-        run_command_for_stdout(["pactree", "--unique", package], Perms::Same)?
-            .lines()
-            .map(String::from)
-            .collect(),
-    )
 }

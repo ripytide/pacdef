@@ -1,4 +1,4 @@
-use std::collections::{BTreeMap, BTreeSet};
+use std::collections::BTreeMap;
 use std::io::ErrorKind::NotFound;
 
 use color_eyre::eyre::{eyre, Context};
@@ -20,14 +20,6 @@ pub struct CargoQueryInfo {
     all_features: bool,
     no_default_features: bool,
     features: Vec<String>,
-}
-impl PossibleQueryInfo for CargoQueryInfo {
-    fn explicit(&self) -> Option<bool> {
-        None
-    }
-    fn dependencies(&self) -> Option<&BTreeSet<String>> {
-        None
-    }
 }
 
 #[serde_inline_default]
