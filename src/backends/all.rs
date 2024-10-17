@@ -57,11 +57,6 @@ impl RawPackageIds {
 #[serde(transparent)]
 pub struct PackageIds(BTreeMap<AnyBackend, BTreeSet<String>>);
 impl PackageIds {
-    pub fn simplified(mut self) -> Self {
-        self.retain(|_, x| !x.is_empty());
-        self
-    }
-
     pub fn append(&mut self, other: &mut Self) {
         for (backend, packages) in other.iter_mut() {
             self.entry(*backend).or_default().append(packages);
@@ -91,7 +86,7 @@ impl PackageIds {
         let mut output = Self::default();
         for (backend, packages) in self.iter() {
             if let Some(other_packages) = other.get(backend) {
-                output.insert(
+                output.0.insert(
                     *backend,
                     packages.difference(other_packages).cloned().collect(),
                 );
@@ -105,12 +100,9 @@ impl std::fmt::Display for PackageIds {
         for (backend, packages) in self.iter() {
             if !packages.is_empty() {
                 writeln!(f, "[{backend}]")?;
-                writeln!(
-                    f,
-                    "{}",
-                    itertools::Itertools::intersperse(packages.iter().cloned(), "\n".to_string())
-                        .collect::<String>()
-                )?;
+                for package in packages {
+                    writeln!(f, "{package}")?;
+                }
                 writeln!(f)?;
             }
         }

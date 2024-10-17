@@ -96,11 +96,43 @@ impl Backend for Arch {
         no_confirm: bool,
         config: &Config,
     ) -> Result<()> {
+        Arch::modify_packages(
+            &packages
+                .iter()
+                .map(|(x, _)| {
+                    (
+                        x.clone(),
+                        ArchModificationOptions {
+                            make_implicit: true,
+                        },
+                    )
+                })
+                .collect(),
+            config,
+        )?;
+
+        let orphans_output = run_command_for_stdout(
+            [
+                &config.arch_package_manager,
+                "--query",
+                "--deps",
+                "--unrequired",
+                "--quiet",
+            ],
+            Perms::Same,
+        )?;
+        let orphans = orphans_output.lines();
+
         run_command(
-            [&config.arch_package_manager, "--remove", "--recursive"]
-                .into_iter()
-                .chain(Some("--no_confirm").filter(|_| no_confirm))
-                .chain(packages.keys().map(String::as_str)),
+            [
+                &config.arch_package_manager,
+                "--remove",
+                "--nosave",
+                "--recursive",
+            ]
+            .into_iter()
+            .chain(Some("--no_confirm").filter(|_| no_confirm))
+            .chain(orphans),
             Perms::AsRoot,
         )
     }
