@@ -39,12 +39,6 @@ pub struct CleanCommand {
     #[arg(short, long)]
     /// do not ask for any confirmation
     pub no_confirm: bool,
-    #[arg(short, long)]
-    /// include implicitly installed packages in the visual output
-    ///
-    /// implicit packages are removed regardless of whether this
-    /// options is set, this only affects the visual output
-    pub include_implicit: bool,
 }
 
 #[derive(Args)]
@@ -81,8 +75,4 @@ pub struct SyncCommand {
 #[derive(Args)]
 #[command(visible_alias("u"))]
 /// show explicitly installed packages not managed by pacdef
-pub struct UnmanagedCommand {
-    #[arg(short, long)]
-    /// include implicitly installed packages
-    pub include_implicit: bool,
-}
+pub struct UnmanagedCommand {}

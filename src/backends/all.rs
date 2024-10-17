@@ -173,25 +173,6 @@ macro_rules! query_infos {
                     )*
                 })
             }
-
-            pub fn explicit(&self, backend: AnyBackend, package_id: &str) -> Option<bool> {
-                match backend {
-                    $(
-                        AnyBackend::$backend => {
-                            self.$backend.get(package_id).and_then(|x| x.explicit())
-                        }
-                    )*
-                }
-            }
-            pub fn dependencies(&self, backend: AnyBackend, package_id: &str) -> Option<&BTreeSet<String>> {
-                match backend {
-                    $(
-                        AnyBackend::$backend => {
-                            self.$backend.get(package_id).and_then(|x| x.dependencies())
-                        }
-                    )*
-                }
-            }
         }
     }
 }

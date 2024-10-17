@@ -17,14 +17,6 @@ pub struct Pipx;
 
 #[derive(Debug, Clone, Default, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 pub struct PipxQueryOptions {}
-impl PossibleQueryInfo for PipxQueryOptions {
-    fn explicit(&self) -> Option<bool> {
-        None
-    }
-    fn dependencies(&self) -> Option<&BTreeSet<String>> {
-        None
-    }
-}
 
 #[derive(Debug, Clone, Default, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 pub struct PipxInstallOptions {}

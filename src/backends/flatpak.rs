@@ -11,16 +11,7 @@ pub struct Flatpak;
 
 #[derive(Debug, Clone)]
 pub struct FlatpakQueryInfo {
-    pub explicit: bool,
     pub systemwide: bool,
-}
-impl PossibleQueryInfo for FlatpakQueryInfo {
-    fn explicit(&self) -> Option<bool> {
-        Some(self.explicit)
-    }
-    fn dependencies(&self) -> Option<&BTreeSet<String>> {
-        None
-    }
 }
 
 #[derive(Debug, Clone, Default, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
@@ -56,13 +47,6 @@ impl Backend for Flatpak {
         .lines()
         .map(String::from)
         .collect::<BTreeSet<_>>();
-        let sys_all_btree = run_command_for_stdout(
-            ["flatpak", "list", "--system", "--columns=application"],
-            Perms::Same,
-        )?
-        .lines()
-        .map(String::from)
-        .collect::<BTreeSet<_>>();
 
         let user_explicit_btree = run_command_for_stdout(
             [
@@ -77,62 +61,15 @@ impl Backend for Flatpak {
         .lines()
         .map(String::from)
         .collect::<BTreeSet<_>>();
-        let user_all_btree = run_command_for_stdout(
-            ["flatpak", "list", "--user", "--columns=application"],
-            Perms::Same,
-        )?
-        .lines()
-        .map(String::from)
-        .collect::<BTreeSet<_>>();
 
-        let sys_explicit = sys_explicit_btree.iter().map(|x| {
-            (
-                x.clone(),
-                FlatpakQueryInfo {
-                    explicit: true,
-                    systemwide: true,
-                },
-            )
-        });
-        let sys_implicit = sys_all_btree
+        let sys_explicit = sys_explicit_btree
             .iter()
-            .filter(|x| !sys_explicit_btree.contains(*x))
-            .map(|x| {
-                (
-                    x.clone(),
-                    FlatpakQueryInfo {
-                        explicit: false,
-                        systemwide: true,
-                    },
-                )
-            });
-        let user_explicit = user_explicit_btree.iter().map(|x| {
-            (
-                x.clone(),
-                FlatpakQueryInfo {
-                    explicit: true,
-                    systemwide: false,
-                },
-            )
-        });
-        let user_implicit = user_all_btree
+            .map(|x| (x.clone(), FlatpakQueryInfo { systemwide: true }));
+        let user_explicit = user_explicit_btree
             .iter()
-            .filter(|x| !user_explicit_btree.contains(*x))
-            .map(|x| {
-                (
-                    x.clone(),
-                    FlatpakQueryInfo {
-                        explicit: false,
-                        systemwide: false,
-                    },
-                )
-            });
+            .map(|x| (x.clone(), FlatpakQueryInfo { systemwide: false }));
 
-        let all = sys_explicit
-            .chain(sys_implicit)
-            .chain(user_explicit)
-            .chain(user_implicit)
-            .collect();
+        let all = sys_explicit.chain(user_explicit).collect();
 
         Ok(all)
     }

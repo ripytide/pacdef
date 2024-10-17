@@ -1,4 +1,4 @@
-use std::collections::{BTreeMap, BTreeSet};
+use std::collections::BTreeMap;
 
 use color_eyre::Result;
 use serde::{Deserialize, Serialize};
@@ -12,14 +12,6 @@ pub struct Dnf;
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DnfQueryInfo {
     pub user: bool,
-}
-impl PossibleQueryInfo for DnfQueryInfo {
-    fn explicit(&self) -> Option<bool> {
-        None
-    }
-    fn dependencies(&self) -> Option<&BTreeSet<String>> {
-        None
-    }
 }
 
 #[derive(Debug, Clone, Default, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]

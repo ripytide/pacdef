@@ -15,8 +15,8 @@ pub use crate::backends::rustup::{
     Rustup, RustupInstallOptions, RustupModificationOptions, RustupQueryInfo,
 };
 pub use crate::backends::xbps::{Xbps, XbpsModificationOptions};
+pub use crate::backends::Backend;
 pub use crate::backends::StringPackageStruct;
-pub use crate::backends::{Backend, PossibleQueryInfo};
 pub use crate::cli::AddCommand;
 pub use crate::cli::CleanCommand;
 pub use crate::cli::MainArguments;

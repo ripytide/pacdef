@@ -8,7 +8,7 @@ pub mod pipx;
 pub mod rustup;
 pub mod xbps;
 
-use std::collections::{BTreeMap, BTreeSet};
+use std::collections::BTreeMap;
 
 use crate::prelude::*;
 use color_eyre::Result;
@@ -26,13 +26,8 @@ pub struct StringPackageStruct {
     pub package: String,
 }
 
-pub trait PossibleQueryInfo {
-    fn explicit(&self) -> Option<bool>;
-    fn dependencies(&self) -> Option<&BTreeSet<String>>;
-}
-
 pub trait Backend {
-    type QueryInfo: PossibleQueryInfo;
+    type QueryInfo;
     type InstallOptions;
     type ModificationOptions;
     type RemoveOptions;

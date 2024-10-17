@@ -47,7 +47,7 @@ impl MainArguments {
 
 impl CleanCommand {
     fn run(self, managed: &InstallOptions, config: &Config) -> Result<()> {
-        let (unmanaged, unmanaged_explicit) = unmanaged(managed, config)?;
+        let unmanaged = unmanaged(managed, config)?.simplified();
 
         if unmanaged.is_empty() {
             log::info!("nothing to do since there are no unmanaged packages");
@@ -61,13 +61,7 @@ impl CleanCommand {
                 .to_remove_options()
                 .remove_packages(self.no_confirm, config)
         } else {
-            let packages_to_print = if self.include_implicit {
-                unmanaged.clone().simplified()
-            } else {
-                unmanaged_explicit.simplified()
-            };
-
-            println!("would remove the following packages:\n\n{packages_to_print}");
+            println!("would remove the following packages:\n\n{unmanaged}");
 
             if Confirm::new()
                 .with_prompt("do you want to continue?")
@@ -166,50 +160,21 @@ impl SyncCommand {
 
 impl UnmanagedCommand {
     fn run(self, managed: &InstallOptions, config: &Config) -> Result<()> {
-        let (unmanaged, unmanaged_explicit) = unmanaged(managed, config)?;
+        let unmanaged = unmanaged(managed, config)?.simplified();
 
         if unmanaged.is_empty() {
             eprintln!("no unmanaged packages");
         } else {
-            let packages_to_print = if self.include_implicit {
-                unmanaged.simplified()
-            } else {
-                unmanaged_explicit.simplified()
-            };
-
-            println!("{}", toml::to_string_pretty(&packages_to_print)?);
+            println!("{}", toml::to_string_pretty(&unmanaged)?);
         }
 
         Ok(())
     }
 }
 
-fn unmanaged(managed: &InstallOptions, config: &Config) -> Result<(PackageIds, PackageIds)> {
-    let installed_query_infos = QueryInfos::query_installed_packages(config)?;
-
-    let mut unmanaged = installed_query_infos.to_package_ids();
-    for (backend, packages) in managed.to_package_ids().iter() {
-        for package_id in packages {
-            unmanaged.remove(*backend, package_id);
-
-            if let Some(dependencies) = installed_query_infos.dependencies(*backend, package_id) {
-                for dependency in dependencies {
-                    unmanaged.remove(*backend, dependency);
-                }
-            }
-        }
-    }
-
-    let mut unmanaged_explicit = PackageIds::default();
-    for (backend, packages) in unmanaged.iter() {
-        for package_id in packages {
-            if let Some(true) | None = installed_query_infos.explicit(*backend, package_id) {
-                unmanaged_explicit.insert(*backend, package_id.clone());
-            }
-        }
-    }
-
-    Ok((unmanaged, unmanaged_explicit))
+fn unmanaged(managed: &InstallOptions, config: &Config) -> Result<PackageIds> {
+    QueryInfos::query_installed_packages(config)
+        .map(|x| x.to_package_ids().difference(&managed.to_package_ids()))
 }
 fn missing(managed: &InstallOptions, config: &Config) -> Result<PackageIds> {
     Ok(managed

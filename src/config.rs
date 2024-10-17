@@ -11,8 +11,6 @@ use serde::{Deserialize, Serialize};
 pub struct Config {
     #[serde_inline_default(Config::default().arch_package_manager)]
     pub arch_package_manager: String,
-    #[serde_inline_default(Config::default().arch_rm_args)]
-    pub arch_rm_args: Vec<String>,
     #[serde_inline_default(Config::default().flatpak_systemwide)]
     pub flatpak_systemwide: bool,
     #[serde_inline_default(Config::default().disabled_backends)]
@@ -26,7 +24,6 @@ impl Default for Config {
     fn default() -> Self {
         Config {
             arch_package_manager: "pacman".to_string(),
-            arch_rm_args: Vec::new(),
             flatpak_systemwide: true,
             disabled_backends: Vec::new(),
             hostname_groups_enabled: false,
