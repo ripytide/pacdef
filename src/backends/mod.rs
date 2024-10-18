@@ -36,7 +36,6 @@ pub trait Backend {
 
     fn install_packages(
         packages: &BTreeMap<String, Self::InstallOptions>,
-        no_confirm: bool,
         config: &Config,
     ) -> Result<()>;
 
@@ -47,7 +46,6 @@ pub trait Backend {
 
     fn remove_packages(
         packages: &BTreeMap<String, Self::RemoveOptions>,
-        no_confirm: bool,
         config: &Config,
     ) -> Result<()>;
 }

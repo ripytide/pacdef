@@ -41,6 +41,7 @@ impl Backend for Pipx {
         let names = extract_package_names(run_command_for_stdout(
             ["pipx", "list", "--json"],
             Perms::Same,
+            ShouldPrint::Hide,
         )?)?;
 
         Ok(names
@@ -51,7 +52,6 @@ impl Backend for Pipx {
 
     fn install_packages(
         packages: &BTreeMap<String, Self::InstallOptions>,
-        _: bool,
         _: &Config,
     ) -> Result<()> {
         run_command(
@@ -59,6 +59,7 @@ impl Backend for Pipx {
                 .into_iter()
                 .chain(packages.keys().map(String::as_str)),
             Perms::AsRoot,
+            ShouldPrint::Print,
         )
     }
 
@@ -68,7 +69,6 @@ impl Backend for Pipx {
 
     fn remove_packages(
         packages: &BTreeMap<String, Self::RemoveOptions>,
-        _: bool,
         _: &Config,
     ) -> Result<()> {
         run_command(
@@ -76,6 +76,7 @@ impl Backend for Pipx {
                 .into_iter()
                 .chain(packages.keys().map(String::as_str)),
             Perms::AsRoot,
+            ShouldPrint::Print,
         )
     }
 }

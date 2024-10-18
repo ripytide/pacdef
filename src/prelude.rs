@@ -24,6 +24,6 @@ pub use crate::cli::MainSubcommand;
 pub use crate::cli::ReviewCommand;
 pub use crate::cli::SyncCommand;
 pub use crate::cli::UnmanagedCommand;
-pub use crate::cmd::Perms;
+pub use crate::cmd::{Perms, ShouldPrint};
 pub use crate::config::Config;
 pub use crate::groups::Groups;

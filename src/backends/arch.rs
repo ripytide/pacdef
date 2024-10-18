@@ -46,6 +46,7 @@ impl Backend for Arch {
                 "--quiet",
             ],
             Perms::Same,
+            ShouldPrint::Hide,
         )?;
 
         let mut result = BTreeMap::new();
@@ -59,18 +60,17 @@ impl Backend for Arch {
 
     fn install_packages(
         packages: &BTreeMap<String, Self::InstallOptions>,
-        no_confirm: bool,
         config: &Config,
     ) -> Result<()> {
         run_command(
-            [&config.arch_package_manager, "--sync"]
+            [&config.arch_package_manager, "--sync", "--no_confirm"]
                 .into_iter()
-                .chain(Some("--no_confirm").filter(|_| no_confirm))
                 .chain(packages.keys().map(String::as_str))
                 .chain(packages.values().flat_map(|dependencies| {
                     dependencies.optional_deps.iter().map(String::as_str)
                 })),
             Perms::AsRoot,
+            ShouldPrint::Print,
         )
     }
 
@@ -78,22 +78,26 @@ impl Backend for Arch {
         packages: &BTreeMap<String, Self::ModificationOptions>,
         config: &Config,
     ) -> Result<()> {
-        run_command(
-            [&config.arch_package_manager, "--database", "--asdeps"]
-                .into_iter()
-                .chain(
-                    packages
-                        .iter()
-                        .filter(|(_, m)| m.make_implicit)
-                        .map(|(p, _)| p.as_str()),
-                ),
-            Perms::AsRoot,
-        )
+        if !packages.is_empty() {
+            run_command(
+                [&config.arch_package_manager, "--database", "--asdeps"]
+                    .into_iter()
+                    .chain(
+                        packages
+                            .iter()
+                            .filter(|(_, m)| m.make_implicit)
+                            .map(|(p, _)| p.as_str()),
+                    ),
+                Perms::AsRoot,
+                ShouldPrint::Print,
+            )?;
+        }
+
+        Ok(())
     }
 
     fn remove_packages(
         packages: &BTreeMap<String, Self::RemoveOptions>,
-        no_confirm: bool,
         config: &Config,
     ) -> Result<()> {
         Arch::modify_packages(
@@ -120,6 +124,7 @@ impl Backend for Arch {
                 "--quiet",
             ],
             Perms::Same,
+            ShouldPrint::Hide,
         )?;
         let orphans = orphans_output.lines();
 
@@ -129,11 +134,12 @@ impl Backend for Arch {
                 "--remove",
                 "--nosave",
                 "--recursive",
+                "--no_confirm",
             ]
             .into_iter()
-            .chain(Some("--no_confirm").filter(|_| no_confirm))
             .chain(orphans),
             Perms::AsRoot,
+            ShouldPrint::Print,
         )
     }
 }
