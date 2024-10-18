@@ -59,7 +59,7 @@ impl CleanCommand {
 
             unmanaged
                 .to_remove_options()
-                .remove_packages(self.no_confirm, config)
+                .remove_packages(config)
         } else {
             println!("{unmanaged}");
 
@@ -74,7 +74,7 @@ impl CleanCommand {
             {
                 unmanaged
                     .to_remove_options()
-                    .remove_packages(self.no_confirm, config)
+                    .remove_packages(config)
             } else {
                 Ok(())
             }
@@ -158,7 +158,7 @@ impl SyncCommand {
 
         missing
             .to_install_options()
-            .install_packages(self.no_confirm, config)
+            .install_packages(config)
     }
 }
 

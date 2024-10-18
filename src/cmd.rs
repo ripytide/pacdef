@@ -1,4 +1,8 @@
-use std::process::Command;
+use std::{
+    fmt::Write,
+    io::{BufRead, BufReader},
+    process::{Command, Stdio},
+};
 
 use color_eyre::{eyre::eyre, Result};
 
@@ -20,7 +24,17 @@ pub enum Perms {
     Same,
 }
 
-pub fn run_command_for_stdout<I, S>(args: I, perms: Perms) -> Result<String>
+#[derive(Debug, Clone, Copy)]
+pub enum ShouldPrint {
+    Print,
+    Hide,
+}
+
+pub fn run_command_for_stdout<I, S>(
+    args: I,
+    perms: Perms,
+    should_print_stdout: ShouldPrint,
+) -> Result<String>
 where
     S: Into<String>,
     I: IntoIterator<Item = S>,
@@ -44,23 +58,39 @@ where
 
     let (first_arg, remaining_args) = args.split_first().unwrap();
 
-    let output = Command::new(first_arg).args(remaining_args).output()?;
+    let mut command = Command::new(first_arg);
+    let mut child = command
+        .args(remaining_args)
+        .stdin(Stdio::inherit())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::inherit())
+        .spawn()?;
 
-    if output.status.success() {
-        Ok(String::from_utf8(output.stdout)?)
+    let child_out = BufReader::new(child.stdout.as_mut().unwrap());
+
+    let mut stdout: String = String::new();
+
+    for line in child_out.lines() {
+        let line = line?;
+
+        write!(&mut stdout, "{line}")?;
+
+        if let ShouldPrint::Print = should_print_stdout {
+            print!("{line}");
+        }
+    }
+
+    if child.wait()?.success() {
+        Ok(stdout)
     } else {
-        Err(eyre!(
-            "command failed: {:?}, stderr: {:?}",
-            remaining_args,
-            String::from_utf8(output.stderr)?,
-        ))
+        Err(eyre!("command failed: {:?}", args))
     }
 }
 
-pub fn run_command<I, S>(command: I, perms: Perms) -> Result<()>
+pub fn run_command<I, S>(command: I, perms: Perms, should_print_stdout: ShouldPrint) -> Result<()>
 where
     S: Into<String>,
     I: IntoIterator<Item = S>,
 {
-    run_command_for_stdout(command, perms).map(|_| ())
+    run_command_for_stdout(command, perms, should_print_stdout).map(|_| ())
 }

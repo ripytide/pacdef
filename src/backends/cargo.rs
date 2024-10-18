@@ -69,7 +69,6 @@ impl Backend for Cargo {
 
     fn install_packages(
         packages: &BTreeMap<String, Self::InstallOptions>,
-        _: bool,
         _: &Config,
     ) -> Result<()> {
         for (package, options) in packages {
@@ -96,6 +95,7 @@ impl Backend for Cargo {
                     .chain(options.features.iter().map(|feature| feature.as_str()))
                     .chain([package.as_str()]),
                 Perms::AsRoot,
+            ShouldPrint::Print,
             )?;
         }
         Ok(())
@@ -107,7 +107,6 @@ impl Backend for Cargo {
 
     fn remove_packages(
         packages: &BTreeMap<String, Self::RemoveOptions>,
-        _: bool,
         _: &Config,
     ) -> Result<()> {
         run_command(
@@ -115,6 +114,7 @@ impl Backend for Cargo {
                 .into_iter()
                 .chain(packages.keys().map(String::as_str)),
             Perms::AsRoot,
+            ShouldPrint::Print,
         )
     }
 }

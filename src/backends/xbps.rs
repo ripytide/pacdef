@@ -40,7 +40,7 @@ impl Backend for Xbps {
 
         let mut cmd = Command::new("xbps-query");
         cmd.args(["-l"]);
-        let stdout = run_command_for_stdout(["xbps-query", "-l"], Perms::Same)?;
+        let stdout = run_command_for_stdout(["xbps-query", "-l"], Perms::Same, ShouldPrint::Hide)?;
 
         // Removes the package status and description from output
         let re1 = Regex::new(r"^ii |^uu |^hr |^\?\? | .*")?;
@@ -64,29 +64,27 @@ impl Backend for Xbps {
 
     fn install_packages(
         packages: &std::collections::BTreeMap<String, Self::InstallOptions>,
-        no_confirm: bool,
         _: &Config,
     ) -> Result<()> {
         run_command(
-            ["xbps-install", "-S"]
+            ["xbps-install", "-S", "-y"]
                 .into_iter()
-                .chain(Some("-y").filter(|_| no_confirm))
                 .chain(packages.keys().map(String::as_str)),
             Perms::AsRoot,
+            ShouldPrint::Print,
         )
     }
 
     fn remove_packages(
         packages: &std::collections::BTreeMap<String, Self::RemoveOptions>,
-        no_confirm: bool,
         _: &Config,
     ) -> Result<()> {
         run_command(
-            ["xbps-remove", "-R"]
+            ["xbps-remove", "-R", "-y"]
                 .into_iter()
-                .chain(Some("-y").filter(|_| no_confirm))
                 .chain(packages.keys().map(String::as_str)),
             Perms::AsRoot,
+            ShouldPrint::Print,
         )
     }
 
@@ -102,6 +100,7 @@ impl Backend for Xbps {
                     .map(|(p, _)| p.as_str()),
             ),
             Perms::AsRoot,
+            ShouldPrint::Print,
         )
     }
 }
