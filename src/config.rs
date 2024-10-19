@@ -1,16 +1,17 @@
 use color_eyre::eyre::Context;
+use color_eyre::Result;
+use serde::{Deserialize, Serialize};
 use serde_inline_default::serde_inline_default;
 use std::{collections::BTreeMap, path::Path};
 
-use color_eyre::Result;
-use serde::{Deserialize, Serialize};
+use crate::prelude::*;
 
 // Update README if fields change.
 #[serde_inline_default]
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Config {
     #[serde_inline_default(Config::default().arch_package_manager)]
-    pub arch_package_manager: String,
+    pub arch_package_manager: ArchPackageManager,
     #[serde_inline_default(Config::default().flatpak_systemwide)]
     pub flatpak_systemwide: bool,
     #[serde_inline_default(Config::default().disabled_backends)]
@@ -23,7 +24,7 @@ pub struct Config {
 impl Default for Config {
     fn default() -> Self {
         Config {
-            arch_package_manager: "pacman".to_string(),
+            arch_package_manager: ArchPackageManager::default(),
             flatpak_systemwide: true,
             disabled_backends: Vec::new(),
             hostname_groups_enabled: false,
@@ -47,6 +48,31 @@ impl Config {
                 &std::fs::read_to_string(config_file_path).wrap_err("reading config file")?,
             )
             .wrap_err("parsing toml config")
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy, Default, Serialize, Deserialize)]
+pub enum ArchPackageManager {
+    #[default]
+    Pacman,
+    Paru,
+    Yay,
+}
+impl ArchPackageManager {
+    pub fn as_command(&self) -> &'static str {
+        match self {
+            ArchPackageManager::Pacman => "pacman",
+            ArchPackageManager::Paru => "paru",
+            ArchPackageManager::Yay => "yay",
+        }
+    }
+
+    pub fn change_perms(&self) -> Perms {
+        match self {
+            ArchPackageManager::Pacman => Perms::Sudo,
+            ArchPackageManager::Paru => Perms::Same,
+            ArchPackageManager::Yay => Perms::Same,
         }
     }
 }

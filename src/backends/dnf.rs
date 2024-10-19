@@ -86,7 +86,7 @@ impl Backend for Dnf {
                                 None => vec![package_id.as_str()],
                             }),
                     ),
-                Perms::AsRoot,
+                Perms::Sudo,
             )?;
         }
 
@@ -108,7 +108,7 @@ impl Backend for Dnf {
                     .into_iter()
                     .chain(Some("--assumeyes").filter(|_| no_confirm))
                     .chain(packages.keys().map(String::as_str)),
-                Perms::AsRoot,
+                Perms::Sudo,
             )?;
         }
 

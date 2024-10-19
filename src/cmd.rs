@@ -17,7 +17,7 @@ pub fn command_found(command: &str) -> bool {
 
 #[derive(Debug, Clone, Copy)]
 pub enum Perms {
-    AsRoot,
+    Sudo,
     Same,
 }
 
@@ -38,7 +38,7 @@ where
     }
 
     let args = Some("sudo".to_string())
-        .filter(|_| matches!(perms, Perms::AsRoot) && !we_are_root)
+        .filter(|_| matches!(perms, Perms::Sudo) && !we_are_root)
         .into_iter()
         .chain(args)
         .collect::<Vec<_>>();
@@ -77,7 +77,7 @@ where
     }
 
     let args = Some("sudo".to_string())
-        .filter(|_| matches!(perms, Perms::AsRoot) && !we_are_root)
+        .filter(|_| matches!(perms, Perms::Sudo) && !we_are_root)
         .into_iter()
         .chain(args)
         .collect::<Vec<_>>();

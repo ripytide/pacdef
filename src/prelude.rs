@@ -25,5 +25,5 @@ pub use crate::cli::ReviewCommand;
 pub use crate::cli::SyncCommand;
 pub use crate::cli::UnmanagedCommand;
 pub use crate::cmd::Perms;
-pub use crate::config::Config;
+pub use crate::config::{ArchPackageManager, Config};
 pub use crate::groups::Groups;
