@@ -56,7 +56,7 @@ impl Backend for Apt {
                     .into_iter()
                     .chain(Some("--yes").filter(|_| no_confirm))
                     .chain(packages.keys().map(String::as_str)),
-                Perms::AsRoot,
+                Perms::Sudo,
             )?;
         }
 
@@ -75,7 +75,7 @@ impl Backend for Apt {
                         .filter(|(_, m)| m.make_implicit)
                         .map(|(p, _)| p.as_str()),
                 ),
-                Perms::AsRoot,
+                Perms::Sudo,
             )?;
         }
 
@@ -93,7 +93,7 @@ impl Backend for Apt {
                     .into_iter()
                     .chain(Some("--yes").filter(|_| no_confirm))
                     .chain(packages.keys().map(String::as_str)),
-                Perms::AsRoot,
+                Perms::Sudo,
             )?;
         }
 

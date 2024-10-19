@@ -34,13 +34,13 @@ impl Backend for Arch {
     type RemoveOptions = ArchRemoveOptions;
 
     fn query_installed_packages(config: &Config) -> Result<BTreeMap<String, Self::QueryInfo>> {
-        if !command_found(&config.arch_package_manager) {
+        if !command_found(config.arch_package_manager.as_command()) {
             return Ok(BTreeMap::new());
         }
 
         let explicit_packages = run_command_for_stdout(
             [
-                &config.arch_package_manager,
+                config.arch_package_manager.as_command(),
                 "--query",
                 "--explicit",
                 "--quiet",
@@ -64,14 +64,14 @@ impl Backend for Arch {
     ) -> Result<()> {
         if !packages.is_empty() {
             run_command(
-                [&config.arch_package_manager, "--sync"]
+                [config.arch_package_manager.as_command(), "--sync"]
                     .into_iter()
                     .chain(Some("--no_confirm").filter(|_| no_confirm))
                     .chain(packages.keys().map(String::as_str))
                     .chain(packages.values().flat_map(|dependencies| {
                         dependencies.optional_deps.iter().map(String::as_str)
                     })),
-                Perms::AsRoot,
+                config.arch_package_manager.change_perms(),
             )?;
         }
 
@@ -84,15 +84,19 @@ impl Backend for Arch {
     ) -> Result<()> {
         if !packages.is_empty() {
             run_command(
-                [&config.arch_package_manager, "--database", "--asdeps"]
-                    .into_iter()
-                    .chain(
-                        packages
-                            .iter()
-                            .filter(|(_, m)| m.make_implicit)
-                            .map(|(p, _)| p.as_str()),
-                    ),
-                Perms::AsRoot,
+                [
+                    config.arch_package_manager.as_command(),
+                    "--database",
+                    "--asdeps",
+                ]
+                .into_iter()
+                .chain(
+                    packages
+                        .iter()
+                        .filter(|(_, m)| m.make_implicit)
+                        .map(|(p, _)| p.as_str()),
+                ),
+                config.arch_package_manager.change_perms(),
             )?;
         }
 
@@ -122,7 +126,7 @@ impl Backend for Arch {
 
             let orphans_output = run_command_for_stdout(
                 [
-                    &config.arch_package_manager,
+                    config.arch_package_manager.as_command(),
                     "--query",
                     "--deps",
                     "--unrequired",
@@ -134,7 +138,7 @@ impl Backend for Arch {
 
             run_command(
                 [
-                    &config.arch_package_manager,
+                    config.arch_package_manager.as_command(),
                     "--remove",
                     "--nosave",
                     "--recursive",
@@ -142,7 +146,7 @@ impl Backend for Arch {
                 .into_iter()
                 .chain(Some("--noconfirm").filter(|_| no_confirm))
                 .chain(orphans),
-                Perms::AsRoot,
+                config.arch_package_manager.change_perms(),
             )?;
         }
 

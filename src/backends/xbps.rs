@@ -73,7 +73,7 @@ impl Backend for Xbps {
                     .into_iter()
                     .chain(Some("-y").filter(|_| no_confirm))
                     .chain(packages.keys().map(String::as_str)),
-                Perms::AsRoot,
+                Perms::Sudo,
             )?;
         }
 
@@ -91,7 +91,7 @@ impl Backend for Xbps {
                     .into_iter()
                     .chain(Some("-y").filter(|_| no_confirm))
                     .chain(packages.keys().map(String::as_str)),
-                Perms::AsRoot,
+                Perms::Sudo,
             )?;
         }
 
@@ -110,7 +110,7 @@ impl Backend for Xbps {
                         .filter(|(_, m)| m.make_implicit)
                         .map(|(p, _)| p.as_str()),
                 ),
-                Perms::AsRoot,
+                Perms::Sudo,
             )?;
         }
 
