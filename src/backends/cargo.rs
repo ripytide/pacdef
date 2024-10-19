@@ -95,7 +95,6 @@ impl Backend for Cargo {
                     .chain(options.features.iter().map(|feature| feature.as_str()))
                     .chain([package.as_str()]),
                 Perms::AsRoot,
-            ShouldPrint::Print,
             )?;
         }
         Ok(())
@@ -105,17 +104,17 @@ impl Backend for Cargo {
         unimplemented!()
     }
 
-    fn remove_packages(
-        packages: &BTreeMap<String, Self::RemoveOptions>,
-        _: &Config,
-    ) -> Result<()> {
-        run_command(
-            ["cargo", "uninstall"]
-                .into_iter()
-                .chain(packages.keys().map(String::as_str)),
-            Perms::AsRoot,
-            ShouldPrint::Print,
-        )
+    fn remove_packages(packages: &BTreeMap<String, Self::RemoveOptions>, _: &Config) -> Result<()> {
+        if !packages.is_empty() {
+            run_command(
+                ["cargo", "uninstall"]
+                    .into_iter()
+                    .chain(packages.keys().map(String::as_str)),
+                Perms::AsRoot,
+            )?;
+        }
+
+        Ok(())
     }
 }
 

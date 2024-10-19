@@ -45,7 +45,6 @@ impl Backend for Dnf {
                 "%{from_repo}/%{name}",
             ],
             Perms::Same,
-            ShouldPrint::Hide,
         )?;
         let system_packages = system_packages.lines().map(parse_package);
 
@@ -58,7 +57,6 @@ impl Backend for Dnf {
                 "%{from_repo}/%{name}",
             ],
             Perms::Same,
-            ShouldPrint::Hide,
         )?;
         let user_packages = user_packages.lines().map(parse_package);
 
@@ -92,7 +90,6 @@ impl Backend for Dnf {
                 },
             )),
             Perms::AsRoot,
-            ShouldPrint::Print,
         )
     }
 
@@ -101,13 +98,16 @@ impl Backend for Dnf {
     }
 
     fn remove_packages(packages: &BTreeMap<String, Self::RemoveOptions>, _: &Config) -> Result<()> {
-        run_command(
-            ["dnf", "remove", "--assumeyes"]
-                .into_iter()
-                .chain(packages.keys().map(String::as_str)),
-            Perms::AsRoot,
-            ShouldPrint::Print,
-        )
+        if !packages.is_empty() {
+            run_command(
+                ["dnf", "remove", "--assumeyes"]
+                    .into_iter()
+                    .chain(packages.keys().map(String::as_str)),
+                Perms::AsRoot,
+            )?;
+        }
+
+        Ok(())
     }
 }
 
