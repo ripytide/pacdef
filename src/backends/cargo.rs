@@ -69,6 +69,7 @@ impl Backend for Cargo {
 
     fn install_packages(
         packages: &BTreeMap<String, Self::InstallOptions>,
+        _: bool,
         _: &Config,
     ) -> Result<()> {
         for (package, options) in packages {
@@ -104,7 +105,11 @@ impl Backend for Cargo {
         unimplemented!()
     }
 
-    fn remove_packages(packages: &BTreeMap<String, Self::RemoveOptions>, _: &Config) -> Result<()> {
+    fn remove_packages(
+        packages: &BTreeMap<String, Self::RemoveOptions>,
+        _: bool,
+        _: &Config,
+    ) -> Result<()> {
         if !packages.is_empty() {
             run_command(
                 ["cargo", "uninstall"]

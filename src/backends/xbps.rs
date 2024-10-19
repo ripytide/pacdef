@@ -64,11 +64,13 @@ impl Backend for Xbps {
 
     fn install_packages(
         packages: &std::collections::BTreeMap<String, Self::InstallOptions>,
+        no_confirm: bool,
         _: &Config,
     ) -> Result<()> {
         run_command(
-            ["xbps-install", "-S", "-y"]
+            ["xbps-install", "-S"]
                 .into_iter()
+                .chain(Some("-y").filter(|_| no_confirm))
                 .chain(packages.keys().map(String::as_str)),
             Perms::AsRoot,
         )
@@ -76,15 +78,17 @@ impl Backend for Xbps {
 
     fn remove_packages(
         packages: &std::collections::BTreeMap<String, Self::RemoveOptions>,
+        no_confirm: bool,
         _: &Config,
     ) -> Result<()> {
         if !packages.is_empty() {
             run_command(
-                ["xbps-remove", "-R", "-y"]
-                    .into_iter()
-                    .chain(packages.keys().map(String::as_str)),
-                Perms::AsRoot,
-            )?;
+            ["xbps-remove", "-R"]
+                .into_iter()
+                .chain(Some("-y").filter(|_| no_confirm))
+                .chain(packages.keys().map(String::as_str)),
+            Perms::AsRoot,
+        )?;
         }
 
         Ok(())

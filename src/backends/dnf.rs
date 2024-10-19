@@ -68,27 +68,23 @@ impl Backend for Dnf {
 
     fn install_packages(
         packages: &BTreeMap<String, Self::InstallOptions>,
+        no_confirm: bool,
         _: &Config,
     ) -> Result<()> {
         // add these two repositories as these are needed for many dependencies
         #[allow(clippy::option_if_let_else)]
         run_command(
-            [
-                "dnf",
-                "install",
-                "--repo",
-                "updates",
-                "--repo",
-                "fedora",
-                "--assumeyes",
-            ]
-            .into_iter()
-            .chain(packages.iter().flat_map(
-                |(package_id, options)| match &options.repo {
-                    Some(repo) => vec![package_id, "--repo", repo.as_str()],
-                    None => vec![package_id.as_str()],
-                },
-            )),
+            ["dnf", "install", "--repo", "updates", "--repo", "fedora"]
+                .into_iter()
+                .chain(Some("--assumeyes").filter(|_| no_confirm))
+                .chain(
+                    packages
+                        .iter()
+                        .flat_map(|(package_id, options)| match &options.repo {
+                            Some(repo) => vec![package_id, "--repo", repo.as_str()],
+                            None => vec![package_id.as_str()],
+                        }),
+                ),
             Perms::AsRoot,
         )
     }
@@ -97,11 +93,16 @@ impl Backend for Dnf {
         unimplemented!()
     }
 
-    fn remove_packages(packages: &BTreeMap<String, Self::RemoveOptions>, _: &Config) -> Result<()> {
+    fn remove_packages(
+        packages: &BTreeMap<String, Self::RemoveOptions>,
+        no_confirm: bool,
+        _: &Config,
+    ) -> Result<()> {
         if !packages.is_empty() {
             run_command(
-                ["dnf", "remove", "--assumeyes"]
+                ["dnf", "remove"]
                     .into_iter()
+                    .chain(Some("--assumeyes").filter(|_| no_confirm))
                     .chain(packages.keys().map(String::as_str)),
                 Perms::AsRoot,
             )?;

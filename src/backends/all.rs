@@ -205,10 +205,10 @@ macro_rules! install_options {
             is_empty!($($backend),*);
             to_package_ids!($($backend),*);
 
-            pub fn install_packages(self, config: &Config) -> Result<()> {
+            pub fn install_packages(self, no_confirm: bool, config: &Config) -> Result<()> {
                 $(
                     if is_enabled(&$backend.to_string(), config) {
-                        $backend::install_packages(&self.$backend, config)?;
+                        $backend::install_packages(&self.$backend, no_confirm, config)?;
                     }
                 )*
 
@@ -261,10 +261,10 @@ macro_rules! remove_options {
             is_empty!($($backend),*);
             to_package_ids!($($backend),*);
 
-            pub fn remove_packages(self, config: &Config) -> Result<()> {
+            pub fn remove_packages(self, no_confirm: bool, config: &Config) -> Result<()> {
                 $(
                     if is_enabled(&$backend.to_string(), config) {
-                        $backend::remove_packages(&self.$backend, config)?;
+                        $backend::remove_packages(&self.$backend, no_confirm, config)?;
                     }
                 )*
 

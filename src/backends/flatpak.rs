@@ -76,6 +76,7 @@ impl Backend for Flatpak {
 
     fn install_packages(
         packages: &BTreeMap<String, Self::InstallOptions>,
+        no_confirm: bool,
         config: &Config,
     ) -> Result<()> {
         run_command(
@@ -87,9 +88,9 @@ impl Backend for Flatpak {
                 } else {
                     "--user"
                 },
-                "--assumeyes",
             ]
             .into_iter()
+            .chain(Some("--assumeyes").filter(|_| no_confirm))
             .chain(packages.keys().map(String::as_str)),
             Perms::AsRoot,
         )
@@ -101,6 +102,7 @@ impl Backend for Flatpak {
 
     fn remove_packages(
         packages: &BTreeMap<String, Self::RemoveOptions>,
+        no_confirm: bool,
         config: &Config,
     ) -> Result<()> {
         if !packages.is_empty() {
@@ -113,9 +115,9 @@ impl Backend for Flatpak {
                     } else {
                         "--user"
                     },
-                    "--assumeyes",
                 ]
                 .into_iter()
+                .chain(Some("--assumeyes").filter(|_| no_confirm))
                 .chain(packages.keys().map(String::as_str)),
                 Perms::AsRoot,
             )?;
