@@ -53,6 +53,7 @@ impl Config {
 }
 
 #[derive(Debug, Clone, Copy, Default, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
 pub enum ArchPackageManager {
     #[default]
     Pacman,
