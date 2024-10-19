@@ -57,7 +57,9 @@ impl CleanCommand {
         if self.no_confirm {
             log::info!("proceeding without confirmation");
 
-            unmanaged.to_remove_options().remove_packages(config)
+            unmanaged
+                .to_remove_options()
+                .remove_packages(self.no_confirm, config)
         } else {
             println!("{unmanaged}");
 
@@ -70,7 +72,9 @@ impl CleanCommand {
                 .interact()
                 .wrap_err("getting user confirmation")?
             {
-                unmanaged.to_remove_options().remove_packages(config)
+                unmanaged
+                    .to_remove_options()
+                    .remove_packages(self.no_confirm, config)
             } else {
                 Ok(())
             }
@@ -152,7 +156,9 @@ impl SyncCommand {
             return Ok(());
         }
 
-        missing.to_install_options().install_packages(config)
+        missing
+            .to_install_options()
+            .install_packages(self.no_confirm, config)
     }
 }
 

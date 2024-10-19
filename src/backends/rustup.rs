@@ -84,6 +84,7 @@ impl Backend for Rustup {
 
     fn install_packages(
         packages: &BTreeMap<String, Self::InstallOptions>,
+        _: bool,
         _: &Config,
     ) -> Result<()> {
         for (toolchain, rustup_install_options) in packages.iter() {
@@ -168,7 +169,11 @@ impl Backend for Rustup {
         Ok(())
     }
 
-    fn remove_packages(packages: &BTreeMap<String, Self::RemoveOptions>, _: &Config) -> Result<()> {
+    fn remove_packages(
+        packages: &BTreeMap<String, Self::RemoveOptions>,
+        _: bool,
+        _: &Config,
+    ) -> Result<()> {
         if !packages.is_empty() {
             for toolchain in packages.keys() {
                 run_command(

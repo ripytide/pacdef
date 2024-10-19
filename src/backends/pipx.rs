@@ -51,6 +51,7 @@ impl Backend for Pipx {
 
     fn install_packages(
         packages: &BTreeMap<String, Self::InstallOptions>,
+        _: bool,
         _: &Config,
     ) -> Result<()> {
         run_command(
@@ -65,7 +66,11 @@ impl Backend for Pipx {
         unimplemented!()
     }
 
-    fn remove_packages(packages: &BTreeMap<String, Self::RemoveOptions>, _: &Config) -> Result<()> {
+    fn remove_packages(
+        packages: &BTreeMap<String, Self::RemoveOptions>,
+        _: bool,
+        _: &Config,
+    ) -> Result<()> {
         if !packages.is_empty() {
             run_command(
                 ["pipx", "uninstall"]

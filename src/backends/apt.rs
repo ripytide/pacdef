@@ -47,12 +47,14 @@ impl Backend for Apt {
 
     fn install_packages(
         packages: &BTreeMap<String, Self::InstallOptions>,
+        no_confirm: bool,
         _: &Config,
     ) -> Result<()> {
         if !packages.is_empty() {
             run_command(
-                ["apt-get", "install", "--yes"]
+                ["apt-get", "install"]
                     .into_iter()
+                    .chain(Some("--yes").filter(|_| no_confirm))
                     .chain(packages.keys().map(String::as_str)),
                 Perms::AsRoot,
             )?;
@@ -76,11 +78,16 @@ impl Backend for Apt {
         )
     }
 
-    fn remove_packages(packages: &BTreeMap<String, Self::RemoveOptions>, _: &Config) -> Result<()> {
+    fn remove_packages(
+        packages: &BTreeMap<String, Self::RemoveOptions>,
+        no_confirm: bool,
+        _: &Config,
+    ) -> Result<()> {
         if !packages.is_empty() {
             run_command(
-                ["apt-get", "remove", "--yes"]
+                ["apt-get", "remove"]
                     .into_iter()
+                    .chain(Some("--yes").filter(|_| no_confirm))
                     .chain(packages.keys().map(String::as_str)),
                 Perms::AsRoot,
             )?;
