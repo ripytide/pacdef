@@ -40,6 +40,13 @@ macro_rules! any {
         pub enum AnyBackend {
             $($backend,)*
         }
+        impl AnyBackend {
+            pub fn remove_packages(&self, packages: &BTreeSet<String>, no_confirm: bool, config: &Config) -> Result<()> {
+                match self {
+                    $( AnyBackend::$backend => $backend::remove_packages(packages, no_confirm, config), )*
+                }
+            }
+        }
     };
 }
 apply_public_backends!(any);
@@ -91,6 +98,16 @@ impl PackageIds {
         }
         output
     }
+
+    pub fn remove_packages(&self, no_confirm: bool, config: &Config) -> Result<()> {
+        for (backend, packages) in self.0.iter() {
+            if is_enabled(*backend, config) {
+                backend.remove_packages(packages, no_confirm, config)?;
+            }
+        }
+
+        Ok(())
+    }
 }
 impl std::fmt::Display for PackageIds {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -120,17 +137,7 @@ macro_rules! package_ids {
                     )*
                 }
             }
-            pub fn to_remove_options(self) -> RemoveOptions {
-                RemoveOptions{
-                    $(
-                        $backend: if let Some(packages) = self.get(&AnyBackend::$backend) {
-                            packages.iter().map(|x| (x.clone(), <$backend as Backend>::RemoveOptions::default())).collect()
-                        } else {
-                            Default::default()
-                        },
-                    )*
-                }
-            }
+
         }
     }
 }
@@ -154,7 +161,7 @@ macro_rules! query_infos {
                 Ok(Self {
                     $(
                         $backend:
-                            if is_enabled(&$backend.to_string(), config) {
+                            if is_enabled(AnyBackend::$backend, config) {
                                 $backend::query_installed_packages(config)?
                             } else {
                                 Default::default()
@@ -207,7 +214,7 @@ macro_rules! install_options {
 
             pub fn install_packages(self, no_confirm: bool, config: &Config) -> Result<()> {
                 $(
-                    if is_enabled(&$backend.to_string(), config) {
+                    if is_enabled(AnyBackend::$backend, config) {
                         $backend::install_packages(&self.$backend, no_confirm, config)?;
                     }
                 )*
@@ -219,65 +226,9 @@ macro_rules! install_options {
 }
 apply_public_backends!(install_options);
 
-macro_rules! modification_options {
-    ($($backend:ident),*) => {
-        #[derive(Debug, Clone, Default)]
-        #[allow(non_snake_case)]
-        pub struct ModificationOptions {
-            $(
-                pub $backend: BTreeMap<String, <$backend as Backend>::ModificationOptions>,
-            )*
-        }
-        impl ModificationOptions {
-            append!($($backend),*);
-            is_empty!($($backend),*);
-            to_package_ids!($($backend),*);
-
-            pub fn modify_packages(self, config: &Config) -> Result<()> {
-                $(
-                    if is_enabled(&$backend.to_string(), config) {
-                        $backend::modify_packages(&self.$backend, config)?;
-                    }
-                )*
-
-                Ok(())
-            }
-        }
-    }
-}
-apply_public_backends!(modification_options);
-
-macro_rules! remove_options {
-    ($($backend:ident),*) => {
-        #[derive(Debug, Clone, Default)]
-        #[allow(non_snake_case)]
-        pub struct RemoveOptions {
-            $(
-                pub $backend: BTreeMap<String, <$backend as Backend>::RemoveOptions>,
-            )*
-        }
-        impl RemoveOptions {
-            append!($($backend),*);
-            is_empty!($($backend),*);
-            to_package_ids!($($backend),*);
-
-            pub fn remove_packages(self, no_confirm: bool, config: &Config) -> Result<()> {
-                $(
-                    if is_enabled(&$backend.to_string(), config) {
-                        $backend::remove_packages(&self.$backend, no_confirm, config)?;
-                    }
-                )*
-
-                Ok(())
-            }
-        }
-    };
-}
-apply_public_backends!(remove_options);
-
-fn is_enabled(backend: &str, config: &Config) -> bool {
+fn is_enabled(backend: AnyBackend, config: &Config) -> bool {
     !config
         .disabled_backends
         .iter()
-        .any(|x| x.to_lowercase() == backend.to_lowercase())
+        .any(|x| x.to_lowercase() == backend.to_string().to_lowercase())
 }

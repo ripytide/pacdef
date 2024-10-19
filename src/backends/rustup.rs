@@ -3,11 +3,11 @@ use crate::cmd::run_command;
 use crate::cmd::run_command_for_stdout;
 use crate::prelude::*;
 use color_eyre::Result;
-use itertools::Itertools;
 use serde::Deserialize;
 use serde::Serialize;
 use serde_inline_default::serde_inline_default;
 use std::collections::BTreeMap;
+use std::collections::BTreeSet;
 
 #[derive(Debug, Copy, Clone, Default, PartialEq, Eq, PartialOrd, Ord, derive_more::Display)]
 pub struct Rustup;
@@ -24,20 +24,9 @@ pub struct RustupInstallOptions {
     pub components: Vec<String>,
 }
 
-#[derive(Debug, Clone, Default, Deserialize, Serialize)]
-pub struct RustupModificationOptions {
-    pub add_components: Vec<String>,
-    pub remove_components: Vec<String>,
-}
-
-#[derive(Debug, Clone, Default, Deserialize, Serialize)]
-pub struct RustupRemoveOptions {}
-
 impl Backend for Rustup {
     type QueryInfo = RustupQueryInfo;
     type InstallOptions = RustupInstallOptions;
-    type ModificationOptions = RustupModificationOptions;
-    type RemoveOptions = RustupRemoveOptions;
 
     fn query_installed_packages(_: &Config) -> Result<BTreeMap<String, Self::QueryInfo>> {
         if !command_found("rustup") {
@@ -103,64 +92,7 @@ impl Backend for Rustup {
                         toolchain.as_str(),
                     ]
                     .into_iter()
-                    .chain(rustup_install_options.components.iter().map(|x| x.as_str())),
-                    Perms::Same,
-                )?;
-            }
-        }
-
-        Ok(())
-    }
-
-    fn modify_packages(
-        packages: &BTreeMap<String, Self::ModificationOptions>,
-        _: &Config,
-    ) -> Result<()> {
-        for (toolchain, rustup_modification_options) in packages.iter() {
-            if !rustup_modification_options
-                .add_components
-                .iter()
-                .chain(rustup_modification_options.remove_components.iter())
-                .all_unique()
-            {
-                log::warn!("component in both add_components and remove_components for the {toolchain} toolchain modification")
-            }
-
-            if !rustup_modification_options.remove_components.is_empty() {
-                run_command(
-                    [
-                        "rustup",
-                        "component",
-                        "remove",
-                        "--toolchain",
-                        toolchain.as_str(),
-                    ]
-                    .into_iter()
-                    .chain(
-                        rustup_modification_options
-                            .remove_components
-                            .iter()
-                            .map(|x| x.as_str()),
-                    ),
-                    Perms::Same,
-                )?;
-            }
-            if !rustup_modification_options.add_components.is_empty() {
-                run_command(
-                    [
-                        "rustup",
-                        "component",
-                        "add",
-                        "--toolchain",
-                        toolchain.as_str(),
-                    ]
-                    .into_iter()
-                    .chain(
-                        rustup_modification_options
-                            .add_components
-                            .iter()
-                            .map(|x| x.as_str()),
-                    ),
+                    .chain(rustup_install_options.components.iter().map(String::as_str)),
                     Perms::Same,
                 )?;
             }
@@ -170,12 +102,12 @@ impl Backend for Rustup {
     }
 
     fn remove_packages(
-        packages: &BTreeMap<String, Self::RemoveOptions>,
+        packages: &BTreeSet<String>,
         _: bool,
         _: &Config,
     ) -> Result<()> {
         if !packages.is_empty() {
-            for toolchain in packages.keys() {
+            for toolchain in packages.iter() {
                 run_command(
                     ["rustup", "toolchain", "remove", toolchain.as_str()],
                     Perms::Same,

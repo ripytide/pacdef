@@ -8,7 +8,7 @@ pub mod pipx;
 pub mod rustup;
 pub mod xbps;
 
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 
 use crate::prelude::*;
 use color_eyre::Result;
@@ -29,8 +29,6 @@ pub struct StringPackageStruct {
 pub trait Backend {
     type QueryInfo;
     type InstallOptions;
-    type ModificationOptions;
-    type RemoveOptions;
 
     fn query_installed_packages(config: &Config) -> Result<BTreeMap<String, Self::QueryInfo>>;
 
@@ -40,13 +38,8 @@ pub trait Backend {
         config: &Config,
     ) -> Result<()>;
 
-    fn modify_packages(
-        packages: &BTreeMap<String, Self::ModificationOptions>,
-        config: &Config,
-    ) -> Result<()>;
-
     fn remove_packages(
-        packages: &BTreeMap<String, Self::RemoveOptions>,
+        packages: &BTreeSet<String>,
         no_confirm: bool,
         config: &Config,
     ) -> Result<()>;

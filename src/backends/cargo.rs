@@ -1,4 +1,4 @@
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 use std::io::ErrorKind::NotFound;
 
 use color_eyre::eyre::{eyre, Context};
@@ -34,17 +34,9 @@ pub struct CargoInstallOptions {
     features: Vec<String>,
 }
 
-#[derive(Debug, Clone, Default, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
-pub struct CargoModificationOptions {}
-
-#[derive(Debug, Clone, Default, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
-pub struct CargoRemoveOptions {}
-
 impl Backend for Cargo {
     type QueryInfo = CargoQueryInfo;
     type InstallOptions = CargoInstallOptions;
-    type ModificationOptions = CargoModificationOptions;
-    type RemoveOptions = CargoRemoveOptions;
 
     fn query_installed_packages(_: &Config) -> Result<BTreeMap<String, Self::QueryInfo>> {
         if !command_found("cargo") {
@@ -93,7 +85,7 @@ impl Backend for Cargo {
                             .into_iter()
                             .filter(|_| !options.features.is_empty()),
                     )
-                    .chain(options.features.iter().map(|feature| feature.as_str()))
+                    .chain(options.features.iter().map(String::as_str))
                     .chain([package.as_str()]),
                 Perms::Same,
             )?;
@@ -102,12 +94,8 @@ impl Backend for Cargo {
         Ok(())
     }
 
-    fn modify_packages(_: &BTreeMap<String, Self::ModificationOptions>, _: &Config) -> Result<()> {
-        unimplemented!()
-    }
-
     fn remove_packages(
-        packages: &BTreeMap<String, Self::RemoveOptions>,
+        packages: &BTreeSet<String>,
         _: bool,
         _: &Config,
     ) -> Result<()> {
@@ -115,7 +103,7 @@ impl Backend for Cargo {
             run_command(
                 ["cargo", "uninstall"]
                     .into_iter()
-                    .chain(packages.keys().map(String::as_str)),
+                    .chain(packages.iter().map(String::as_str)),
                 Perms::Same,
             )?;
         }

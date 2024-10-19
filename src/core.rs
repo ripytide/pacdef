@@ -58,7 +58,6 @@ impl CleanCommand {
             log::info!("proceeding without confirmation");
 
             unmanaged
-                .to_remove_options()
                 .remove_packages(self.no_confirm, config)
         } else {
             println!("{unmanaged}");
@@ -73,7 +72,6 @@ impl CleanCommand {
                 .wrap_err("getting user confirmation")?
             {
                 unmanaged
-                    .to_remove_options()
                     .remove_packages(self.no_confirm, config)
             } else {
                 Ok(())
