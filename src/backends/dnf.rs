@@ -1,4 +1,4 @@
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 
 use color_eyre::Result;
 use serde::{Deserialize, Serialize};
@@ -19,17 +19,9 @@ pub struct DnfInstallOptions {
     repo: Option<String>,
 }
 
-#[derive(Debug, Clone, Default, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
-pub struct DnfModificationOptions {}
-
-#[derive(Debug, Clone, Default, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
-pub struct DnfRemoveOptions {}
-
 impl Backend for Dnf {
     type QueryInfo = DnfQueryInfo;
     type InstallOptions = DnfInstallOptions;
-    type ModificationOptions = DnfModificationOptions;
-    type RemoveOptions = DnfRemoveOptions;
 
     fn query_installed_packages(_: &Config) -> Result<BTreeMap<String, Self::QueryInfo>> {
         if !command_found("dnf") {
@@ -93,12 +85,8 @@ impl Backend for Dnf {
         Ok(())
     }
 
-    fn modify_packages(_: &BTreeMap<String, Self::ModificationOptions>, _: &Config) -> Result<()> {
-        unimplemented!()
-    }
-
     fn remove_packages(
-        packages: &BTreeMap<String, Self::RemoveOptions>,
+        packages: &BTreeSet<String>,
         no_confirm: bool,
         _: &Config,
     ) -> Result<()> {
@@ -107,7 +95,7 @@ impl Backend for Dnf {
                 ["dnf", "remove"]
                     .into_iter()
                     .chain(Some("--assumeyes").filter(|_| no_confirm))
-                    .chain(packages.keys().map(String::as_str)),
+                    .chain(packages.iter().map(String::as_str)),
                 Perms::Sudo,
             )?;
         }

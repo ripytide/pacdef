@@ -17,17 +17,9 @@ pub struct FlatpakQueryInfo {
 #[derive(Debug, Clone, Default, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 pub struct FlatpakInstallOptions {}
 
-#[derive(Debug, Clone, Default, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
-pub struct FlatpakModificationOptions {}
-
-#[derive(Debug, Clone, Default, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
-pub struct FlatpakRemoveOptions {}
-
 impl Backend for Flatpak {
     type QueryInfo = FlatpakQueryInfo;
     type InstallOptions = FlatpakInstallOptions;
-    type ModificationOptions = FlatpakModificationOptions;
-    type RemoveOptions = FlatpakRemoveOptions;
 
     fn query_installed_packages(_: &Config) -> Result<BTreeMap<String, Self::QueryInfo>> {
         if !command_found("flatpak") {
@@ -100,12 +92,8 @@ impl Backend for Flatpak {
         Ok(())
     }
 
-    fn modify_packages(_: &BTreeMap<String, Self::ModificationOptions>, _: &Config) -> Result<()> {
-        unimplemented!()
-    }
-
     fn remove_packages(
-        packages: &BTreeMap<String, Self::RemoveOptions>,
+        packages: &BTreeSet<String>,
         no_confirm: bool,
         config: &Config,
     ) -> Result<()> {
@@ -122,7 +110,7 @@ impl Backend for Flatpak {
                 ]
                 .into_iter()
                 .chain(Some("--assumeyes").filter(|_| no_confirm))
-                .chain(packages.keys().map(String::as_str)),
+                .chain(packages.iter().map(String::as_str)),
                 Perms::Sudo,
             )?;
         }

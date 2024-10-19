@@ -21,17 +21,9 @@ pub struct PipxQueryOptions {}
 #[derive(Debug, Clone, Default, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 pub struct PipxInstallOptions {}
 
-#[derive(Debug, Clone, Default, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
-pub struct PipxModificationOptions {}
-
-#[derive(Debug, Clone, Default, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
-pub struct PipxRemoveOptions {}
-
 impl Backend for Pipx {
     type QueryInfo = PipxQueryOptions;
     type InstallOptions = PipxInstallOptions;
-    type ModificationOptions = PipxModificationOptions;
-    type RemoveOptions = PipxRemoveOptions;
 
     fn query_installed_packages(_: &Config) -> Result<BTreeMap<String, Self::QueryInfo>> {
         if !command_found("pipx") {
@@ -66,12 +58,8 @@ impl Backend for Pipx {
         Ok(())
     }
 
-    fn modify_packages(_: &BTreeMap<String, Self::ModificationOptions>, _: &Config) -> Result<()> {
-        unimplemented!()
-    }
-
     fn remove_packages(
-        packages: &BTreeMap<String, Self::RemoveOptions>,
+        packages: &BTreeSet<String>,
         _: bool,
         _: &Config,
     ) -> Result<()> {
@@ -79,7 +67,7 @@ impl Backend for Pipx {
             run_command(
                 ["pipx", "uninstall"]
                     .into_iter()
-                    .chain(packages.keys().map(String::as_str)),
+                    .chain(packages.iter().map(String::as_str)),
                 Perms::Same,
             )?;
         }

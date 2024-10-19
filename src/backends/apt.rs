@@ -1,4 +1,4 @@
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 
 use color_eyre::Result;
 use serde::{Deserialize, Serialize};
@@ -15,16 +15,9 @@ pub struct AptQueryInfo {}
 #[derive(Debug, Clone, Default, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 pub struct AptInstallOptions {}
 
-#[derive(Debug, Clone, Deserialize, Serialize)]
-pub struct AptModificationOptions {
-    make_implicit: bool,
-}
-
 impl Backend for Apt {
     type QueryInfo = AptQueryInfo;
     type InstallOptions = AptInstallOptions;
-    type ModificationOptions = AptModificationOptions;
-    type RemoveOptions = ();
 
     fn query_installed_packages(_: &Config) -> Result<BTreeMap<String, Self::QueryInfo>> {
         if !command_found("apt-mark") {
@@ -63,27 +56,8 @@ impl Backend for Apt {
         Ok(())
     }
 
-    fn modify_packages(
-        packages: &BTreeMap<String, Self::ModificationOptions>,
-        _: &Config,
-    ) -> Result<()> {
-        if !packages.is_empty() {
-            run_command(
-                ["apt-mark", "auto"].into_iter().chain(
-                    packages
-                        .iter()
-                        .filter(|(_, m)| m.make_implicit)
-                        .map(|(p, _)| p.as_str()),
-                ),
-                Perms::Sudo,
-            )?;
-        }
-
-        Ok(())
-    }
-
     fn remove_packages(
-        packages: &BTreeMap<String, Self::RemoveOptions>,
+        packages: &BTreeSet<String>,
         no_confirm: bool,
         _: &Config,
     ) -> Result<()> {
@@ -92,7 +66,7 @@ impl Backend for Apt {
                 ["apt-get", "remove"]
                     .into_iter()
                     .chain(Some("--yes").filter(|_| no_confirm))
-                    .chain(packages.keys().map(String::as_str)),
+                    .chain(packages.iter().map(String::as_str)),
                 Perms::Sudo,
             )?;
         }

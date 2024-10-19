@@ -1,20 +1,15 @@
 pub use crate::backends::all::{
-    AnyBackend, InstallOptions, ModificationOptions, PackageIds, QueryInfos, RawInstallOptions,
-    RawPackageIds, RemoveOptions,
+    AnyBackend, InstallOptions, PackageIds, QueryInfos, RawInstallOptions, RawPackageIds,
 };
 pub(crate) use crate::backends::apply_public_backends;
-pub use crate::backends::apt::{Apt, AptModificationOptions, AptQueryInfo};
-pub use crate::backends::arch::{
-    Arch, ArchInstallOptions, ArchModificationOptions, ArchQueryInfo, ArchRemoveOptions,
-};
+pub use crate::backends::apt::{Apt, AptQueryInfo};
+pub use crate::backends::arch::{Arch, ArchInstallOptions, ArchQueryInfo};
 pub use crate::backends::cargo::Cargo;
 pub use crate::backends::dnf::{Dnf, DnfInstallOptions, DnfQueryInfo};
 pub use crate::backends::flatpak::{Flatpak, FlatpakQueryInfo};
 pub use crate::backends::pipx::Pipx;
-pub use crate::backends::rustup::{
-    Rustup, RustupInstallOptions, RustupModificationOptions, RustupQueryInfo,
-};
-pub use crate::backends::xbps::{Xbps, XbpsModificationOptions};
+pub use crate::backends::rustup::{Rustup, RustupInstallOptions, RustupQueryInfo};
+pub use crate::backends::xbps::Xbps;
 pub use crate::backends::Backend;
 pub use crate::backends::StringPackageStruct;
 pub use crate::cli::AddCommand;

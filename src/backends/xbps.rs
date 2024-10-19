@@ -1,4 +1,4 @@
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 use std::process::Command;
 
 use color_eyre::Result;
@@ -17,19 +17,9 @@ pub struct XbpsQueryInfo {}
 #[derive(Debug, Clone, Default, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 pub struct XbpsInstallOptions {}
 
-#[derive(Debug, Clone)]
-pub struct XbpsModificationOptions {
-    make_implicit: bool,
-}
-
-#[derive(Debug, Clone, Default, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
-pub struct XbpsRemoveOptions {}
-
 impl Backend for Xbps {
     type QueryInfo = XbpsQueryInfo;
     type InstallOptions = XbpsInstallOptions;
-    type ModificationOptions = XbpsModificationOptions;
-    type RemoveOptions = XbpsRemoveOptions;
 
     fn query_installed_packages(
         _: &Config,
@@ -81,7 +71,7 @@ impl Backend for Xbps {
     }
 
     fn remove_packages(
-        packages: &std::collections::BTreeMap<String, Self::RemoveOptions>,
+        packages: &BTreeSet<String>,
         no_confirm: bool,
         _: &Config,
     ) -> Result<()> {
@@ -90,26 +80,7 @@ impl Backend for Xbps {
                 ["xbps-remove", "-R"]
                     .into_iter()
                     .chain(Some("-y").filter(|_| no_confirm))
-                    .chain(packages.keys().map(String::as_str)),
-                Perms::Sudo,
-            )?;
-        }
-
-        Ok(())
-    }
-
-    fn modify_packages(
-        packages: &std::collections::BTreeMap<String, Self::ModificationOptions>,
-        _: &Config,
-    ) -> Result<()> {
-        if !packages.is_empty() {
-            run_command(
-                ["xbps-pkgdb", "-m", "auto"].into_iter().chain(
-                    packages
-                        .iter()
-                        .filter(|(_, m)| m.make_implicit)
-                        .map(|(p, _)| p.as_str()),
-                ),
+                    .chain(packages.iter().map(String::as_str)),
                 Perms::Sudo,
             )?;
         }

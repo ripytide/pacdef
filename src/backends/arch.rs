@@ -1,7 +1,7 @@
 use color_eyre::Result;
 use serde::{Deserialize, Serialize};
 use serde_inline_default::serde_inline_default;
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 
 use crate::cmd::{command_found, run_command, run_command_for_stdout};
 use crate::prelude::*;
@@ -19,19 +19,9 @@ pub struct ArchInstallOptions {
     pub optional_deps: Vec<String>,
 }
 
-#[derive(Debug, Clone)]
-pub struct ArchModificationOptions {
-    pub make_implicit: bool,
-}
-
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
-pub struct ArchRemoveOptions {}
-
 impl Backend for Arch {
     type QueryInfo = ArchQueryInfo;
     type InstallOptions = ArchInstallOptions;
-    type ModificationOptions = ArchModificationOptions;
-    type RemoveOptions = ArchRemoveOptions;
 
     fn query_installed_packages(config: &Config) -> Result<BTreeMap<String, Self::QueryInfo>> {
         if !command_found(config.arch_package_manager.as_command()) {
@@ -78,8 +68,9 @@ impl Backend for Arch {
         Ok(())
     }
 
-    fn modify_packages(
-        packages: &BTreeMap<String, Self::ModificationOptions>,
+    fn remove_packages(
+        packages: &BTreeSet<String>,
+        no_confirm: bool,
         config: &Config,
     ) -> Result<()> {
         if !packages.is_empty() {
@@ -90,38 +81,8 @@ impl Backend for Arch {
                     "--asdeps",
                 ]
                 .into_iter()
-                .chain(
-                    packages
-                        .iter()
-                        .filter(|(_, m)| m.make_implicit)
-                        .map(|(p, _)| p.as_str()),
-                ),
+                .chain(packages.iter().map(String::as_str)),
                 config.arch_package_manager.change_perms(),
-            )?;
-        }
-
-        Ok(())
-    }
-
-    fn remove_packages(
-        packages: &BTreeMap<String, Self::RemoveOptions>,
-        no_confirm: bool,
-        config: &Config,
-    ) -> Result<()> {
-        if !packages.is_empty() {
-            Arch::modify_packages(
-                &packages
-                    .iter()
-                    .map(|(x, _)| {
-                        (
-                            x.clone(),
-                            ArchModificationOptions {
-                                make_implicit: true,
-                            },
-                        )
-                    })
-                    .collect(),
-                config,
             )?;
 
             let orphans_output = run_command_for_stdout(
