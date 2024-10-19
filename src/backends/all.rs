@@ -71,9 +71,6 @@ impl PackageIds {
         self.get(&backend).is_some_and(|x| x.contains(package))
     }
 
-    pub fn insert(&mut self, backend: AnyBackend, package: String) -> bool {
-        self.entry(backend).or_default().insert(package)
-    }
     pub fn remove(&mut self, backend: AnyBackend, package: &str) -> bool {
         if let Some(packages) = self.get_mut(&backend) {
             packages.remove(package)

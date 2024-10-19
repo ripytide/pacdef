@@ -37,8 +37,7 @@ impl Backend for Apt {
         // designed with this use-case in mind so there are lots and
         // lots of different methods all of which seem to have
         // caveats.
-        let explicit =
-            run_command_for_stdout(["apt-mark", "showmanual"], Perms::Same, ShouldPrint::Hide)?;
+        let explicit = run_command_for_stdout(["apt-mark", "showmanual"], Perms::Same)?;
 
         Ok(explicit
             .lines()
@@ -50,13 +49,16 @@ impl Backend for Apt {
         packages: &BTreeMap<String, Self::InstallOptions>,
         _: &Config,
     ) -> Result<()> {
-        run_command(
-            ["apt-get", "install", "--yes"]
-                .into_iter()
-                .chain(packages.keys().map(String::as_str)),
-            Perms::AsRoot,
-            ShouldPrint::Print,
-        )
+        if !packages.is_empty() {
+            run_command(
+                ["apt-get", "install", "--yes"]
+                    .into_iter()
+                    .chain(packages.keys().map(String::as_str)),
+                Perms::AsRoot,
+            )?;
+        }
+
+        Ok(())
     }
 
     fn modify_packages(
@@ -71,17 +73,19 @@ impl Backend for Apt {
                     .map(|(p, _)| p.as_str()),
             ),
             Perms::AsRoot,
-            ShouldPrint::Print,
         )
     }
 
     fn remove_packages(packages: &BTreeMap<String, Self::RemoveOptions>, _: &Config) -> Result<()> {
-        run_command(
-            ["apt-get", "remove", "--yes"]
-                .into_iter()
-                .chain(packages.keys().map(String::as_str)),
-            Perms::AsRoot,
-            ShouldPrint::Print,
-        )
+        if !packages.is_empty() {
+            run_command(
+                ["apt-get", "remove", "--yes"]
+                    .into_iter()
+                    .chain(packages.keys().map(String::as_str)),
+                Perms::AsRoot,
+            )?;
+        }
+
+        Ok(())
     }
 }

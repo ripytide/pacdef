@@ -41,7 +41,6 @@ impl Backend for Pipx {
         let names = extract_package_names(run_command_for_stdout(
             ["pipx", "list", "--json"],
             Perms::Same,
-            ShouldPrint::Hide,
         )?)?;
 
         Ok(names
@@ -59,7 +58,6 @@ impl Backend for Pipx {
                 .into_iter()
                 .chain(packages.keys().map(String::as_str)),
             Perms::AsRoot,
-            ShouldPrint::Print,
         )
     }
 
@@ -67,17 +65,17 @@ impl Backend for Pipx {
         unimplemented!()
     }
 
-    fn remove_packages(
-        packages: &BTreeMap<String, Self::RemoveOptions>,
-        _: &Config,
-    ) -> Result<()> {
-        run_command(
-            ["pipx", "uninstall"]
-                .into_iter()
-                .chain(packages.keys().map(String::as_str)),
-            Perms::AsRoot,
-            ShouldPrint::Print,
-        )
+    fn remove_packages(packages: &BTreeMap<String, Self::RemoveOptions>, _: &Config) -> Result<()> {
+        if !packages.is_empty() {
+            run_command(
+                ["pipx", "uninstall"]
+                    .into_iter()
+                    .chain(packages.keys().map(String::as_str)),
+                Perms::AsRoot,
+            )?;
+        }
+
+        Ok(())
     }
 }
 

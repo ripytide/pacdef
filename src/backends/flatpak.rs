@@ -43,7 +43,6 @@ impl Backend for Flatpak {
                 "--columns=application",
             ],
             Perms::Same,
-            ShouldPrint::Hide,
         )?
         .lines()
         .map(String::from)
@@ -58,7 +57,6 @@ impl Backend for Flatpak {
                 "--columns=application",
             ],
             Perms::Same,
-            ShouldPrint::Hide,
         )?
         .lines()
         .map(String::from)
@@ -89,12 +87,11 @@ impl Backend for Flatpak {
                 } else {
                     "--user"
                 },
-                "--assumeyes"
+                "--assumeyes",
             ]
             .into_iter()
             .chain(packages.keys().map(String::as_str)),
             Perms::AsRoot,
-            ShouldPrint::Print,
         )
     }
 
@@ -106,21 +103,24 @@ impl Backend for Flatpak {
         packages: &BTreeMap<String, Self::RemoveOptions>,
         config: &Config,
     ) -> Result<()> {
-        run_command(
-            [
-                "flatpak",
-                "uninstall",
-                if config.flatpak_systemwide {
-                    "--system"
-                } else {
-                    "--user"
-                },
-                "--assumeyes"
-            ]
-            .into_iter()
-            .chain(packages.keys().map(String::as_str)),
-            Perms::AsRoot,
-            ShouldPrint::Print,
-        )
+        if !packages.is_empty() {
+            run_command(
+                [
+                    "flatpak",
+                    "uninstall",
+                    if config.flatpak_systemwide {
+                        "--system"
+                    } else {
+                        "--user"
+                    },
+                    "--assumeyes",
+                ]
+                .into_iter()
+                .chain(packages.keys().map(String::as_str)),
+                Perms::AsRoot,
+            )?;
+        }
+
+        Ok(())
     }
 }

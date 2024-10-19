@@ -46,11 +46,8 @@ impl Backend for Rustup {
 
         let mut packages = BTreeMap::new();
 
-        let toolchains_stdout = run_command_for_stdout(
-            ["rustup", "toolchain", "list"],
-            Perms::Same,
-            ShouldPrint::Hide,
-        )?;
+        let toolchains_stdout =
+            run_command_for_stdout(["rustup", "toolchain", "list"], Perms::Same)?;
         let toolchains = toolchains_stdout.lines().map(|x| {
             x.split(' ')
                 .next()
@@ -72,7 +69,6 @@ impl Backend for Rustup {
                     toolchain.as_str(),
                 ],
                 Perms::Same,
-                ShouldPrint::Hide,
             ) {
                 packages.insert(
                     toolchain,
@@ -94,7 +90,6 @@ impl Backend for Rustup {
             run_command(
                 ["rustup", "toolchain", "install", toolchain.as_str()],
                 Perms::Same,
-                ShouldPrint::Print,
             )?;
 
             if !rustup_install_options.components.is_empty() {
@@ -109,7 +104,6 @@ impl Backend for Rustup {
                     .into_iter()
                     .chain(rustup_install_options.components.iter().map(|x| x.as_str())),
                     Perms::Same,
-                    ShouldPrint::Print,
                 )?;
             }
         }
@@ -148,7 +142,6 @@ impl Backend for Rustup {
                             .map(|x| x.as_str()),
                     ),
                     Perms::Same,
-                    ShouldPrint::Print,
                 )?;
             }
             if !rustup_modification_options.add_components.is_empty() {
@@ -168,7 +161,6 @@ impl Backend for Rustup {
                             .map(|x| x.as_str()),
                     ),
                     Perms::Same,
-                    ShouldPrint::Print,
                 )?;
             }
         }
@@ -176,16 +168,14 @@ impl Backend for Rustup {
         Ok(())
     }
 
-    fn remove_packages(
-        packages: &BTreeMap<String, Self::RemoveOptions>,
-        _: &Config,
-    ) -> Result<()> {
-        for toolchain in packages.keys() {
-            run_command(
-                ["rustup", "toolchain", "remove", toolchain.as_str()],
-                Perms::Same,
-                ShouldPrint::Print,
-            )?;
+    fn remove_packages(packages: &BTreeMap<String, Self::RemoveOptions>, _: &Config) -> Result<()> {
+        if !packages.is_empty() {
+            for toolchain in packages.keys() {
+                run_command(
+                    ["rustup", "toolchain", "remove", toolchain.as_str()],
+                    Perms::Same,
+                )?;
+            }
         }
 
         Ok(())

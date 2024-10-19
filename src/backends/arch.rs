@@ -46,7 +46,6 @@ impl Backend for Arch {
                 "--quiet",
             ],
             Perms::Same,
-            ShouldPrint::Hide,
         )?;
 
         let mut result = BTreeMap::new();
@@ -63,14 +62,13 @@ impl Backend for Arch {
         config: &Config,
     ) -> Result<()> {
         run_command(
-            [&config.arch_package_manager, "--sync", "--no_confirm"]
+            [&config.arch_package_manager, "--sync", "--noconfirm"]
                 .into_iter()
                 .chain(packages.keys().map(String::as_str))
                 .chain(packages.values().flat_map(|dependencies| {
                     dependencies.optional_deps.iter().map(String::as_str)
                 })),
             Perms::AsRoot,
-            ShouldPrint::Print,
         )
     }
 
@@ -89,7 +87,6 @@ impl Backend for Arch {
                             .map(|(p, _)| p.as_str()),
                     ),
                 Perms::AsRoot,
-                ShouldPrint::Print,
             )?;
         }
 
@@ -100,46 +97,48 @@ impl Backend for Arch {
         packages: &BTreeMap<String, Self::RemoveOptions>,
         config: &Config,
     ) -> Result<()> {
-        Arch::modify_packages(
-            &packages
-                .iter()
-                .map(|(x, _)| {
-                    (
-                        x.clone(),
-                        ArchModificationOptions {
-                            make_implicit: true,
-                        },
-                    )
-                })
-                .collect(),
-            config,
-        )?;
+        if !packages.is_empty() {
+            Arch::modify_packages(
+                &packages
+                    .iter()
+                    .map(|(x, _)| {
+                        (
+                            x.clone(),
+                            ArchModificationOptions {
+                                make_implicit: true,
+                            },
+                        )
+                    })
+                    .collect(),
+                config,
+            )?;
 
-        let orphans_output = run_command_for_stdout(
-            [
-                &config.arch_package_manager,
-                "--query",
-                "--deps",
-                "--unrequired",
-                "--quiet",
-            ],
-            Perms::Same,
-            ShouldPrint::Hide,
-        )?;
-        let orphans = orphans_output.lines();
+            let orphans_output = run_command_for_stdout(
+                [
+                    &config.arch_package_manager,
+                    "--query",
+                    "--deps",
+                    "--unrequired",
+                    "--quiet",
+                ],
+                Perms::Same,
+            )?;
+            let orphans = orphans_output.lines();
 
-        run_command(
-            [
-                &config.arch_package_manager,
-                "--remove",
-                "--nosave",
-                "--recursive",
-                "--no_confirm",
-            ]
-            .into_iter()
-            .chain(orphans),
-            Perms::AsRoot,
-            ShouldPrint::Print,
-        )
+            run_command(
+                [
+                    &config.arch_package_manager,
+                    "--remove",
+                    "--nosave",
+                    "--recursive",
+                    "--noconfirm",
+                ]
+                .into_iter()
+                .chain(orphans),
+                Perms::AsRoot,
+            )?;
+        }
+
+        Ok(())
     }
 }
