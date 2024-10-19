@@ -79,21 +79,25 @@ impl Backend for Flatpak {
         no_confirm: bool,
         config: &Config,
     ) -> Result<()> {
-        run_command(
-            [
-                "flatpak",
-                "install",
-                if config.flatpak_systemwide {
-                    "--system"
-                } else {
-                    "--user"
-                },
-            ]
-            .into_iter()
-            .chain(Some("--assumeyes").filter(|_| no_confirm))
-            .chain(packages.keys().map(String::as_str)),
-            Perms::AsRoot,
-        )
+        if !packages.is_empty() {
+            run_command(
+                [
+                    "flatpak",
+                    "install",
+                    if config.flatpak_systemwide {
+                        "--system"
+                    } else {
+                        "--user"
+                    },
+                ]
+                .into_iter()
+                .chain(Some("--assumeyes").filter(|_| no_confirm))
+                .chain(packages.keys().map(String::as_str)),
+                Perms::AsRoot,
+            )?;
+        }
+
+        Ok(())
     }
 
     fn modify_packages(_: &BTreeMap<String, Self::ModificationOptions>, _: &Config) -> Result<()> {

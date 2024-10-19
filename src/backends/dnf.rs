@@ -71,22 +71,26 @@ impl Backend for Dnf {
         no_confirm: bool,
         _: &Config,
     ) -> Result<()> {
-        // add these two repositories as these are needed for many dependencies
-        #[allow(clippy::option_if_let_else)]
-        run_command(
-            ["dnf", "install", "--repo", "updates", "--repo", "fedora"]
-                .into_iter()
-                .chain(Some("--assumeyes").filter(|_| no_confirm))
-                .chain(
-                    packages
-                        .iter()
-                        .flat_map(|(package_id, options)| match &options.repo {
-                            Some(repo) => vec![package_id, "--repo", repo.as_str()],
-                            None => vec![package_id.as_str()],
-                        }),
-                ),
-            Perms::AsRoot,
-        )
+        if !packages.is_empty() {
+            // add these two repositories as these are needed for many dependencies
+            #[allow(clippy::option_if_let_else)]
+            run_command(
+                ["dnf", "install", "--repo", "updates", "--repo", "fedora"]
+                    .into_iter()
+                    .chain(Some("--assumeyes").filter(|_| no_confirm))
+                    .chain(
+                        packages
+                            .iter()
+                            .flat_map(|(package_id, options)| match &options.repo {
+                                Some(repo) => vec![package_id, "--repo", repo.as_str()],
+                                None => vec![package_id.as_str()],
+                            }),
+                    ),
+                Perms::AsRoot,
+            )?;
+        }
+
+        Ok(())
     }
 
     fn modify_packages(_: &BTreeMap<String, Self::ModificationOptions>, _: &Config) -> Result<()> {

@@ -67,13 +67,17 @@ impl Backend for Xbps {
         no_confirm: bool,
         _: &Config,
     ) -> Result<()> {
-        run_command(
-            ["xbps-install", "-S"]
-                .into_iter()
-                .chain(Some("-y").filter(|_| no_confirm))
-                .chain(packages.keys().map(String::as_str)),
-            Perms::AsRoot,
-        )
+        if !packages.is_empty() {
+            run_command(
+                ["xbps-install", "-S"]
+                    .into_iter()
+                    .chain(Some("-y").filter(|_| no_confirm))
+                    .chain(packages.keys().map(String::as_str)),
+                Perms::AsRoot,
+            )?;
+        }
+
+        Ok(())
     }
 
     fn remove_packages(
@@ -83,12 +87,12 @@ impl Backend for Xbps {
     ) -> Result<()> {
         if !packages.is_empty() {
             run_command(
-            ["xbps-remove", "-R"]
-                .into_iter()
-                .chain(Some("-y").filter(|_| no_confirm))
-                .chain(packages.keys().map(String::as_str)),
-            Perms::AsRoot,
-        )?;
+                ["xbps-remove", "-R"]
+                    .into_iter()
+                    .chain(Some("-y").filter(|_| no_confirm))
+                    .chain(packages.keys().map(String::as_str)),
+                Perms::AsRoot,
+            )?;
         }
 
         Ok(())
@@ -98,14 +102,18 @@ impl Backend for Xbps {
         packages: &std::collections::BTreeMap<String, Self::ModificationOptions>,
         _: &Config,
     ) -> Result<()> {
-        run_command(
-            ["xbps-pkgdb", "-m", "auto"].into_iter().chain(
-                packages
-                    .iter()
-                    .filter(|(_, m)| m.make_implicit)
-                    .map(|(p, _)| p.as_str()),
-            ),
-            Perms::AsRoot,
-        )
+        if !packages.is_empty() {
+            run_command(
+                ["xbps-pkgdb", "-m", "auto"].into_iter().chain(
+                    packages
+                        .iter()
+                        .filter(|(_, m)| m.make_implicit)
+                        .map(|(p, _)| p.as_str()),
+                ),
+                Perms::AsRoot,
+            )?;
+        }
+
+        Ok(())
     }
 }

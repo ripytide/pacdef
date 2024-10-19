@@ -54,12 +54,16 @@ impl Backend for Pipx {
         _: bool,
         _: &Config,
     ) -> Result<()> {
-        run_command(
-            ["pipx", "install"]
-                .into_iter()
-                .chain(packages.keys().map(String::as_str)),
-            Perms::AsRoot,
-        )
+        if !packages.is_empty() {
+            run_command(
+                ["pipx", "install"]
+                    .into_iter()
+                    .chain(packages.keys().map(String::as_str)),
+                Perms::AsRoot,
+            )?;
+        }
+
+        Ok(())
     }
 
     fn modify_packages(_: &BTreeMap<String, Self::ModificationOptions>, _: &Config) -> Result<()> {
