@@ -98,6 +98,7 @@ impl Backend for Cargo {
                 Perms::AsRoot,
             )?;
         }
+
         Ok(())
     }
 

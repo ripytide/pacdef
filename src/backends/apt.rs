@@ -67,15 +67,19 @@ impl Backend for Apt {
         packages: &BTreeMap<String, Self::ModificationOptions>,
         _: &Config,
     ) -> Result<()> {
-        run_command(
-            ["apt-mark", "auto"].into_iter().chain(
-                packages
-                    .iter()
-                    .filter(|(_, m)| m.make_implicit)
-                    .map(|(p, _)| p.as_str()),
-            ),
-            Perms::AsRoot,
-        )
+        if !packages.is_empty() {
+            run_command(
+                ["apt-mark", "auto"].into_iter().chain(
+                    packages
+                        .iter()
+                        .filter(|(_, m)| m.make_implicit)
+                        .map(|(p, _)| p.as_str()),
+                ),
+                Perms::AsRoot,
+            )?;
+        }
+
+        Ok(())
     }
 
     fn remove_packages(
