@@ -59,7 +59,7 @@ impl Backend for Pipx {
                 ["pipx", "install"]
                     .into_iter()
                     .chain(packages.keys().map(String::as_str)),
-                Perms::AsRoot,
+                Perms::Same,
             )?;
         }
 
@@ -80,7 +80,7 @@ impl Backend for Pipx {
                 ["pipx", "uninstall"]
                     .into_iter()
                     .chain(packages.keys().map(String::as_str)),
-                Perms::AsRoot,
+                Perms::Same,
             )?;
         }
 

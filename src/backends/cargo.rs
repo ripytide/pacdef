@@ -95,7 +95,7 @@ impl Backend for Cargo {
                     )
                     .chain(options.features.iter().map(|feature| feature.as_str()))
                     .chain([package.as_str()]),
-                Perms::AsRoot,
+                Perms::Same,
             )?;
         }
 
@@ -116,7 +116,7 @@ impl Backend for Cargo {
                 ["cargo", "uninstall"]
                     .into_iter()
                     .chain(packages.keys().map(String::as_str)),
-                Perms::AsRoot,
+                Perms::Same,
             )?;
         }
 
