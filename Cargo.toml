@@ -7,7 +7,7 @@ license = "GPL-3.0-or-later"
 repository = "https://github.com/ripytide/metapac"
 readme = "README.md"
 keywords = ["package-manager", "linux", "declarative", "cli"]
-categories = ["command-line-utilities", "package-managers"]
+categories = ["command-line-utilities"]
 include = [
   "build.rs",
   "src/**/*",
