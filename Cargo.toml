@@ -1,13 +1,27 @@
 [package]
 name = "metapac"
 description = "multi-backend declarative package manager"
-version = "1.6.0"
+version = "0.1.0"
 edition = "2021"
 license = "GPL-3.0-or-later"
-repository = "https://github.com/steven-omaha/metapac"
+repository = "https://github.com/ripytide/metapac"
 readme = "README.md"
 keywords = ["package-manager", "linux", "declarative", "cli"]
-categories = ["command-line-utilities"]
+categories = ["command-line-utilities", "package-managers"]
+include = [
+  "build.rs",
+  "src/**/*",
+  "Cargo.toml",
+  "Cargo.lock",
+  "LICENSE*",
+  "README.md",
+  "benches/**/*",
+  "examples/**/*"
+]
+
+[package.metadata.docs.rs]
+all-features = true
+rustdoc-args = ["--cfg", "docsrs"]
 
 [dependencies]
 color-eyre = "0.6.3"
@@ -31,3 +45,8 @@ toml_edit = "0.22.22"
 
 [dev-dependencies]
 assert_cmd = "2.0.16"
+
+# The profile that 'cargo dist' will build with
+[profile.dist]
+inherits = "release"
+lto = "thin"

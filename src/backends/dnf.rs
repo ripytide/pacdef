@@ -92,11 +92,7 @@ impl Backend for Dnf {
         Ok(())
     }
 
-    fn remove_packages(
-        packages: &BTreeSet<String>,
-        no_confirm: bool,
-        _: &Config,
-    ) -> Result<()> {
+    fn remove_packages(packages: &BTreeSet<String>, no_confirm: bool, _: &Config) -> Result<()> {
         if !packages.is_empty() {
             run_command(
                 ["dnf", "remove"]

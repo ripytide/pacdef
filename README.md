@@ -162,22 +162,7 @@ rustup = [
 ]
 ```
 
-## Commands
+# Credits
 
-Run `metapac -h` to see an overview of the commands available with
-`metapac`.
-
-## Naming
-
-`metapac` combines the words "package" and "define".
-
-## Backend Pitfalls
-
-### Pipx
-
-Some packages like
-[`mdformat-myst`](https://github.com/executablebooks/mdformat-myst) do
-not provide an executable themselves but rather act as a plugin to
-their dependency, which is mdformat in this case. Please install such
-packages explicitly by running: `pipx install <package-name>
---include-deps`.
+This project was forked from <https://github.com/steven-omaha/pacdef> so
+credits to the author(s) of that project for all their prior work.
