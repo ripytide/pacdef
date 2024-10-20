@@ -6,11 +6,13 @@ multi-backend declarative package manager
 
 ### Cargo
 
-To install `metapac` using cargo:
-
 ```bash
-cargo install metapac --git https://github.com/ripytide/metapac
+cargo install metapac
 ```
+
+### AUR
+
+Coming soon.
 
 ## Use-case
 
