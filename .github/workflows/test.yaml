@@ -13,5 +13,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
       - name: Cargo Test
-        run: cargo test --verbose
+        run: RUST_BACKTRACE=full cargo test --verbose --color never
