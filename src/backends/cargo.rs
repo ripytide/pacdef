@@ -101,11 +101,7 @@ impl Backend for Cargo {
         Ok(())
     }
 
-    fn remove_packages(
-        packages: &BTreeSet<String>,
-        _: bool,
-        _: &Config,
-    ) -> Result<()> {
+    fn remove_packages(packages: &BTreeSet<String>, _: bool, _: &Config) -> Result<()> {
         if !packages.is_empty() {
             run_command(
                 ["cargo", "uninstall"]
