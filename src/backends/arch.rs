@@ -27,6 +27,10 @@ impl Backend for Arch {
         mut packages: BTreeMap<String, Self::InstallOptions>,
         config: &Config,
     ) -> Result<BTreeMap<String, Self::InstallOptions>> {
+        if !command_found(config.arch_package_manager.as_command()) {
+            return Ok(BTreeMap::new());
+        }
+
         let groups = run_command_for_stdout(
             [
                 config.arch_package_manager.as_command(),
