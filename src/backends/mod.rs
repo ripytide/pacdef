@@ -30,6 +30,11 @@ pub trait Backend {
     type QueryInfo;
     type InstallOptions;
 
+    fn map_managed_packages(
+        packages: BTreeMap<String, Self::InstallOptions>,
+        config: &Config,
+    ) -> Result<BTreeMap<String, Self::InstallOptions>>;
+
     fn query_installed_packages(config: &Config) -> Result<BTreeMap<String, Self::QueryInfo>>;
 
     fn install_packages(

@@ -23,6 +23,47 @@ impl Backend for Arch {
     type QueryInfo = ArchQueryInfo;
     type InstallOptions = ArchInstallOptions;
 
+    fn map_managed_packages(
+        mut packages: BTreeMap<String, Self::InstallOptions>,
+        config: &Config,
+    ) -> Result<BTreeMap<String, Self::InstallOptions>> {
+        let groups = run_command_for_stdout(
+            [
+                config.arch_package_manager.as_command(),
+                "--sync",
+                "--groups",
+                "--quiet",
+            ],
+            Perms::Same,
+        )?;
+
+        for group in groups.lines() {
+            if let Some(install_options) = packages.remove(group) {
+                let group_packages = run_command_for_stdout(
+                    [
+                        config.arch_package_manager.as_command(),
+                        "--sync",
+                        "--groups",
+                        "--quiet",
+                        group,
+                    ],
+                    Perms::Same,
+                )?;
+
+                for group_package in group_packages.lines() {
+                    let overridden =
+                        packages.insert(group_package.to_string(), install_options.clone());
+
+                    if overridden.is_some() {
+                        log::warn!("arch package {group_package} has been overridden by the {group} package group");
+                    }
+                }
+            }
+        }
+
+        Ok(packages)
+    }
+
     fn query_installed_packages(config: &Config) -> Result<BTreeMap<String, Self::QueryInfo>> {
         if !command_found(config.arch_package_manager.as_command()) {
             return Ok(BTreeMap::new());

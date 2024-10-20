@@ -25,6 +25,13 @@ impl Backend for Pipx {
     type QueryInfo = PipxQueryOptions;
     type InstallOptions = PipxInstallOptions;
 
+    fn map_managed_packages(
+        packages: BTreeMap<String, Self::InstallOptions>,
+        _: &Config,
+    ) -> Result<BTreeMap<String, Self::InstallOptions>> {
+        Ok(packages)
+    }
+
     fn query_installed_packages(_: &Config) -> Result<BTreeMap<String, Self::QueryInfo>> {
         if !command_found("pipx") {
             return Ok(BTreeMap::new());
