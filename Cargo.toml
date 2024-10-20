@@ -23,15 +23,6 @@ include = [
 all-features = true
 rustdoc-args = ["--cfg", "docsrs"]
 
-[package.metadata.release]
-pre-release-replacements = [
-  {file="CHANGELOG.md", search="Unreleased", replace="{{version}}", min=1},
-  {file="CHANGELOG.md", search="\\.\\.\\.HEAD", replace="...{{tag_name}}", exactly=1},
-  {file="CHANGELOG.md", search="ReleaseDate", replace="{{date}}", min=1},
-  {file="CHANGELOG.md", search="<!-- next-header -->", replace="<!-- next-header -->\n## [Unreleased] - ReleaseDate\n", exactly=1},
-  {file="CHANGELOG.md", search="<!-- next-url -->", replace="<!-- next-url -->\n[Unreleased]: https://github.com/ORG/PROJECT/compare/{{tag_name}}...HEAD", exactly=1},
-]
-
 [dependencies]
 color-eyre = "0.6.3"
 clap = { version = "4.5.20", features = ["derive"] }
