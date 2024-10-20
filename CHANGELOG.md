@@ -136,7 +136,6 @@ All notable changes to this project will be documented in this file.
 - *(README)* Add fedora backend
 - *(man)* Add pip_binary config value
 - Fix toml syntax
-- Add initial changelog and simplify readme
 
 ### 🎨 Styling
 
@@ -144,7 +143,6 @@ All notable changes to this project will be documented in this file.
 - *(fedora)* Comments and empty lines
 - *(fedora)* Implicit types and module consts
 - *(packages)* Rename variables
-- Cargo fmt
 
 ### 🧪 Testing
 
@@ -228,7 +226,6 @@ All notable changes to this project will be documented in this file.
 - *(release)* Bump man pages
 - Release
 - *(release)* Fix adding zsh completion
-- Remove committed
 
 ### Build
 
@@ -253,8 +250,8 @@ All notable changes to this project will be documented in this file.
 - *(core)* Remove stale lint config
 - *(core)* Simplify valid group name check
 - *(main)* Create_empty_config_file
-- Unnecessary wraps
-- Unnecessary wraps
+- Unncessary wraps
+- Unncessary wraps
 - Replace match with if let else
 - Use clone instead to_owned
 - *(core)* Manual let else
@@ -262,7 +259,7 @@ All notable changes to this project will be documented in this file.
 - *(ui)* Infallible conversion for u8 to char
 - *(package.rs)* Expose repo field publicly
 - *(rustup)* Fetch installed toolchains and components
-- *(rustup)* Refactor install_packages
+- *(rustup)* Refector install_packages
 - *(rustup)* Use anyhow::Error
 - *(rustup)* Remove clippy warnings
 - *(rustup)* Change methods to functions
