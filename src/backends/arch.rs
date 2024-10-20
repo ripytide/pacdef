@@ -95,13 +95,19 @@ impl Backend for Arch {
     ) -> Result<()> {
         if !packages.is_empty() {
             run_command(
-                [config.arch_package_manager.as_command(), "--sync"]
-                    .into_iter()
-                    .chain(Some("--no_confirm").filter(|_| no_confirm))
-                    .chain(packages.keys().map(String::as_str))
-                    .chain(packages.values().flat_map(|dependencies| {
+                [
+                    config.arch_package_manager.as_command(),
+                    "--sync",
+                    "--asexplicit",
+                ]
+                .into_iter()
+                .chain(Some("--no_confirm").filter(|_| no_confirm))
+                .chain(packages.keys().map(String::as_str))
+                .chain(
+                    packages.values().flat_map(|dependencies| {
                         dependencies.optional_deps.iter().map(String::as_str)
-                    })),
+                    }),
+                ),
                 config.arch_package_manager.change_perms(),
             )?;
         }
