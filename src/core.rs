@@ -23,8 +23,8 @@ impl MainArguments {
             x
         } else {
             dirs::config_dir()
-                .map(|path| path.join("pacdef/"))
-                .ok_or(eyre!("getting the default pacdef config directory"))?
+                .map(|path| path.join("metapac/"))
+                .ok_or(eyre!("getting the default metapac config directory"))?
         };
 
         let group_dir = config_dir.join("groups/");

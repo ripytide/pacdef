@@ -1,5 +1,5 @@
 # Group files (like this one) should be placed in the
-# XDG_CONFIG_HOME/pacdef directory (usually ~/.config/pacdef/config.toml)
+# XDG_CONFIG_HOME/metapac directory (usually ~/.config/metapac/config.toml)
 # unless using the --config-dir cli option.
 #
 # The packages for each backend in group files can come in two formats, short-form
@@ -13,40 +13,40 @@
 #
 # For example, the following two packages are equivalent:
 # arch = [
-# 	"pacdef",
-# 	{ package = "pacdef" }
+# 	"metapac",
+# 	{ package = "metapac" }
 # ]
 
 arch = [
-	"pacdef",
+	"metapac",
 	# optional_deps: additional packages to install with this package, short-form syntax only
-	{ package = "pacdef",  optional_deps = ["git"] }
+	{ package = "metapac",  optional_deps = ["git"] }
 ]
 cargo = [
-	"pacdef",
+	"metapac",
 	# see cargo docs for info on the options
-	{ package = "pacdef", git = "https://github.com/ripytide/pacdef", all_features = true, no_default_features = false, features = [ "feature1", ] },
+	{ package = "metapac", git = "https://github.com/ripytide/metapac", all_features = true, no_default_features = false, features = [ "feature1", ] },
 ]
 pipx = [
-	"pacdef",
-	{ package = "pacdef" }
+	"metapac",
+	{ package = "metapac" }
 ]
 apt = [
-	"pacdef",
-	{ package = "pacdef" }
+	"metapac",
+	{ package = "metapac" }
 ]
 xbps = [
-	"pacdef",
-	{ package = "pacdef" }
+	"metapac",
+	{ package = "metapac" }
 ]
 flatpak = [
-	"pacdef",
-	{ package = "pacdef" }
+	"metapac",
+	{ package = "metapac" }
 ]
 dnf = [
-	"pacdef",
+	"metapac",
 	# see dnf docs for more info on these options
-	{ package = "pacdef", repo = "/etc/yum.repos.d/fedora_extras.repo" },
+	{ package = "metapac", repo = "/etc/yum.repos.d/fedora_extras.repo" },
 ]
 rustup = [
 	"stable",

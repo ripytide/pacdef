@@ -1,6 +1,6 @@
 # Contributing
 
-Thank you for considering to contribute to `pacdef`. The recommended workflow is
+Thank you for considering to contribute to `metapac`. The recommended workflow is
 this:
 
 1. Open a github issue, mention that you would like to fix the issue in a PR.
