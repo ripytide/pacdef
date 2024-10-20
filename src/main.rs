@@ -1,4 +1,4 @@
-//! Main program for `pacdef`.
+//! Main program for `metapac`.
 
 #![warn(
     clippy::as_conversions,
@@ -16,7 +16,7 @@
 
 use clap::Parser;
 use color_eyre::Result;
-use pacdef::MainArguments;
+use metapac::MainArguments;
 
 fn main() -> Result<()> {
     pretty_env_logger::formatted_builder()

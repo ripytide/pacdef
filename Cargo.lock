@@ -508,6 +508,31 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "78ca9ab1a0babb1e7d5695e3530886289c18cf2f87ec19a575a0abdce112e3a3"
 
 [[package]]
+name = "metapac"
+version = "1.6.0"
+dependencies = [
+ "assert_cmd",
+ "clap",
+ "color-eyre",
+ "derive_more",
+ "dialoguer",
+ "dirs",
+ "home",
+ "hostname",
+ "itertools",
+ "libc",
+ "log",
+ "pretty_env_logger",
+ "regex",
+ "serde",
+ "serde-inline-default",
+ "serde_json",
+ "toml",
+ "toml_edit",
+ "walkdir",
+]
+
+[[package]]
 name = "miniz_oxide"
 version = "0.7.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -542,31 +567,6 @@ name = "owo-colors"
 version = "3.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c1b04fb49957986fdce4d6ee7a65027d55d4b6d2265e5848bbb507b58ccfdb6f"
-
-[[package]]
-name = "pacdef"
-version = "1.6.0"
-dependencies = [
- "assert_cmd",
- "clap",
- "color-eyre",
- "derive_more",
- "dialoguer",
- "dirs",
- "home",
- "hostname",
- "itertools",
- "libc",
- "log",
- "pretty_env_logger",
- "regex",
- "serde",
- "serde-inline-default",
- "serde_json",
- "toml",
- "toml_edit",
- "walkdir",
-]
 
 [[package]]
 name = "pin-project-lite"

@@ -34,8 +34,8 @@ impl Default for Config {
 }
 
 impl Config {
-    pub fn load(pacdef_dir: &Path) -> Result<Self> {
-        let config_file_path = pacdef_dir.join("config.toml");
+    pub fn load(config_dir: &Path) -> Result<Self> {
+        let config_file_path = config_dir.join("config.toml");
 
         if !config_file_path.is_file() {
             log::trace!(

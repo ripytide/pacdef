@@ -3,7 +3,7 @@ use std::process::Command;
 
 #[test]
 fn unmanaged() {
-    let mut cmd = Command::cargo_bin("pacdef").unwrap();
+    let mut cmd = Command::cargo_bin("metapac").unwrap();
     cmd.args(["--hostname", "pc", "--config-dir", ".", "unmanaged"]);
     cmd.assert().success();
 }

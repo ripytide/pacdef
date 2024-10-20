@@ -1,14 +1,14 @@
-# The pacdef config.toml file is expected in the
-# XDG_CONFIG_HOME/pacdef directory (usually ~/.config/pacdef/config.toml)
+# The metapac config.toml file is expected in the
+# XDG_CONFIG_HOME/metapac directory (usually ~/.config/metapac/config.toml)
 # unless using the --config-dir cli option.
 
 # To decide which group files are relevant for the current machine
-# pacdef uses the machine's hostname in the hostname_groups table in
+# metapac uses the machine's hostname in the hostname_groups table in
 # the config file to get a list of group file names.
 
 # Since pacman, yay and paru all operate on the same package database
 # they are mutually exclusive and so you must pick which one you want
-# pacdef to use.
+# metapac to use.
 # Must be one of: ["pacman", "paru", "yay"]
 # Default: "pacman"
 arch_package_manager = "paru"
@@ -17,7 +17,7 @@ arch_package_manager = "paru"
 # Default: true
 flatpak_systemwide = true
 
-# Backends to disable from all pacdef behavior. See the README.md for
+# Backends to disable from all metapac behavior. See the README.md for
 # the list of backend names
 # Default: []
 disabled_backends = ["apt"]

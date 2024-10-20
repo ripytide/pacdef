@@ -74,5 +74,5 @@ pub struct SyncCommand {
 
 #[derive(Args)]
 #[command(visible_alias("u"))]
-/// show explicitly installed packages not managed by pacdef
+/// show explicitly installed packages not managed by metapac
 pub struct UnmanagedCommand {}
