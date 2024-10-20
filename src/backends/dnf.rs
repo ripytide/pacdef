@@ -23,6 +23,13 @@ impl Backend for Dnf {
     type QueryInfo = DnfQueryInfo;
     type InstallOptions = DnfInstallOptions;
 
+    fn map_managed_packages(
+        packages: BTreeMap<String, Self::InstallOptions>,
+        _: &Config,
+    ) -> Result<BTreeMap<String, Self::InstallOptions>> {
+        Ok(packages)
+    }
+
     fn query_installed_packages(_: &Config) -> Result<BTreeMap<String, Self::QueryInfo>> {
         if !command_found("dnf") {
             return Ok(BTreeMap::new());

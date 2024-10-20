@@ -21,6 +21,13 @@ impl Backend for Xbps {
     type QueryInfo = XbpsQueryInfo;
     type InstallOptions = XbpsInstallOptions;
 
+    fn map_managed_packages(
+        packages: BTreeMap<String, Self::InstallOptions>,
+        _: &Config,
+    ) -> Result<BTreeMap<String, Self::InstallOptions>> {
+        Ok(packages)
+    }
+
     fn query_installed_packages(
         _: &Config,
     ) -> Result<std::collections::BTreeMap<String, Self::QueryInfo>> {

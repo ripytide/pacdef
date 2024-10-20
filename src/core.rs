@@ -33,7 +33,7 @@ impl MainArguments {
         let groups = Groups::load(&group_dir, &hostname, &config)
             .wrap_err("failed to load package install options from groups")?;
 
-        let managed = groups.to_install_options();
+        let managed = groups.to_install_options().map_install_packages(&config)?;
 
         match self.subcommand {
             MainSubcommand::Clean(clean) => clean.run(&managed, &config),
@@ -57,8 +57,7 @@ impl CleanCommand {
         if self.no_confirm {
             log::info!("proceeding without confirmation");
 
-            unmanaged
-                .remove_packages(self.no_confirm, config)
+            unmanaged.remove_packages(self.no_confirm, config)
         } else {
             println!("{unmanaged}");
 
@@ -71,8 +70,7 @@ impl CleanCommand {
                 .interact()
                 .wrap_err("getting user confirmation")?
             {
-                unmanaged
-                    .remove_packages(self.no_confirm, config)
+                unmanaged.remove_packages(self.no_confirm, config)
             } else {
                 Ok(())
             }

@@ -21,6 +21,13 @@ impl Backend for Flatpak {
     type QueryInfo = FlatpakQueryInfo;
     type InstallOptions = FlatpakInstallOptions;
 
+    fn map_managed_packages(
+        packages: BTreeMap<String, Self::InstallOptions>,
+        _: &Config,
+    ) -> Result<BTreeMap<String, Self::InstallOptions>> {
+        Ok(packages)
+    }
+
     fn query_installed_packages(_: &Config) -> Result<BTreeMap<String, Self::QueryInfo>> {
         if !command_found("flatpak") {
             return Ok(BTreeMap::new());

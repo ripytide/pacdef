@@ -19,6 +19,13 @@ impl Backend for Apt {
     type QueryInfo = AptQueryInfo;
     type InstallOptions = AptInstallOptions;
 
+    fn map_managed_packages(
+        packages: BTreeMap<String, Self::InstallOptions>,
+        _: &Config,
+    ) -> Result<BTreeMap<String, Self::InstallOptions>> {
+        Ok(packages)
+    }
+
     fn query_installed_packages(_: &Config) -> Result<BTreeMap<String, Self::QueryInfo>> {
         if !command_found("apt-mark") {
             return Ok(BTreeMap::new());
@@ -56,11 +63,7 @@ impl Backend for Apt {
         Ok(())
     }
 
-    fn remove_packages(
-        packages: &BTreeSet<String>,
-        no_confirm: bool,
-        _: &Config,
-    ) -> Result<()> {
+    fn remove_packages(packages: &BTreeSet<String>, no_confirm: bool, _: &Config) -> Result<()> {
         if !packages.is_empty() {
             run_command(
                 ["apt-get", "remove"]

@@ -212,6 +212,16 @@ macro_rules! install_options {
             is_empty!($($backend),*);
             to_package_ids!($($backend),*);
 
+            pub fn map_install_packages(mut self, config: &Config) -> Result<Self> {
+                $(
+                    if is_enabled(AnyBackend::$backend, config) {
+                        self.$backend = $backend::map_managed_packages(self.$backend, config)?;
+                    }
+                )*
+
+                Ok(self)
+            }
+
             pub fn install_packages(self, no_confirm: bool, config: &Config) -> Result<()> {
                 $(
                     if is_enabled(AnyBackend::$backend, config) {

@@ -28,6 +28,13 @@ impl Backend for Rustup {
     type QueryInfo = RustupQueryInfo;
     type InstallOptions = RustupInstallOptions;
 
+    fn map_managed_packages(
+        packages: BTreeMap<String, Self::InstallOptions>,
+        _: &Config,
+    ) -> Result<BTreeMap<String, Self::InstallOptions>> {
+        Ok(packages)
+    }
+
     fn query_installed_packages(_: &Config) -> Result<BTreeMap<String, Self::QueryInfo>> {
         if !command_found("rustup") {
             return Ok(BTreeMap::new());
